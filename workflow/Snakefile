@@ -38,6 +38,7 @@ onerror:
 # -----------------------------------------------------
 rule all:
     input:
-        "results/multiqc/multiqc_report.html",
+        "results/multiqc/fastq.html",
+        "results/multiqc/samtools_stats.html",
         "results/ataqv/ataqv_report.html",
         expand("results/macs2/{sample}.no_blacklist.narrowPeak", sample=SAMPLES),
