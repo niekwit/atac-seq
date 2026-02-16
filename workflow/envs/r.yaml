@@ -1,0 +1,8 @@
+name: R
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::bioconductor-rtracklayer=1.66.0
+  - bioconda::bioconductor-annotationhub=3.14.0

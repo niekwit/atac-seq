@@ -1,22 +1,27 @@
-# Main entrypoint of the workflow.
-# Please follow the best practices:
-# https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
-# in particular regarding the standardized folder structure mentioned there.
+# This workflow is based on:
+# https://www.nature.com/articles/s41467-023-42787-1
+# and
+# http://barc.wi.mit.edu/education/hot_topics/ATACseq_2024/ATACseq2024.pdf
 
+# Only mouse and human genomes are supported for now
 
-# load configuration
+from scripts.resources import Resources
+include: "rules/common.smk"
+
+# Load configuration
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
 
-# load rules
+
+resources = Resources(config["genome"]["ensembl"], config["genome"]["release"])
+SAMPLES = samples()
+
+# Load rules
 # -----------------------------------------------------
-include: "rules/common.smk"
 include: "rules/process_reads.smk"
+include: "rules/atac.smk"
 
-
-# optional messages, log and error handling
-# -----------------------------------------------------
 onstart:
     print("\n--- Analysis started ---\n")
 
@@ -29,9 +34,10 @@ onerror:
     print("\n--- An error occurred! ---\n")
 
 
-# target rules
+# Target rules
 # -----------------------------------------------------
 rule all:
     input:
         "results/multiqc/multiqc_report.html",
-    default_target: True
+        "results/ataqv/ataqv_report.html",
+        expand("results/macs2/{sample}.no_blacklist.narrowPeak", sample=SAMPLES),

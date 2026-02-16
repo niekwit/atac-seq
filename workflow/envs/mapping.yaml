@@ -1,0 +1,11 @@
+name: mapping
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - pigz=2.8
+  - bioconda::samtools=1.23
+  - conda-forge::pip=26.0.1
+  - pip:
+      - pyranges1==1.2.0

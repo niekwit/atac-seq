@@ -1,8 +1,15 @@
-sample_sheet: ".test/config/samples.tsv"
+genome:
+  ensembl: mm39
+  release: 115
 
-get_genome:
-  ncbi_ftp: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz
+trim_galore:
+  extra: "-q 20 --nextera"
 
-simulate_reads:
-  read_length: 100
-  read_number: 10000
+bwa_mem2:
+  extra: "-M"
+
+macs2:
+  extra: "-f BAMPE --nomodel --shift -37 --extsize 73 --keep-dup all -q 0.05 -g mm"
+
+ataqv:
+  extra: ""
