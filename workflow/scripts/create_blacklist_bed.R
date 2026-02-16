@@ -23,3 +23,4 @@ seqlevelsStyle(blacklist) <- "Ensembl"
 
 # Export to BED file
 output_file <- snakemake@output[["bed"]]
+export(blacklist, output_file)
