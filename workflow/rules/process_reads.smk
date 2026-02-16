@@ -10,7 +10,7 @@ rule get_fasta:
         "logs/resources/get_fasta.log"
     threads: 1
     conda:
-        "../envs/mapping.yaml"
+        "../envs/atac.yaml"
     script:
         "../scripts/get_resource.sh"
 
@@ -34,7 +34,7 @@ rule generate_tss_file:
     log:
         "logs/resources/generate_tss_file.log",
     conda:
-        "../envs/mapping.yaml"
+        "../envs/atac.yaml"
     shell:
         "python workflow/scripts/generate_tss_file.py {input.gtf} {output}"
 
