@@ -36,7 +36,7 @@ rule generate_tss_file:
     conda:
         "../envs/mapping.yaml"
     shell:
-        "python ../scripts/generate_tss_file.py {input.gtf} {output}"
+        "python workflow/scripts/generate_tss_file.py {input.gtf} {output}"
 
 
 # Index genome with bwa_mem2
