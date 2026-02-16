@@ -6,6 +6,10 @@ trim_galore:
   extra: "-q 20 --nextera"
 
 bwa_mem2:
+  sort: "samtools" # Can be 'none', 'samtools', or 'picard'.
+  sort_order: "coordinate" # Can be 'coordinate' (default) or 'queryname'.
+  sort_extra: "" # Extra args for samtools/picard sorts.
+  # Extra args for bwa mem2
   extra: "-M"
 
 macs2:
