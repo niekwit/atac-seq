@@ -21,6 +21,11 @@ blacklist <- query[[1]]
 # Convert to Ensemble style chromosome names
 seqlevelsStyle(blacklist) <- "Ensembl"
 
+# Fix all 0 coordinates
+# export function annoyingly 1-based 0 to -1 0-based (BED format)
+# Convert this to 1 to avoid negative coordinates in the BED file
+start(blacklist) <- pmax(start(blacklist), 1)
+
 # Export to BED file
 output_file <- snakemake@output[["bed"]]
-export(blacklist, output_file)
+export(blacklist, output_file, format = "BED")
