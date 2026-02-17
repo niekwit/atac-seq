@@ -15,6 +15,23 @@ rule get_fasta:
         "../scripts/get_resource.sh"
 
 
+# Create chromosome sizes file from fasta file for use in downstream tools
+# -----------------------------------------------------
+rule create_chrom_sizes:
+    input:
+        resources.fasta,
+    output:
+        "resources/chrom_sizes.txt",
+    log:
+        "logs/resources/create_chrom_sizes.log",
+    threads: 1
+    conda:
+        "../envs/atac.yaml"
+    shell:
+        "samtools faidx {input}; "
+        "cut -f1,2 {input}.fai > {output}"
+
+
 # Download gtf file from Ensembl
 # -----------------------------------------------------
 use rule get_fasta as get_gtf with:
@@ -178,6 +195,22 @@ rule markduplicates:
         "v9.0.0/bio/picard/markduplicates"
 
 
+# Index dedup marked BAM files with samtools
+# -----------------------------------------------------
+rule index_dedup_marked:
+    input:
+        "results/dedup/{sample}.bam",
+    output:
+        "results/dedup/{sample}.bam.bai",
+    log:
+        "logs/samtools_index/{sample}.log",
+    params:
+        extra="",  # optional params string
+    threads: 3  # This value - 1 will be sent to -@
+    wrapper:
+        "v8.1.1/bio/samtools/index"
+
+
 # Remove reads mapping to mitochondrial genome and
 # those with low mapping quality (MAPQ < 30)
 # -----------------------------------------------------
@@ -199,13 +232,15 @@ rule filter_bam:
         "samtools view -Sb - > {output}"
 
 
+# Index filtered BAM files with samtools
+# -----------------------------------------------------
 # Index filteredBAM files with samtools
 # -----------------------------------------------------
-rule index:
+rule index_filtered:
     input:
-        "results/dedup/{sample}.bam",
+        "results/filtered/{sample}.bam",
     output:
-        "results/dedup/{sample}.bam.bai",
+        "results/filtered/{sample}.bam.bai",
     log:
         "logs/samtools_index/{sample}.log",
     params:
