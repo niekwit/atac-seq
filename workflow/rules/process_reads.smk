@@ -26,17 +26,19 @@ use rule get_fasta as get_gtf with:
         "logs/resources/get_gtf.log",
 
 
+# Generate BED file of TSS regions from GTF file for ataqv
+# -----------------------------------------------------
 rule generate_tss_file:
     input:
         gtf=resources.gtf,
     output:
-        "resources/tss.bed",
+        bed="resources/tss.bed",
     log:
         "logs/resources/generate_tss_file.log",
     conda:
         "../envs/atac.yaml"
-    shell:
-        "python workflow/scripts/generate_tss_file.py {input.gtf} {output}"
+    script:
+        "../scripts/generate_tss_file.py"
 
 
 # Index genome with bwa_mem2
@@ -160,7 +162,7 @@ rule bwa_mem2_mem:
 
 # Mark duplicates with Picard
 # -----------------------------------------------------
-rule markduplicates_bam:
+rule markduplicates:
     input:
         bams="results/mapped/{sample}.bam",
     output:
@@ -197,9 +199,9 @@ rule filter_bam:
         "samtools view -Sb - > {output}"
 
 
-# Index BAM files with samtools
+# Index filteredBAM files with samtools
 # -----------------------------------------------------
-rule samtools_index:
+rule index:
     input:
         "results/dedup/{sample}.bam",
     output:
