@@ -105,7 +105,7 @@ rule multiqc:
     output:
         report="results/multiqc/fastq.html",
     params:
-        extra="--verbose --dirs",
+        extra="--verbose",
     log:
         "results/multiqc/multiqc.log",
     wrapper:
@@ -152,7 +152,7 @@ rule bwa_mem2_mem:
         sort=config["bwa_mem2"]["sort"],
         sort_order=config["bwa_mem2"]["sort_order"],
         sort_extra=config["bwa_mem2"]["sort_extra"],
-        extra=config["bwa_mem2"]["extra"],  #+ r" -R '@RG\tID:{sample}\tSM:{sample}'",
+        extra=config["bwa_mem2"]["extra"] + " -R '@RG\\tID:{sample}\\tSM:{sample}\\tLB:lib1\\tPL:ILLUMINA'",
     threads: 8
     wrapper:
         "v8.1.1/bio/bwa-mem2/mem"
@@ -171,7 +171,7 @@ rule markduplicates_bam:
     params:
         extra="--REMOVE_DUPLICATES false",
     resources:
-        mem_mb=2048,
+        mem_mb=4096,
     wrapper:
         "v9.0.0/bio/picard/markduplicates"
 
