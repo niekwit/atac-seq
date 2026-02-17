@@ -72,17 +72,37 @@ rule ataqv:
         "{input.bam} > {output.out} 2> {log}"
 
 
-# Create HTML report of ATAC-seq QC metrics using ataqv
+# Create HTML report of ATAC-seq QC metrics using ataqv mkarv
 # -----------------------------------------------------
 rule ataqv_report:
     input:
         json=expand("results/ataqv/{sample}.json.gz", sample=SAMPLES),
     output:
-        "results/ataqv/ataqv_report.html",
+        html="results/ataqv_report/index.html",
     params:
+        dir=lambda w, output: os.path.dirname(output["html"]),
         extra=""
     log:
         "logs/ataqv/ataqv_report.log"
     threads: 1
+    conda:
+        "../envs/atac.yaml"
     shell:
-        "mkarv ataqv_report  {input.json} {log}"
+        "mkarv --force {params.dir} {input.json} 2> {log}"
+
+
+# Generate consensus peak set for each condition
+# -----------------------------------------------------
+rule consensus_peaks:
+    input:
+        peaks=expand("results/macs2/{sample}.no_blacklist.narrowPeak", sample=SAMPLES),
+        chrom_sizes="resources/chrom_sizes.txt",
+    output:
+        bed="results/macs2/{condition}_consensus_peaks.bed",
+    params:
+        method=config["consensus_peaks"]["method"],
+        keep=config["consensus_peaks"]["multiinter_options"]["keep"],
+    log:
+        "logs/consensus_peaks/{condition}.log"
+    script:
+        "../scripts/consensus_peaks.py"
