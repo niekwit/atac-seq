@@ -14,7 +14,7 @@ def samples():
     Paired-end data assumed.
     """
     csv = pd.read_csv("config/samples.csv")
-    SAMPLES = csv["sample"].tolist()  # this gets just IP samples
+    SAMPLES = csv["sample"].tolist()
     
     # Check if sample names contain any characters that are not alphanumeric or underscore
     illegal = []
@@ -59,3 +59,19 @@ def ataqv_organism():
         return "mouse"
     else:
         raise ValueError(f"Unsupported genome: {genome}")
+
+
+def bamcoverage_genome():
+    genome = config["genome"]["ensembl"]
+    if genome == "hg38":
+        return "GRCh38"
+    elif genome == "mm39":
+        return "mm10"
+    else:
+        raise ValueError(f"Unsupported genome: {genome}")
+
+
+def conditions():
+    csv = pd.read_csv("config/samples.csv")
+    conditions = csv["condition"].unique().tolist()
+    return conditions
