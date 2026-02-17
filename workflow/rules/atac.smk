@@ -43,31 +43,33 @@ rule remove_blacklisted_regions:
 # -----------------------------------------------------
 rule ataqv:
     input:
-        bam="results/mapped/{sample}.bam", # use unfiltered BAM
+        bam="results/dedup/{sample}.bam", # use deduplicated BAM
+        bai="results/dedup/{sample}.bam.bai",
         macs2="results/macs2/{sample}_peaks.narrowPeak", # raw peaks
         tss="resources/tss.bed",
         blacklist="resources/blacklist.bed"
     output:
         json="results/ataqv/{sample}.json.gz",
-        prob_reads="results/ataqv/{sample}_problematic_reads.log",
         out="results/ataqv/{sample}.out"
     params:
         organism=ataqv_organism(),
         extra=""
     log:
         "logs/ataqv/{sample}.log"
-    threads: 2
+    threads: 4
+    conda:
+        "../envs/atac.yaml"
     shell:
         "ataqv {params.organism} "
-        "--mitochondrial-reference-name MT"
+        "--threads {threads} "
+        "--mitochondrial-reference-name MT "
         "--name {wildcards.sample} "
-        "--peakfile {input.macs2} "
-        "--tss {input.tss} "
+        "--peak-file {input.macs2} "
+        "--tss-file {input.tss} "
         "--metrics-file {output.json} "
-        "--problematic-reads {output.prob_reads} "
         "--excluded-region-file {input.blacklist} "
         "{params.extra} "
-        "{input.bam} > {output.out} {log}"
+        "{input.bam} > {output.out} 2> {log}"
 
 
 # Create HTML report of ATAC-seq QC metrics using ataqv
