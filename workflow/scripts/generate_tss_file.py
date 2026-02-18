@@ -66,7 +66,6 @@ tss["Score"] = 0
 tss = tss[["Chromosome", "Start", "End", "Name", "Score", "Strand"]]
 
 # Export to BED
-# PyRanges automatically maps 'Name' to the 4th column of the BED file
 logging.info(f"Exporting TSS to BED file: {output_bed}")
 output_bed = output_bed
 tss.to_bed(output_bed)
