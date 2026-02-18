@@ -34,7 +34,7 @@ logging.basicConfig(
     format="%(levelname)s:%(asctime)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.DEBUG,
-    handlers=[logging.FileHandler(log), logging.StreamHandler(sys.stdout)],
+    handlers=[logging.FileHandler(log)],
     force=True,
 )
 
