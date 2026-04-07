@@ -5,7 +5,7 @@ rule bigwig:
         bam="results/filtered/{sample}.bam",
         bai="results/filtered/{sample}.bam.bai",
     output:
-        "results/bigwig/{sample}.bw",
+        "results/bigwig/samples/{sample}.bw",
     params:
         genome=bamcoverage_genome(),
         read_length=config["read_length"],
@@ -16,12 +16,14 @@ rule bigwig:
         "v5.6.0/bio/deeptools/bamcoverage"
 
 
+# Create intermediate wig files by averaging bigwig files from samples in the same condition
+# -----------------------------------------------------
 rule average_wig:
     input:
-        expand("results/bigwig/{sample}.bw", sample=SAMPLES),
+        expand("results/bigwig/samples/{sample}.bw", sample=SAMPLES),
     output:
         wig=temp("results/bigwig/{condition}.wig"),
-    threads: 2
+    threads: 1
     log:
         "logs/wiggletools/wig_average_{condition}.log",
     conda:
@@ -30,17 +32,17 @@ rule average_wig:
         "../scripts/average_wig.py"
 
 
+# Convert wig files to bigwig files
+# -----------------------------------------------------
 rule wig2bigwig:
     input:
         wig="results/bigwig/{condition}.wig",
-        cs="resources/chrom.sizes.txt",
+        cs="resources/chrom_sizes.txt",
     output:
-        "results/bigwig/{condition}.bw",
+        "results/bigwig/average/{condition}.bw",
     params:
         extra="",
-    threads: config["resources"]["deeptools"]["cpu"]
-    resources:
-        runtime=config["resources"]["deeptools"]["time"],
+    threads: 1
     log:
         "logs/wigToBigWig/{condition}.log",
     conda:
