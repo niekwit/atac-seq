@@ -6,21 +6,27 @@
 # Only mouse and human genomes are supported for now
 
 from scripts.resources import Resources
+
+
 include: "rules/common.smk"
+
 
 # Load configuration
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
 
-
 resources = Resources(config["genome"]["ensembl"], config["genome"]["release"])
 SAMPLES = samples()
+CONDITIONS = conditions()
+
 
 # Load rules
 # -----------------------------------------------------
 include: "rules/process_reads.smk"
 include: "rules/atac.smk"
+include: "rules/bigwig.smk"
+
 
 onstart:
     print("\n--- Analysis started ---\n")
@@ -40,5 +46,6 @@ rule all:
     input:
         "results/multiqc/fastq.html",
         "results/multiqc/samtools_stats.html",
-        "results/ataqv/ataqv_report.html",
-        expand("results/macs2/{sample}.no_blacklist.narrowPeak", sample=SAMPLES),
+        "results/ataqv_report/index.html",
+        expand("results/macs2/{condition}_consensus_peaks.bed", condition=CONDITIONS),
+        expand("results/bigwig/average/{condition}.bw", condition=CONDITIONS),
