@@ -3,7 +3,8 @@ from snakemake.shell import shell
 import pandas as pd
 
 # Load Snakemake variables
-log = snakemake.log_fmt_shell(stdout=True, stderr=True)
+log = snakemake.log[0]
+log_fmt = snakemake.log_fmt_shell(stdout=True, stderr=True)
 
 all_bw = snakemake.input
 condition = snakemake.wildcards["condition"]
@@ -31,7 +32,7 @@ bw = [x for x in all_bw if any(sample in x for sample in samples)]
 logging.info(f"Bigwig files for condition '{condition}': {bw}")
 
 # Create average bigwig file
-command = "wiggletools write {wig} mean {bw} {log}"
+command = "wiggletools write {wig} mean {bw} {log_fmt}"
 logging.debug(command)
 shell(command)
 logging.info("Done!")
