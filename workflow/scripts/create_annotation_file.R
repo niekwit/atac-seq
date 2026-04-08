@@ -5,7 +5,7 @@ sink(log, type = "message")
 
 library(rtracklayer)
 library(tidyverse)
-library(GenomicFeatures)
+library(txdbmaker)
 
 # Load Snakemake parameters
 gtf <- snakemake@input[["gtf"]]
@@ -31,5 +31,5 @@ save(edb, file = snakemake@output[["rdata"]])
 # ------------------------------
 txdb <- makeTxDbFromGFF(gtf)
 
-# Save Txdb to file as R object
-save(txdb, file = snakemake@output[["txdb"]])
+# Save Txdb to file using AnnotationDbi (save/load doesn't work for TxDb)
+AnnotationDbi::saveDb(txdb, file = snakemake@output[["txdb"]])
