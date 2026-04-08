@@ -53,7 +53,7 @@ def samples():
 
 def ataqv_organism():
     genome = config["genome"]["ensembl"]
-    if re.match("hg", genome):
+    if re.match("hg", genome) or genome == "test":
         return "human"
     elif re.match("mm", genome):
         return "mouse"
@@ -67,6 +67,8 @@ def bamcoverage_genome():
         return "GRCh38"
     elif genome == "mm39":
         return "mm10"
+    elif genome == "test":
+        return "GRCh38"
     else:
         raise ValueError(f"Unsupported genome: {genome}")
 
