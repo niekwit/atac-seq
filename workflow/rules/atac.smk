@@ -104,5 +104,27 @@ rule consensus_peaks:
         keep=config["consensus_peaks"]["multiinter_options"]["keep"],
     log:
         "logs/consensus_peaks/{condition}.log"
+    conda:
+        "../envs/atac.yaml"
     script:
         "../scripts/consensus_peaks.py"
+
+
+# Annotate consensus peaks with ChIPseeker
+# -----------------------------------------------------
+rule annotate_peaks:
+    input:
+        bed="results/macs2/{condition}_consensus_peaks.bed",
+        edb=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
+        txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
+    output:
+        txt="results/macs2/{condition}_consensus_peaks_annotated.txt",
+    params:
+        gtf=resources.gtf,
+    threads: 2
+    log:
+        "logs/annotate_peaks/{condition}.log"
+    conda:
+        "../envs/r.yaml"
+    script:
+        "../scripts/annotate_peaks.R"
