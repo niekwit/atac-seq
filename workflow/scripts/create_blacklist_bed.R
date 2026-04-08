@@ -6,6 +6,7 @@ sink(log, type = "message")
 
 library(rtracklayer)
 library(AnnotationHub)
+library(GenomeInfoDb)
 # https://doi.org/10.1093/bioinformatics/btad198
 
 # Get genome
