@@ -11,6 +11,9 @@ library(GenomeInfoDb)
 
 # Get genome
 genome_assembly <- snakemake@params[["genome"]]
+if (genome_assembly == "test") {
+  genome_assembly <- "hg38"
+}
 
 print(paste("Fetching blacklist regions for:", genome_assembly))
 
