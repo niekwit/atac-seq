@@ -66,6 +66,12 @@ else:  # Otherwise, use bedtools multiinter to find consensus peaks
 # Final cleanup to ensure no peaks exceed chromosome boundaries
 consensus_peaks = consensus_peaks.truncate_to_chrom(chrom_sizes)
 
+# Consensus peaks only have 3 columns
+# Add a 4th column with unique peak IDs
+consensus_peaks = consensus_peaks.each(
+    lambda x: x.append(f"peak_{x.chrom}_{x.start}_{x.end}") or x
+)
+
 logging.info(f"Saving consensus peaks to {bed}")
 consensus_peaks.saveas(bed)
 logging.info("Done!")
