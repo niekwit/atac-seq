@@ -1,8 +1,28 @@
-sample_sheet: "config/samples.tsv"
+read_length: 50
 
-get_genome:
-  ncbi_ftp: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz
+genome:
+  ensembl: test
+  release: 115
 
-simulate_reads:
-  read_length: 100
-  read_number: 10000
+trim_galore:
+  extra: "-q 20 --nextera"
+
+bwa_mem2:
+  sort: "samtools" # Can be 'none', 'samtools', or 'picard'.
+  sort_order: "coordinate" # Can be 'coordinate' (default) or 'queryname'.
+  sort_extra: "" # Extra args for samtools/picard sorts.
+  # Extra args for bwa mem2
+  extra: "-M"
+
+macs2:
+  extra: "-f BAM --nomodel --shift -100 --extsize 200 --keep-dup all -q 0.01 -g hs"
+
+consensus_peaks:
+  method: merge # merge or multiinter
+  multiinter_options:
+    # Number of samples that must support a peak for it to be included in
+    # the consensus peak set when using multiinter method.
+    keep: 3 # minimum: 2
+
+ataqv:
+  extra: ""
