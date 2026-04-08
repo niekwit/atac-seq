@@ -32,6 +32,23 @@ rule create_chrom_sizes:
         "cut -f1,2 {input}.fai > {output}"
 
 
+# Create annotation files for use in downstream tools
+# -----------------------------------------------------
+rule create_annotation_file:
+    input:
+        gtf=resources.gtf,
+    output:
+        rdata=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
+        txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
+    log:
+        "logs/resources/create_annotation_file.log"
+    threads: 2
+    conda:
+        "../envs/r.yaml"
+    script:
+        "../scripts/create_annotation_file.R"
+
+
 # Download gtf file from Ensembl
 # -----------------------------------------------------
 use rule get_fasta as get_gtf with:
