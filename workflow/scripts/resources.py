@@ -46,6 +46,10 @@ class Resources:
             self.fasta_url = f"{base_url}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.toplevel.fa.gz"
             self.gtf_url = f"{base_url}gtf/drosophila_melanogaster/Drosophila_melanogaster.{name}.{build}.gtf.gz"
 
+        elif "test" in genome:
+            self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
+            self.gtf_url = "https://github.com/niekwit/atac-seq/raw/main/.test/Homo_sapiens.GRCh38.115_chr11.gtf.gz"
+
         # downloaded unzipped file names
         self.fasta = self._file_from_url(self.fasta_url)
         self.gtf = self._file_from_url(self.gtf_url)
