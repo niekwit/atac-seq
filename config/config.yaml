@@ -1,3 +1,5 @@
+read_length: 50
+
 genome:
   ensembl: mm39
   release: 115
@@ -13,7 +15,14 @@ bwa_mem2:
   extra: "-M"
 
 macs2:
-  extra: "-f BAMPE --nomodel --shift -37 --extsize 73 --keep-dup all -q 0.05 -g mm"
+  extra: "-f BAMPE --nomodel --shift -100 --extsize 200 --keep-dup all -q 0.05 -g mm"
+
+consensus_peaks:
+  method: merge # merge or multiinter
+  multiinter_options:
+    # Number of samples that must support a peak for it to be included in
+    # the consensus peak set when using multiinter method.
+    keep: 3 # minimum: 2
 
 ataqv:
   extra: ""
