@@ -47,5 +47,5 @@ rule all:
         "results/multiqc/fastq.html",
         "results/multiqc/samtools_stats.html",
         "results/ataqv_report/index.html",
-        expand("results/macs2/{condition}_consensus_peaks.bed", condition=CONDITIONS),
+        expand("results/macs2/{condition}_consensus_peaks_annotated.txt", condition=CONDITIONS),
         expand("results/bigwig/average/{condition}.bw", condition=CONDITIONS),
