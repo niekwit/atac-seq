@@ -4,5 +4,9 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - bioconda::bioconductor-rtracklayer=1.66.0
-  - bioconda::bioconductor-annotationhub=3.14.0
+  - bioconda::bioconductor-rtracklayer=1.70.1
+  - bioconda::bioconductor-annotationhub=4.0.0
+  - bioconda::bioconductor-genomeinfodb=1.46.2
+  - bioconda::bioconductor-txdbmaker=1.6.2
+  - r-tidyverse=2.0.0
+  - bioconductor-chipseeker=1.46.1
