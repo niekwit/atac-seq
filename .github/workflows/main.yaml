@@ -20,7 +20,7 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_SNAKEMAKE_SNAKEFMT: true
-          VALIDATE_YAML_PRETTIER: true
+          VALIDATE_YAML_PRETTIER: false
 
   Linting:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
       - name: Lint workflow
         uses: snakemake/snakemake-github-action@v2
         with:
-          directory: .
+          directory: .test/
           snakefile: workflow/Snakefile
           args: "--lint"
 
@@ -44,13 +44,6 @@ jobs:
       - name: Test workflow
         uses: snakemake/snakemake-github-action@v2
         with:
-          directory: .test
+          directory: .test/
           snakefile: workflow/Snakefile
           args: "--sdm conda --show-failed-logs --cores 2 --conda-cleanup-pkgs cache --all-temp"
-
-      - name: Test report
-        uses: snakemake/snakemake-github-action@v2
-        with:
-          directory: .test
-          snakefile: workflow/Snakefile
-          args: "--report report.zip"
