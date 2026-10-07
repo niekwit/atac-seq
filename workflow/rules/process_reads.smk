@@ -182,14 +182,16 @@ rule cutadapt:
         extra=config["cutadapt"]["extra"],
     threads: 4
     log:
-        "logs/cutadapt/{sample}.log",
+        # Report (stdout) is parsed by MultiQC, so errors go to a separate log
+        report="logs/cutadapt/{sample}.log",
+        err="logs/cutadapt/{sample}.err",
     conda:
         "../envs/encode.yaml"
     shell:
         "cutadapt -j {threads} {params.extra} "
         "-a {params.adapter_r1} -A {params.adapter_r2} "
         "-o {output.r1} -p {output.r2} "
-        "{input.r1} {input.r2} > {log}"
+        "{input.r1} {input.r2} > {log.report} 2> {log.err}"
 
 
 # Mapping with bowtie2 (ENCODE: -k multimapping+1 -X2000 --mm)
