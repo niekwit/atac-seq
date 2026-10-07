@@ -42,22 +42,22 @@ logging.basicConfig(
 logging.info(f"Loading GTF file {gtf}")
 gr = pr.read_gtf(gtf)
 
-# Filter for transcripts
-logging.info("Filtering for transcripts...")
-transcripts = gr[gr.Feature == "transcript"]
+# Filter for genes: one TSS per gene, as in the ENCODE TSS files
+# (TSS enrichment scores are lower with one TSS per transcript)
+logging.info("Filtering for genes...")
+genes = gr[gr.Feature == "gene"]
 
-# Remove mitochondrial transcripts
-logging.info("Removing mitochondrial transcripts...")
-transcripts = transcripts[transcripts.Chromosome != "MT"]
+# Remove mitochondrial genes
+logging.info("Removing mitochondrial genes...")
+genes = genes[genes.Chromosome != "MT"]
 
 # Calculate TSS
 # .five_end() handles the strand-specific logic
 logging.info("Calculating TSS...")
-tss = transcripts.five_end()
+tss = genes.five_end()
 
-# Combine Gene ID and Transcript ID
-logging.info("Combining Gene ID and Transcript ID for the Name column...")
-tss["Name"] = tss.gene_id + "|" + tss.transcript_id
+logging.info("Using Gene ID for the Name column...")
+tss["Name"] = tss.gene_id
 
 # Add a dummy score
 tss["Score"] = 0

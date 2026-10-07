@@ -9,27 +9,47 @@ library(ChIPseeker)
 library(tidyverse)
 
 # Load Snakemake parameters
-bed_file <- snakemake@input[["bed"]]
+peak_file <- snakemake@input[["peaks"]]
 edb_file <- snakemake@input[["edb"]]
 txdb_file <- snakemake@input[["txdb"]]
 txt <- snakemake@output[["txt"]]
 
-# Annotate bed file
+# Load narrowPeak file (0-based BED coordinates)
+peaks <- read.delim(
+  peak_file,
+  header = FALSE,
+  col.names = c(
+    "chr",
+    "start",
+    "end",
+    "peak_id",
+    "score",
+    "strand",
+    "signal_value",
+    "p_value",
+    "q_value",
+    "summit"
+  ),
+  colClasses = c("character", rep(NA, 9))
+) %>%
+  mutate(start = start + 1, strand = "*")
+peaks <- makeGRangesFromDataFrame(
+  peaks,
+  keep.extra.columns = TRUE,
+  starts.in.df.are.0based = FALSE
+)
+
+# Annotate peaks
 txdb <- AnnotationDbi::loadDb(txdb_file)
-peaks <- readPeakFile(bed_file, as = "GRanges")
 seqlevels(peaks, pruning.mode = "coarse") <- intersect(
   seqlevels(peaks),
   seqlevels(txdb)
 )
 peakAnno <- annotatePeak(peaks, tssRegion = c(-3000, 3000), TxDb = txdb)
 
-# Tidy up annotation data
-df <- as.data.frame(peakAnno@anno@elementMetadata@listData)
-names(df)[1:3] <- c("peak_id", "fold_enrichment", "strand")
-
 # Add gene names and gene biotype to annotation
 load(edb_file)
-df <- df %>%
+df <- as.data.frame(peakAnno) %>%
   left_join(edb, by = "geneId")
 
 # Write annotation to file

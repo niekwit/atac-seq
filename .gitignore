@@ -13,3 +13,6 @@ workflow/notebooks/.ipynb_checkpoints/**
 *~
 *.pdf
 *.log
+.test/resources/**
+.test/logs/**
+**/__pycache__/

@@ -1,28 +1,36 @@
-read_length: 50
-
 genome:
   ensembl: test
   release: 115
 
-trim_galore:
-  extra: "-q 20 --nextera"
+mito_chr_name: MT
 
-bwa_mem2:
-  sort: "samtools" # Can be 'none', 'samtools', or 'picard'.
-  sort_order: "coordinate" # Can be 'coordinate' (default) or 'queryname'.
-  sort_extra: "" # Extra args for samtools/picard sorts.
-  # Extra args for bwa mem2
-  extra: "-M"
+cutadapt:
+  adapter_r1: CTGTCTCTTATA
+  adapter_r2: CTGTCTCTTATA
+  extra: "-e 0.1 -m 5"
+
+bowtie2:
+  multimapping: 4
+  extra: "-X2000 --mm"
+
+filter:
+  mapq_thresh: 30
+  filter_chrs: ["MT"]
+
+subsample_reads: 0
 
 macs2:
-  extra: "-f BAM --nomodel --shift -100 --extsize 200 --keep-dup all -q 0.01 -g hs"
+  # Test genome is human chr11 only
+  gsize: "1.3e8"
+  pval_thresh: 0.01
+  smooth_win: 150
+  cap_num_peak: 300000
 
-consensus_peaks:
-  method: merge # merge or multiinter
-  multiinter_options:
-    # Number of samples that must support a peak for it to be included in
-    # the consensus peak set when using multiinter method.
-    keep: 3 # minimum: 2
+peaks:
+  keep_chr_regex: "[0-9]+|X|Y"
 
-ataqv:
-  extra: ""
+idr:
+  enable: true
+  threshold: 0.05
+
+pseudoreplication_random_seed: 0
