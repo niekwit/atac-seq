@@ -12,6 +12,7 @@ dependencies:
   - bioconda::cutadapt=4.9
   - bioconda::bowtie2=2.5.4
   - bioconda::samtools=1.21
+  - bioconda::pysam=0.23.3
   - bioconda::bedtools=2.31.1
   # Later builds reference __log_finite, which glibc >= 2.31 no longer exports
   - bioconda::macs2=2.2.9.1=py310h7c593f9_1

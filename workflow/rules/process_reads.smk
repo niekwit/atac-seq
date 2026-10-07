@@ -234,14 +234,13 @@ rule filter_bam:
     params:
         multimapping=config["bowtie2"]["multimapping"],
         mapq_thresh=config["filter"]["mapq_thresh"],
-        assign_multimappers=f"{workflow.basedir}/scripts/assign_multimappers.py",
     threads: 4
     log:
         "logs/filter_bam/{sample}.log",
     conda:
         "../envs/encode.yaml"
     script:
-        "../scripts/filter_bam.sh"
+        "../scripts/filter_bam.py"
 
 
 # Mark duplicates with Picard
