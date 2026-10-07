@@ -21,7 +21,7 @@ rule bam2ta:
     conda:
         "../envs/encode.yaml"
     script:
-        "../scripts/bam2ta.sh"
+        "../scripts/bam2ta.py"
 
 
 # Split each replicate into two pseudoreplicates
@@ -40,7 +40,7 @@ rule pseudoreplicates:
     conda:
         "../envs/encode.yaml"
     script:
-        "../scripts/spr.sh"
+        "../scripts/spr.py"
 
 
 # Pool the replicates (and their pseudoreplicates) of each condition
@@ -119,7 +119,7 @@ rule idr:
     conda:
         "../envs/idr.yaml"
     script:
-        "../scripts/idr.sh"
+        "../scripts/idr.py"
 
 
 # Naive overlap of pairs of replicates/pseudoreplicates: pooled peaks
