@@ -78,8 +78,9 @@ def peak_pairs(condition):
     replicate and, with more than one replicate, the pooled pseudoreplicates.
     """
     n = len(replicates(condition))
-    true_reps = [f"rep{i + 1}_vs_rep{j + 1}" for i in range(n) for j in range(i + 1, n)]
-    pseudo_reps = [f"rep{i + 1}-pr1_vs_rep{i + 1}-pr2" for i in range(n)]
+    reps = range(1, n + 1)
+    true_reps = [f"rep{i}_vs_rep{j}" for i in reps for j in reps if i < j]
+    pseudo_reps = [f"rep{i}-pr1_vs_rep{i}-pr2" for i in reps]
     pooled_pseudo_reps = ["pooled-pr1_vs_pooled-pr2"] if n > 1 else []
     return true_reps + pseudo_reps + pooled_pseudo_reps
 

@@ -13,9 +13,10 @@ rule get_fasta:
         "../envs/atac.yaml"
     shell:
         # Non-nucleotide characters in sequence lines (which break bowtie2-build)
-        # are replaced by N, keeping the coordinates
+        # are replaced by N, keeping the coordinates (| as sed delimiter, as
+        # snakemake --lint mistakes a quoted string starting with / for a path)
         "(wget -q {params.url} -O - | pigz -dc | "
-        "sed '/^>/!s/[^ACGTNacgtn]/N/g' > {output}) 2> {log}"
+        "sed '\\|^>|!s|[^ACGTNacgtn]|N|g' > {output}) 2> {log}"
 
 
 # Create chromosome sizes file from fasta file for use in downstream tools
@@ -203,7 +204,7 @@ rule bowtie2_align:
     params:
         prefix=lambda w, input: input.idx[0].removesuffix(".1.bt2"),
         multimapping=(
-            f"-k {config['bowtie2']['multimapping'] + 1}"
+            "-k {}".format(config["bowtie2"]["multimapping"] + 1)
             if config["bowtie2"]["multimapping"]
             else ""
         ),
