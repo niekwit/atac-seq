@@ -1,29 +1,99 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 description: main configuration schema for the workflow
+type: object
 properties:
-  sample_sheet:
-    type: string
-    description: path to sample-sheet TSV file
-
-  get_genome:
+  genome:
     type: object
     properties:
-      ncbi_ftp:
+      ensembl:
         type: string
-        description: URL for genome retrieval
-    required: ["ncbi_ftp"]
+        description: genome build (hg19, hg38, mm38, mm39, dm6 or test)
+      release:
+        type: integer
+        description: Ensembl release
+    required: ["ensembl", "release"]
 
-  simulate_reads:
+  mito_chr_name:
+    type: string
+
+  cutadapt:
     type: object
     properties:
-      read_length:
+      adapter_r1:
+        type: string
+      adapter_r2:
+        type: string
+      extra:
+        type: string
+    required: ["adapter_r1", "adapter_r2", "extra"]
+
+  bowtie2:
+    type: object
+    properties:
+      multimapping:
+        type: integer
+        minimum: 0
+      extra:
+        type: string
+    required: ["multimapping", "extra"]
+
+  filter:
+    type: object
+    properties:
+      mapq_thresh:
+        type: integer
+        minimum: 0
+      filter_chrs:
+        type: array
+        items:
+          type: string
+    required: ["mapq_thresh", "filter_chrs"]
+
+  subsample_reads:
+    type: integer
+    minimum: 0
+
+  macs2:
+    type: object
+    properties:
+      gsize:
+        type: string
+      pval_thresh:
         type: number
-        description: length of target reads in bp
-      read_number:
+      smooth_win:
+        type: integer
+      cap_num_peak:
+        type: integer
+    required: ["gsize", "pval_thresh", "smooth_win", "cap_num_peak"]
+
+  peaks:
+    type: object
+    properties:
+      keep_chr_regex:
+        type: string
+    required: ["keep_chr_regex"]
+
+  idr:
+    type: object
+    properties:
+      enable:
+        type: boolean
+      threshold:
         type: number
-        description: number of total reads to be simulated
+    required: ["enable", "threshold"]
+
+  pseudoreplication_random_seed:
+    type: integer
+    minimum: 0
 
 required:
-  - sample_sheet
-  - get_genome
-  - simulate_reads
+  - genome
+  - mito_chr_name
+  - cutadapt
+  - bowtie2
+  - filter
+  - subsample_reads
+  - macs2
+  - peaks
+  - idr
+  - pseudoreplication_random_seed

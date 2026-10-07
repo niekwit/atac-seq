@@ -1,14 +1,10 @@
-# This workflow is based on:
-# https://www.nature.com/articles/s41467-023-42787-1
-# and
-# http://barc.wi.mit.edu/education/hot_topics/ATACseq_2024/ATACseq2024.pdf
+# This workflow follows the ENCODE ATAC-seq pipeline (v2.2.3):
+# https://github.com/ENCODE-DCC/atac-seq-pipeline
+# https://www.encodeproject.org/atac-seq/
 
 # Only mouse and human genomes are supported for now
 
 from scripts.resources import Resources
-
-
-include: "rules/common.smk"
 
 
 # Load configuration
@@ -16,9 +12,21 @@ include: "rules/common.smk"
 configfile: "config/config.yaml"
 
 
+include: "rules/common.smk"
+
+
 resources = Resources(config["genome"]["ensembl"], config["genome"]["release"])
 SAMPLES = samples()
 CONDITIONS = conditions()
+
+
+wildcard_constraints:
+    sample="[a-zA-Z0-9_]+",
+    condition="[a-zA-Z0-9_]+",
+    read="R1|R2",
+    prefix=r"(pooled/)?[a-zA-Z0-9_]+(\.pr[12])?",
+    pair=r"rep\d+_vs_rep\d+|rep\d+-pr1_vs_rep\d+-pr2|pooled-pr1_vs_pooled-pr2",
+    method="idr|overlap",
 
 
 # Load rules
@@ -26,6 +34,7 @@ CONDITIONS = conditions()
 include: "rules/process_reads.smk"
 include: "rules/atac.smk"
 include: "rules/bigwig.smk"
+include: "rules/qc.smk"
 
 
 onstart:
@@ -44,8 +53,16 @@ onerror:
 # -----------------------------------------------------
 rule all:
     input:
-        "results/multiqc/fastq.html",
-        "results/multiqc/samtools_stats.html",
+        "results/multiqc/multiqc_report.html",
         "results/ataqv_report/index.html",
-        expand("results/macs2/{condition}_consensus_peaks_annotated.txt", condition=CONDITIONS),
-        expand("results/bigwig/average/{condition}.bw", condition=CONDITIONS),
+        "results/qc/encode_qc_summary.tsv",
+        expand(
+            "results/{method}/{condition}/optimal_peak_annotated.txt",
+            method=reproducibility_methods(),
+            condition=CONDITIONS,
+        ),
+        expand(
+            "results/bigwig/{prefix}.{signal}.signal.bigwig",
+            prefix=SAMPLES + [f"pooled/{c}" for c in CONDITIONS],
+            signal=["fc", "pval"],
+        ),

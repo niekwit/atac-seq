@@ -1,28 +1,50 @@
-read_length: 50
-
 genome:
   ensembl: mm39
   release: 115
 
-trim_galore:
-  extra: "-q 20 --nextera"
+# Parameters below follow the ENCODE ATAC-seq pipeline (v2.2.3) defaults:
+# https://github.com/ENCODE-DCC/atac-seq-pipeline
 
-bwa_mem2:
-  sort: "samtools" # Can be 'none', 'samtools', or 'picard'.
-  sort_order: "coordinate" # Can be 'coordinate' (default) or 'queryname'.
-  sort_extra: "" # Extra args for samtools/picard sorts.
-  # Extra args for bwa mem2
-  extra: "-M"
+# Name of the mitochondrial chromosome (Ensembl naming)
+mito_chr_name: MT
+
+cutadapt:
+  # Nextera (Tn5) adapter for read 1 and read 2
+  adapter_r1: CTGTCTCTTATA
+  adapter_r2: CTGTCTCTTATA
+  extra: "-e 0.1 -m 5"
+
+bowtie2:
+  # Reads with more than this many alignments are discarded; the others keep
+  # one randomly assigned alignment. Set to 0 to instead keep only reads with
+  # MAPQ >= filter:mapq_thresh.
+  multimapping: 4
+  extra: "-X2000 --mm"
+
+filter:
+  # Only used when bowtie2:multimapping is 0
+  mapq_thresh: 30
+  # Reads on these chromosomes are removed after deduplication
+  filter_chrs: ["MT"]
+
+# Number of reads to subsample each tagAlign to (0: no subsampling)
+subsample_reads: 0
 
 macs2:
-  extra: "-f BAMPE --nomodel --shift -100 --extsize 200 --keep-dup all -q 0.05 -g mm"
+  # Effective genome size (hs, mm or a number)
+  gsize: mm
+  pval_thresh: 0.01
+  smooth_win: 150
+  cap_num_peak: 300000
 
-consensus_peaks:
-  method: merge # merge or multiinter
-  multiinter_options:
-    # Number of samples that must support a peak for it to be included in
-    # the consensus peak set when using multiinter method.
-    keep: 3 # minimum: 2
+peaks:
+  # Peaks on chromosomes not matching this regex are removed (ENCODE uses
+  # chr[\dXY]+ for UCSC names)
+  keep_chr_regex: "[0-9]+|X|Y"
 
-ataqv:
-  extra: ""
+idr:
+  enable: true
+  threshold: 0.05
+
+# Random seed for pseudoreplication (0: use the tagAlign file size, as ENCODE)
+pseudoreplication_random_seed: 0

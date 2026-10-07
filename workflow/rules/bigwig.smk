@@ -1,51 +1,19 @@
-# Generate bigwig files from filtered BAM files using deepTools bamCoverage
+# Fold enrichment and p-value signal tracks from the MACS2 pileups of
+# each replicate and each pooled condition (ENCODE: macs2_signal_track)
 # -----------------------------------------------------
-rule bigwig:
+rule macs2_signal_track:
     input:
-        bam="results/filtered/{sample}.bam",
-        bai="results/filtered/{sample}.bam.bai",
+        treat="results/macs2/{prefix}_treat_pileup.bdg",
+        control="results/macs2/{prefix}_control_lambda.bdg",
+        ta="results/tagalign/{prefix}.tagAlign.gz",
+        chrom_sizes="resources/chrom_sizes.txt",
     output:
-        "results/bigwig/samples/{sample}.bw",
-    params:
-        genome=bamcoverage_genome(),
-        read_length=config["read_length"],
-        extra="",
-    log:
-        "logs/deeptools/bamcoverage_{sample}.log",
-    wrapper:
-        "v5.6.0/bio/deeptools/bamcoverage"
-
-
-# Create intermediate wig files by averaging bigwig files from samples in the same condition
-# -----------------------------------------------------
-rule average_wig:
-    input:
-        expand("results/bigwig/samples/{sample}.bw", sample=SAMPLES),
-    output:
-        wig=temp("results/bigwig/{condition}.wig"),
+        fc="results/bigwig/{prefix}.fc.signal.bigwig",
+        pval="results/bigwig/{prefix}.pval.signal.bigwig",
     threads: 1
     log:
-        "logs/wiggletools/wig_average_{condition}.log",
+        "logs/macs2_signal_track/{prefix}.log",
     conda:
-        "../envs/atac.yaml"
+        "../envs/encode.yaml"
     script:
-        "../scripts/average_wig.py"
-
-
-# Convert wig files to bigwig files
-# -----------------------------------------------------
-rule wig2bigwig:
-    input:
-        wig="results/bigwig/{condition}.wig",
-        cs="resources/chrom_sizes.txt",
-    output:
-        "results/bigwig/average/{condition}.bw",
-    params:
-        extra="",
-    threads: 1
-    log:
-        "logs/wigToBigWig/{condition}.log",
-    conda:
-        "../envs/atac.yaml"
-    shell:
-        "wigToBigWig {input.wig} {input.cs} {output}"
+        "../scripts/macs2_signal_track.sh"
