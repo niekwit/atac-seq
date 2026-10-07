@@ -1,0 +1,14 @@
+# IDR as run by the ENCODE ATAC-seq pipeline (https://github.com/ENCODE-DCC/atac-seq-pipeline)
+# Separate from encode.yaml, as its numpy pin is incompatible with the working macs2 build
+name: idr
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - conda-forge::python=3.10
+  # idr 2.0.4.2 uses np.int, which was removed in numpy 1.24
+  - conda-forge::numpy=1.23
+  - conda-forge::matplotlib-base=3.8
+  - bioconda::idr=2.0.4.2
+  - bioconda::ucsc-bedclip=482

@@ -117,7 +117,7 @@ rule idr:
     log:
         "logs/idr/{condition}/{pair}.log",
     conda:
-        "../envs/encode.yaml"
+        "../envs/idr.yaml"
     script:
         "../scripts/idr.sh"
 

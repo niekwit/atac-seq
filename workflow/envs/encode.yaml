@@ -6,16 +6,14 @@ channels:
   - nodefaults
 dependencies:
   - conda-forge::python=3.10
-  # idr 2.0.4.2 uses np.int, which was removed in numpy 1.24
-  - conda-forge::numpy=1.23
-  - conda-forge::matplotlib-base=3.8
+  - conda-forge::numpy=1.26
   - conda-forge::pigz=2.8
   - conda-forge::openssl
   - bioconda::cutadapt=4.9
   - bioconda::bowtie2=2.5.4
   - bioconda::samtools=1.21
   - bioconda::bedtools=2.31.1
-  - bioconda::macs2=2.2.9.1
-  - bioconda::idr=2.0.4.2
+  # Later builds reference __log_finite, which glibc >= 2.31 no longer exports
+  - bioconda::macs2=2.2.9.1=py310h7c593f9_1
   - bioconda::ucsc-bedclip=482
   - bioconda::ucsc-bedgraphtobigwig=482
