@@ -9,7 +9,7 @@ Samples of the same condition are treated as biological replicates of one ENCODE
 2. Quality control of reads (`FastQC`)
 3. Adapter trimming (`cutadapt -e 0.1 -m 5`, Nextera adapter)
 4. Alignment (`bowtie2 -k 5 -X2000 --mm`)
-5. Removal of unmapped, unpaired and multimapping (> 4 alignments) reads (`samtools`)
+5. Removal of unmapped, unpaired and multimapping (> 4 alignments) reads (`samtools`, `pysam`)
 6. Duplicate marking (`Picard MarkDuplicates`) and removal of duplicates and mitochondrial reads
 7. Conversion to Tn5 shifted (+4/-5 bp) tagAlign files of both mates
 8. Pseudoreplication of each replicate, and pooling of the replicates and of the pseudoreplicates per condition
