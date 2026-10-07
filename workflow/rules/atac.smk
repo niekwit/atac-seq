@@ -97,7 +97,7 @@ rule macs2_callpeak:
     conda:
         "../envs/encode.yaml"
     script:
-        "../scripts/macs2_callpeak.sh"
+        "../scripts/macs2_callpeak.py"
 
 
 # IDR on pairs of replicates/pseudoreplicates

@@ -16,4 +16,4 @@ rule macs2_signal_track:
     conda:
         "../envs/encode.yaml"
     script:
-        "../scripts/macs2_signal_track.sh"
+        "../scripts/macs2_signal_track.py"

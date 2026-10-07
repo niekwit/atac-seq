@@ -30,9 +30,10 @@ macs2 callpeak \
     --shift "$SHIFT" --extsize "$SMOOTH_WIN" \
     --nomodel -B --SPMR --keep-dup all --call-summits
 
+# Keep the top CAP peaks in awk, not with head, which would end the pipe
+# early (SIGPIPE) when there are more peaks than CAP
 LC_COLLATE=C sort -k 8gr,8gr "${PREFIX}_peaks.narrowPeak" |
-    awk 'BEGIN{OFS="\t"}{$4="Peak_"NR; if ($2<0) $2=0; if ($3<0) $3=0; if ($10==-1) $10=$2+int(($3-$2+1)/2.0); print $0}' |
-    head -n "$CAP" > "$NPEAK.tmp"
+    awk -v cap="$CAP" 'BEGIN{OFS="\t"} NR<=cap {$4="Peak_"NR; if ($2<0) $2=0; if ($3<0) $3=0; if ($10==-1) $10=$2+int(($3-$2+1)/2.0); print $0}' > "$NPEAK.tmp"
 
 # Clip peaks to 0-chromSize
 bedClip "$NPEAK.tmp" "$CHRSZ" "$NPEAK" -truncate -verbose=2
