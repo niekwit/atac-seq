@@ -151,3 +151,35 @@ def ataqv_organism():
         return "mouse"
     else:
         raise ValueError(f"Unsupported genome: {genome}")
+
+
+def runtime(minutes):
+    """
+    Runtime limit (minutes) for cluster executors, e.g. SLURM's --time.
+    The limit is multiplied by the attempt number, so that jobs that run out
+    of time get more time when the workflow is run with --retries.
+    """
+    return lambda wildcards, attempt: minutes * attempt
+
+
+# ENCODE annotated regions (universal DHS, promoters, enhancers) used for the
+# fraction of reads in annotated regions; only available for GRCh38 and mm10
+ANNOTATION_REGIONS = {
+    "hg38": {"dnase": "ENCFF304XEX", "prom": "ENCFF140XLU", "enh": "ENCFF212UAV"},
+    "test": {"dnase": "ENCFF304XEX", "prom": "ENCFF140XLU", "enh": "ENCFF212UAV"},
+    "mm38": {"dnase": "ENCFF015KVI", "prom": "ENCFF206BQS", "enh": "ENCFF580RGZ"},
+}
+
+
+def annotation_regions():
+    """Annotated region files for the genome (empty if not available)"""
+    regions = ANNOTATION_REGIONS.get(config["genome"]["ensembl"], {})
+    return {region: f"resources/annotation_regions/{region}.bed" for region in regions}
+
+
+# ENCODE exclusion lists (blacklists) used by the ENCODE ATAC-seq pipeline
+ENCODE_BLACKLISTS = {
+    "hg38": "ENCFF356LFX",
+    "test": "ENCFF356LFX",
+    "mm38": "ENCFF547MET",
+}

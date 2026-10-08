@@ -1,0 +1,11 @@
+# TSS enrichment as in the ENCODE ATAC-seq pipeline
+name: tss
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - conda-forge::python=3.12
+  - conda-forge::numpy=2.2
+  - conda-forge::matplotlib-base=3.10
+  - bioconda::pysam=0.23.3

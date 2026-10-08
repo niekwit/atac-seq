@@ -1,0 +1,18 @@
+# ENCODE ATAC-seq QC: fragment length, GC bias, JSD and annotated regions
+name: qc
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - conda-forge::python=3.11
+  - conda-forge::numpy=2.4
+  - conda-forge::scipy=1.17
+  - conda-forge::pandas=3.0
+  - conda-forge::matplotlib-base=3.11
+  # Picard needs R for its histogram and GC charts
+  - conda-forge::r-base=4.6
+  - bioconda::picard=3.4.0
+  - bioconda::deeptools=3.5.6
+  - bioconda::bedtools=2.31.1
+  - bioconda::samtools=1.21

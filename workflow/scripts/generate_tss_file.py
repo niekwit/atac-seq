@@ -42,10 +42,12 @@ logging.basicConfig(
 logging.info(f"Loading GTF file {gtf}")
 gr = pr.read_gtf(gtf)
 
-# Filter for genes: one TSS per gene, as in the ENCODE TSS files
-# (TSS enrichment scores are lower with one TSS per transcript)
-logging.info("Filtering for genes...")
-genes = gr[gr.Feature == "gene"]
+# Filter for protein coding genes: one TSS per protein coding gene, as in the
+# ENCODE TSS files (e.g. ENCFF493CCB for GRCh38). TSS enrichment scores are
+# lower with one TSS per transcript or with all genes, as many non-coding
+# genes have little accessibility at their TSS.
+logging.info("Filtering for protein coding genes...")
+genes = gr[(gr.Feature == "gene") & (gr.gene_biotype == "protein_coding")]
 
 # Remove mitochondrial genes
 logging.info("Removing mitochondrial genes...")

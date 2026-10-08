@@ -36,6 +36,9 @@ logging.basicConfig(
 
 prefix = fc_bigwig.removesuffix(".fc.signal.bigwig")
 
+# Memory buffer of GNU sort
+SORT_BUFFER = "4G"
+
 
 def run(command):
     """Runs a shell command (pipes allowed), with stderr to the log"""
@@ -84,7 +87,14 @@ def bedgraph_to_bigwig(bedgraph, bigwig):
     )
 
     # Sort by chromosome and start, as bedGraphToBigWig requires
-    run(f"LC_COLLATE=C sort -k1,1 -k2,2n {clipped} > {sorted_bdg}")
+    # The buffer size is limited, as sort otherwise sizes it to the total
+    # RAM (~16 GB for a genome-wide bedGraph); beyond it, sort uses temporary
+    # files in the output directory (as ENCODE's sort -S)
+    tmp_dir = os.path.dirname(bedgraph) or "."
+    run(
+        f"LC_COLLATE=C sort -S {SORT_BUFFER} -T {tmp_dir} -k1,1 -k2,2n "
+        f"{clipped} > {sorted_bdg}"
+    )
     os.remove(clipped)
 
     remove_overlaps(sorted_bdg, no_overlaps)

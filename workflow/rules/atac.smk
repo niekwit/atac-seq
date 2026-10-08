@@ -16,6 +16,9 @@ rule bam2ta:
     params:
         subsample=config["subsample_reads"],
     threads: 4
+    resources:
+        runtime=runtime(60),
+        mem_mb=5000,
     log:
         "logs/bam2ta/{sample}.log",
     conda:
@@ -35,6 +38,9 @@ rule pseudoreplicates:
     params:
         seed=config["pseudoreplication_random_seed"],
     threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/pseudoreplicates/{sample}.log",
     conda:
@@ -53,6 +59,9 @@ rule pool_tagalign:
     output:
         "results/tagalign/pooled/{condition}.tagAlign.gz",
     threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/pool_tagalign/{condition}.log",
     conda:
@@ -91,7 +100,10 @@ rule macs2_callpeak:
         pval_thresh=config["macs2"]["pval_thresh"],
         smooth_win=config["macs2"]["smooth_win"],
         cap_num_peak=config["macs2"]["cap_num_peak"],
-    threads: 1
+    threads: 2
+    resources:
+        runtime=runtime(60),
+        mem_mb=6000,
     log:
         "logs/macs2/{prefix}.log",
     conda:
@@ -113,7 +125,10 @@ rule idr:
         idr_log="results/idr/{condition}/{pair}.idr.log",
     params:
         threshold=config["idr"]["threshold"],
-    threads: 1
+    threads: 2
+    resources:
+        runtime=runtime(30),
+        mem_mb=4000,
     log:
         "logs/idr/{condition}/{pair}.log",
     conda:
@@ -133,6 +148,9 @@ rule overlap:
     params:
         awk=r"{s1=$3-$2; s2=$13-$12; if (($21/s1 >= 0.5) || ($21/s2 >= 0.5)) {print $0}}",
     threads: 1
+    resources:
+        runtime=runtime(15),
+        mem_mb=2000,
     log:
         "logs/overlap/{condition}/{pair}.log",
     conda:
@@ -159,6 +177,9 @@ rule blacklist_filter:
     params:
         regex=config["peaks"]["keep_chr_regex"],
     threads: 1
+    resources:
+        runtime=runtime(15),
+        mem_mb=2000,
     log:
         "logs/blacklist_filter/{stem}.log",
     conda:
@@ -180,6 +201,9 @@ rule frip:
     wildcard_constraints:
         stem=STEM_REGEX,
     threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=2000,
     log:
         "logs/frip/{stem}.log",
     conda:
@@ -219,6 +243,9 @@ rule reproducibility:
     params:
         pairs=lambda w: peak_pairs(w.condition),
     threads: 1
+    resources:
+        runtime=runtime(10),
+        mem_mb=1000,
     log:
         "logs/reproducibility/{method}/{condition}.log",
     conda:
@@ -243,6 +270,9 @@ rule ataqv:
         organism=ataqv_organism(),
         mito=config["mito_chr_name"],
         extra="",
+    resources:
+        runtime=runtime(180),
+        mem_mb=2000,
     log:
         "logs/ataqv/{sample}.log",
     threads: 4
@@ -271,6 +301,9 @@ rule ataqv_report:
     params:
         dir=lambda w, output: os.path.dirname(output["html"]),
         extra="",
+    resources:
+        runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/ataqv/ataqv_report.log",
     threads: 1
@@ -290,6 +323,9 @@ rule annotate_peaks:
     output:
         txt="results/{method}/{condition}/optimal_peak_annotated.txt",
     threads: 2
+    resources:
+        runtime=runtime(30),
+        mem_mb=4000,
     log:
         "logs/annotate_peaks/{method}/{condition}.log",
     conda:

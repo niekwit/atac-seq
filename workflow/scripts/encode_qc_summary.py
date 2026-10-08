@@ -75,7 +75,7 @@ def find_key(obj, key):
     return None
 
 
-def tss_enrichment(f):
+def ataqv_tss_enrichment(f):
     with gzip.open(f, "rt") as fh:
         value = find_key(json.load(fh), "tss_enrichment")
     return float(value) if value is not None else float("nan")
@@ -92,8 +92,62 @@ def grade(value, ideal, acceptable=None):
     return "concerning"
 
 
+def bottlenecking(pbc1):
+    """PCR bottlenecking category of PBC1, as in the ENCODE QC report"""
+    if pbc1 >= 0.9:
+        return "none"
+    if pbc1 >= 0.8:
+        return "mild"
+    if pbc1 >= 0.5:
+        return "moderate"
+    return "severe"
+
+
+# ENCODE TSS enrichment thresholds (ideal, acceptable) depend on the genome
+# (https://www.encodeproject.org/atac-seq/#standards)
+TSS_THRESHOLDS = {
+    "hg19": (10, 6),
+    "hg38": (7, 5),
+    "test": (7, 5),
+    "mm38": (15, 10),
+    "mm39": (15, 10),
+}
+tss_ideal, tss_acceptable = TSS_THRESHOLDS.get(
+    snakemake.params["genome"], (float("nan"), float("nan"))
+)
+
+
 def by_sample(name, sample):
     return [f for f in snakemake.input[name] if re.search(rf"/{sample}\.", f)][0]
+
+
+def read_metric_table(f, key_col, value_col):
+    """Returns {key: value} of a TSV file with header"""
+    with open(f) as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        rows = [line.rstrip("\n").split("\t") for line in fh if line.strip()]
+    k, v = header.index(key_col), header.index(value_col)
+    return {row[k]: row[v] for row in rows}
+
+
+def picard_summary(f):
+    """First metrics row of a Picard metrics file as a dict"""
+    with open(f) as fh:
+        lines = [line.rstrip("\n") for line in fh if line.strip()]
+    i = next(i for i, line in enumerate(lines) if line.startswith("## METRICS CLASS"))
+    return dict(zip(lines[i + 1].split("\t"), lines[i + 2].split("\t")))
+
+
+def jsd_metrics(sample):
+    """deepTools plotFingerprint metrics of a sample (all conditions)"""
+    for f in snakemake.input["jsd"]:
+        with open(f) as fh:
+            header = fh.readline().rstrip("\n").split("\t")
+            for line in fh:
+                row = dict(zip(header, line.rstrip("\n").split("\t")))
+                if row.get("Sample") == sample:
+                    return row
+    return {}
 
 
 # Per sample metrics
@@ -106,7 +160,13 @@ for sample in samples:
     pbc = read_table(by_sample("lib_complexity", sample))
     nodup = mapped_reads(by_sample("nodup_stats", sample))
     frip = read_value(by_sample("frip", sample))
-    tss = tss_enrichment(by_sample("ataqv", sample))
+    tss = read_value(by_sample("tss_enrich", sample))
+    tss_ataqv = ataqv_tss_enrichment(by_sample("ataqv", sample))
+    nuc = read_metric_table(by_sample("nucleosomal", sample), "metric", "value")
+    nuc_pass = read_metric_table(by_sample("nucleosomal", sample), "metric", "pass")
+    annot = read_metric_table(by_sample("annot_enrich", sample), "metric", "fraction")
+    gc = picard_summary(by_sample("gc_bias", sample))
+    jsd = jsd_metrics(sample)
     nrf, pbc1, pbc2 = float(pbc["NRF"]), float(pbc["PBC1"]), float(pbc["PBC2"])
 
     sample_rows.append(
@@ -117,17 +177,53 @@ for sample in samples:
             "frac_mito_reads": mito["frac_mito_reads"],
             "nodup_non_mito_reads": nodup,
             "nodup_non_mito_reads_standard": grade(nodup, 50e6),
+            # Library complexity: ENCODE prefers NRF > 0.9, PBC1 > 0.9 and
+            # PBC2 > 3; its QC report accepts NRF > 0.8 and calls
+            # PBC1 0.8-0.9 mild bottlenecking
             "NRF": f"{nrf:.4f}",
-            "NRF_standard": grade(nrf, 0.9),
+            "NRF_standard": grade(nrf, 0.9, 0.8),
             "PBC1": f"{pbc1:.4f}",
-            "PBC1_standard": grade(pbc1, 0.9),
+            "PBC1_standard": grade(pbc1, 0.9, 0.8),
+            "PCR_bottlenecking": bottlenecking(pbc1),
             "PBC2": f"{pbc2:.4f}",
-            "PBC2_standard": grade(pbc2, 3),
+            "PBC2_standard": grade(pbc2, 3, 1),
             "num_peaks": num_lines(by_sample("peaks", sample)),
             "FRiP": f"{frip:.4f}",
             "FRiP_standard": grade(frip, 0.3, 0.2),
-            # ataqv TSS enrichment; ENCODE thresholds depend on the TSS annotation
-            "TSS_enrichment_ataqv": f"{tss:.2f}",
+            "TSS_enrichment": f"{tss:.2f}",
+            "TSS_enrichment_standard": grade(tss, tss_ideal, tss_acceptable),
+            # ataqv calculates TSS enrichment on a different scale, so it is
+            # not graded with the ENCODE thresholds
+            "TSS_enrichment_ataqv": f"{tss_ataqv:.2f}",
+            # Fragment length distribution; ENCODE standard: a nucleosome free
+            # region (NFR) and a mononucleosome peak are present
+            "frac_fragments_in_NFR": f"{float(nuc['Fraction of reads in NFR']):.4f}",
+            "NFR_mono_nuc_ratio": f"{float(nuc['NFR / mono-nuc reads']):.2f}",
+            "NFR_peak": nuc_pass["Presence of NFR peak"],
+            "mono_nuc_peak": nuc_pass["Presence of Mono-Nuc peak"],
+            "di_nuc_peak": nuc_pass["Presence of Di-Nuc peak"],
+            "nucleosome_pattern_standard": (
+                "ideal"
+                if nuc_pass["Presence of NFR peak"] == "True"
+                and nuc_pass["Presence of Mono-Nuc peak"] == "True"
+                else "concerning"
+            ),
+            # Not graded by ENCODE
+            "synthetic_JS_distance": jsd.get("Synthetic JS Distance", "NA"),
+            "frac_reads_in_DHS": annot.get(
+                "fraction_of_reads_in_universal_DHS_regions", "NA"
+            ),
+            "frac_reads_in_promoters": annot.get(
+                "fraction_of_reads_in_promoter_regions", "NA"
+            ),
+            "frac_reads_in_enhancers": annot.get(
+                "fraction_of_reads_in_enhancer_regions", "NA"
+            ),
+            "frac_reads_in_blacklist": annot.get(
+                "fraction_of_reads_in_blacklist_regions", "NA"
+            ),
+            "AT_dropout": gc.get("AT_DROPOUT", "NA"),
+            "GC_dropout": gc.get("GC_DROPOUT", "NA"),
         }
     )
 
