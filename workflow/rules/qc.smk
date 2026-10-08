@@ -84,7 +84,106 @@ rule tss_enrichment:
         "../scripts/tss_enrichment.py"
 
 
-# Collate FastQC, cutadapt, bowtie2, Picard and samtools stats output
+# Fragment length distribution and nucleosomal QC (ENCODE: fraglen_stat_pe)
+# -----------------------------------------------------
+rule fraglen_stat:
+    input:
+        bam="results/filtered/{sample}.nodup.bam",
+    output:
+        metrics="results/qc/{sample}.insert_size_metrics.txt",
+        histogram_pdf="results/qc/{sample}.insert_size_histogram.pdf",
+        qc="results/qc/{sample}.nucleosomal.qc",
+        plot="results/qc/{sample}.fraglen_dist.png",
+    params:
+        java_heap="3g",
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=4000,
+    log:
+        "logs/fraglen_stat/{sample}.log",
+    conda:
+        "../envs/qc.yaml"
+    script:
+        "../scripts/fraglen_stat.py"
+
+
+# GC bias (ENCODE: gc_bias)
+# -----------------------------------------------------
+rule gc_bias:
+    input:
+        bam="results/filtered/{sample}.nodup.bam",
+        fasta=resources.fasta,
+    output:
+        metrics="results/qc/{sample}.gc_bias_metrics.txt",
+        summary="results/qc/{sample}.gc_bias_summary.txt",
+        chart_pdf="results/qc/{sample}.gc_bias.pdf",
+        plot="results/qc/{sample}.gc_plot.png",
+    params:
+        java_heap="8g",
+    threads: 1
+    resources:
+        runtime=runtime(180),
+        mem_mb=10000,
+    log:
+        "logs/gc_bias/{sample}.log",
+    conda:
+        "../envs/qc.yaml"
+    script:
+        "../scripts/gc_bias.py"
+
+
+# Fraction of reads in annotated regions (ENCODE: annot_enrich)
+# -----------------------------------------------------
+rule annot_enrich:
+    input:
+        unpack(lambda w: annotation_regions()),
+        ta="results/tagalign/{sample}.tagAlign.gz",
+        blacklist="resources/blacklist.bed",
+    output:
+        "results/qc/{sample}.annot_enrich.qc",
+    threads: 1
+    resources:
+        runtime=runtime(60),
+        mem_mb=4000,
+    log:
+        "logs/annot_enrich/{sample}.log",
+    conda:
+        "../envs/qc.yaml"
+    script:
+        "../scripts/annot_enrich.py"
+
+
+# Fingerprint and Jensen-Shannon distance of the replicates (ENCODE: jsd)
+# -----------------------------------------------------
+rule jsd:
+    input:
+        bams=lambda w: expand(
+            "results/filtered/{sample}.nodup.bam", sample=replicates(w.condition)
+        ),
+        bais=lambda w: expand(
+            "results/filtered/{sample}.nodup.bam.bai", sample=replicates(w.condition)
+        ),
+        blacklist="resources/blacklist.bed",
+    output:
+        plot="results/qc/{condition}.jsd_plot.png",
+        metrics="results/qc/{condition}.jsd.qc",
+    params:
+        samples=lambda w: replicates(w.condition),
+        mapq=30,
+    threads: 8
+    resources:
+        runtime=runtime(180),
+        mem_mb=8000,
+    log:
+        "logs/jsd/{condition}.log",
+    conda:
+        "../envs/qc.yaml"
+    script:
+        "../scripts/jsd.py"
+
+
+# Collate FastQC, cutadapt, bowtie2, Picard, deepTools and samtools stats output
 # -----------------------------------------------------
 rule multiqc:
     input:
@@ -96,6 +195,9 @@ rule multiqc:
         expand("logs/cutadapt/{sample}.log", sample=SAMPLES),
         expand("logs/bowtie2/{sample}.log", sample=SAMPLES),
         expand("results/filtered/{sample}.dup.qc", sample=SAMPLES),
+        expand("results/qc/{sample}.insert_size_metrics.txt", sample=SAMPLES),
+        expand("results/qc/{sample}.gc_bias_metrics.txt", sample=SAMPLES),
+        expand("results/qc/{condition}.jsd.qc", condition=CONDITIONS),
         expand(
             "results/samtools_stats/{stage}.txt",
             stage=[f"bowtie2/{s}" for s in SAMPLES]
@@ -128,6 +230,10 @@ rule encode_qc_summary:
         peaks=expand("results/macs2/{sample}.bfilt.narrowPeak", sample=SAMPLES),
         ataqv=expand("results/ataqv/{sample}.json.gz", sample=SAMPLES),
         tss_enrich=expand("results/qc/{sample}.tss_enrich.qc", sample=SAMPLES),
+        nucleosomal=expand("results/qc/{sample}.nucleosomal.qc", sample=SAMPLES),
+        annot_enrich=expand("results/qc/{sample}.annot_enrich.qc", sample=SAMPLES),
+        jsd=expand("results/qc/{condition}.jsd.qc", condition=CONDITIONS),
+        gc_bias=expand("results/qc/{sample}.gc_bias_summary.txt", sample=SAMPLES),
         reproducibility=expand(
             "results/{method}/{condition}/reproducibility.qc",
             method=reproducibility_methods(),

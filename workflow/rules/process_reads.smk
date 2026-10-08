@@ -106,6 +106,36 @@ rule get_gtf:
         "(wget -q {params.url} -O - | pigz -dc > {output}) 2> {log}"
 
 
+# Download ENCODE annotated regions (DHS, promoters, enhancers), with Ensembl
+# chromosome names
+# -----------------------------------------------------
+rule get_annotation_region:
+    output:
+        "resources/annotation_regions/{region}.bed",
+    retries: 3
+    params:
+        url=lambda w: (
+            "https://www.encodeproject.org/files/"
+            f"{ANNOTATION_REGIONS[config['genome']['ensembl']][w.region]}/"
+            "@@download/"
+            f"{ANNOTATION_REGIONS[config['genome']['ensembl']][w.region]}.bed.gz"
+        ),
+    wildcard_constraints:
+        region="dnase|prom|enh",
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=1000,
+    log:
+        "logs/resources/get_annotation_region_{region}.log",
+    conda:
+        "../envs/atac.yaml"
+    shell:
+        "(wget -q {params.url} -O - | pigz -dc | "
+        'awk \'BEGIN{{OFS="\\t"}} {{sub(/^chr/, "", $1); if ($1 == "M") $1 = "MT"; print}}\' '
+        "> {output}) 2> {log}"
+
+
 # Generate BED file of TSS regions from GTF file for ataqv
 # -----------------------------------------------------
 rule generate_tss_file:
@@ -153,23 +183,52 @@ rule bowtie2_index:
         "bowtie2-build --threads {threads} {input} {params.prefix} > {log} 2>&1"
 
 
-# Create BED file of blacklisted regions
+# Create BED file of blacklisted regions: the ENCODE exclusion list used by
+# the ENCODE pipeline (GRCh38, mm10), or otherwise a blacklist from
+# AnnotationHub (Amemiya et al. 2019)
 # -----------------------------------------------------
-rule create_blacklist_bed:
-    output:
-        bed="resources/blacklist.bed",
-    params:
-        genome=resources.genome,
-    resources:
-        runtime=runtime(30),
-        mem_mb=2000,
-    log:
-        "logs/resources/create_blacklist_bed.log",
-    threads: 1
-    conda:
-        "../envs/r.yaml"
-    script:
-        "../scripts/create_blacklist_bed.R"
+if config["genome"]["ensembl"] in ENCODE_BLACKLISTS:
+
+    rule get_encode_blacklist:
+        output:
+            bed="resources/blacklist.bed",
+        retries: 3
+        params:
+            url=(
+                "https://www.encodeproject.org/files/"
+                f"{ENCODE_BLACKLISTS[config['genome']['ensembl']]}/@@download/"
+                f"{ENCODE_BLACKLISTS[config['genome']['ensembl']]}.bed.gz"
+            ),
+        resources:
+            runtime=runtime(30),
+            mem_mb=1000,
+        log:
+            "logs/resources/get_encode_blacklist.log",
+        threads: 1
+        conda:
+            "../envs/atac.yaml"
+        shell:
+            "(wget -q {params.url} -O - | pigz -dc | "
+            'awk \'BEGIN{{OFS="\\t"}} {{sub(/^chr/, "", $1); if ($1 == "M") $1 = "MT"; print}}\' '
+            "> {output}) 2> {log}"
+
+else:
+
+    rule create_blacklist_bed:
+        output:
+            bed="resources/blacklist.bed",
+        params:
+            genome=resources.genome,
+        resources:
+            runtime=runtime(30),
+            mem_mb=2000,
+        log:
+            "logs/resources/create_blacklist_bed.log",
+        threads: 1
+        conda:
+            "../envs/r.yaml"
+        script:
+            "../scripts/create_blacklist_bed.R"
 
 
 # Make QC report

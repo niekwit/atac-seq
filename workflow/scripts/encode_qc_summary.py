@@ -121,6 +121,35 @@ def by_sample(name, sample):
     return [f for f in snakemake.input[name] if re.search(rf"/{sample}\.", f)][0]
 
 
+def read_metric_table(f, key_col, value_col):
+    """Returns {key: value} of a TSV file with header"""
+    with open(f) as fh:
+        header = fh.readline().rstrip("\n").split("\t")
+        rows = [line.rstrip("\n").split("\t") for line in fh if line.strip()]
+    k, v = header.index(key_col), header.index(value_col)
+    return {row[k]: row[v] for row in rows}
+
+
+def picard_summary(f):
+    """First metrics row of a Picard metrics file as a dict"""
+    with open(f) as fh:
+        lines = [line.rstrip("\n") for line in fh if line.strip()]
+    i = next(i for i, line in enumerate(lines) if line.startswith("## METRICS CLASS"))
+    return dict(zip(lines[i + 1].split("\t"), lines[i + 2].split("\t")))
+
+
+def jsd_metrics(sample):
+    """deepTools plotFingerprint metrics of a sample (all conditions)"""
+    for f in snakemake.input["jsd"]:
+        with open(f) as fh:
+            header = fh.readline().rstrip("\n").split("\t")
+            for line in fh:
+                row = dict(zip(header, line.rstrip("\n").split("\t")))
+                if row.get("Sample") == sample:
+                    return row
+    return {}
+
+
 # Per sample metrics
 # Standards: https://www.encodeproject.org/atac-seq/#standards
 sample_rows = []
@@ -133,6 +162,11 @@ for sample in samples:
     frip = read_value(by_sample("frip", sample))
     tss = read_value(by_sample("tss_enrich", sample))
     tss_ataqv = ataqv_tss_enrichment(by_sample("ataqv", sample))
+    nuc = read_metric_table(by_sample("nucleosomal", sample), "metric", "value")
+    nuc_pass = read_metric_table(by_sample("nucleosomal", sample), "metric", "pass")
+    annot = read_metric_table(by_sample("annot_enrich", sample), "metric", "fraction")
+    gc = picard_summary(by_sample("gc_bias", sample))
+    jsd = jsd_metrics(sample)
     nrf, pbc1, pbc2 = float(pbc["NRF"]), float(pbc["PBC1"]), float(pbc["PBC2"])
 
     sample_rows.append(
@@ -161,6 +195,35 @@ for sample in samples:
             # ataqv calculates TSS enrichment on a different scale, so it is
             # not graded with the ENCODE thresholds
             "TSS_enrichment_ataqv": f"{tss_ataqv:.2f}",
+            # Fragment length distribution; ENCODE standard: a nucleosome free
+            # region (NFR) and a mononucleosome peak are present
+            "frac_fragments_in_NFR": f"{float(nuc['Fraction of reads in NFR']):.4f}",
+            "NFR_mono_nuc_ratio": f"{float(nuc['NFR / mono-nuc reads']):.2f}",
+            "NFR_peak": nuc_pass["Presence of NFR peak"],
+            "mono_nuc_peak": nuc_pass["Presence of Mono-Nuc peak"],
+            "di_nuc_peak": nuc_pass["Presence of Di-Nuc peak"],
+            "nucleosome_pattern_standard": (
+                "ideal"
+                if nuc_pass["Presence of NFR peak"] == "True"
+                and nuc_pass["Presence of Mono-Nuc peak"] == "True"
+                else "concerning"
+            ),
+            # Not graded by ENCODE
+            "synthetic_JS_distance": jsd.get("Synthetic JS Distance", "NA"),
+            "frac_reads_in_DHS": annot.get(
+                "fraction_of_reads_in_universal_DHS_regions", "NA"
+            ),
+            "frac_reads_in_promoters": annot.get(
+                "fraction_of_reads_in_promoter_regions", "NA"
+            ),
+            "frac_reads_in_enhancers": annot.get(
+                "fraction_of_reads_in_enhancer_regions", "NA"
+            ),
+            "frac_reads_in_blacklist": annot.get(
+                "fraction_of_reads_in_blacklist_regions", "NA"
+            ),
+            "AT_dropout": gc.get("AT_DROPOUT", "NA"),
+            "GC_dropout": gc.get("GC_DROPOUT", "NA"),
         }
     )
 

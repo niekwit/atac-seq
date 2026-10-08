@@ -125,6 +125,12 @@ pipeline. Most are graded as `ideal`, `acceptable` or `concerning` against the
 | `FRiP`                 | Fraction of Tn5 cutting sites in the replicate's peaks                                                    | > 0.3        | > 0.2      |
 | `TSS_enrichment`       | Signal at transcription start sites relative to the background 2 kb away, calculated as by ENCODE        | genome dependent¹ |       |
 | `TSS_enrichment_ataqv` | TSS enrichment calculated by ataqv (not graded, see below)                                                |              |            |
+| `frac_fragments_in_NFR`, `NFR_mono_nuc_ratio` | Fraction of fragments < 150 bp (nucleosome free region, NFR), and NFR / mononucleosome (150-300 bp) fragments (ENCODE flags < 0.4 and < 2.5) | | |
+| `NFR_peak`, `mono_nuc_peak`, `di_nuc_peak` | Peaks in the fragment length distribution at 20-90, 120-250 and 300-500 bp            |              |            |
+| `nucleosome_pattern_standard` | ENCODE standard: a NFR and a mononucleosome peak are present                                       | both present |            |
+| `synthetic_JS_distance` | Jensen-Shannon distance from uniform coverage (deepTools fingerprint); higher means more enriched signal |              |            |
+| `frac_reads_in_DHS`, `_promoters`, `_enhancers`, `_blacklist` | Fraction of Tn5 cutting sites in ENCODE's DNase I hypersensitive sites, promoters, enhancers and exclusion list (DHS, promoters and enhancers for GRCh38 and mm10 only) | | |
+| `AT_dropout`, `GC_dropout` | Picard GC bias: reads missing from AT- or GC-rich regions (%)                                         |              |            |
 
 ¹ hg38: > 7 ideal, > 5 acceptable; hg19: > 10 ideal, > 6 acceptable; mm10/mm39: > 15 ideal,
 > 10 acceptable.
@@ -165,16 +171,16 @@ Peaks:
 
 | Peak set                          | Peaks (workflow / ENCODE) | Overlapping ENCODE peaks | Identical to ENCODE peaks¹ |
 | --------------------------------- | ------------------------- | ------------------------ | -------------------------- |
-| Overlap, optimal (ENCODE default) | 245,849 / 248,668         | 95%                      | 92%                        |
-| IDR, optimal                      | 171,837 / 173,574         | 92%                      | 89%                        |
-| IDR, conservative                 | 167,086 / 168,691         | 99%                      | 96%                        |
+| Overlap, optimal (ENCODE default) | 248,218 / 248,668         | 96%                      | 93%                        |
+| IDR, optimal                      | 173,525 / 173,574         | 93%                      | 90%                        |
+| IDR, conservative                 | 168,761 / 168,691         | 99.8%                    | 96%                        |
 
 ¹ Same coordinates and summit. The signal values and p-values of these peaks are identical
 to ENCODE's (Pearson r = 1.000).
 
 The remaining differences are expected from the different genome assembly (Ensembl primary
-assembly instead of ENCODE's GRCh38 no-alt analysis set) and the newer pipeline and tool
-versions.
+assembly instead of ENCODE's GRCh38 no-alt analysis set), the different random split into
+pseudoreplicates and the newer pipeline and tool versions.
 
 QC metrics (workflow / ENCODE):
 
@@ -187,12 +193,20 @@ QC metrics (workflow / ENCODE):
 | PBC1                         | 0.8301 / 0.8300         | 0.8440 / 0.8440         |
 | PBC2                         | 6.13 / 6.13             | 6.70 / 6.70             |
 | TSS enrichment²              | 27.5 / 29.7             | 25.4 / 27.2             |
+| Fraction of fragments in NFR | 0.3844 / 0.3844         | 0.3759 / 0.3759         |
+| NFR / mononucleosome         | 1.201 / 1.201           | 1.209 / 1.209           |
+| Synthetic JS distance        | 0.613 / 0.614           | 0.608 / 0.608           |
+| Fraction of reads in DHS     | 0.619 / 0.619           | 0.604 / 0.605           |
+| ... in promoters             | 0.332 / 0.332           | 0.301 / 0.301           |
+| ... in enhancers             | 0.349 / 0.349           | 0.370 / 0.370           |
+| ... in exclusion list        | 0.0024 / 0.0024         | 0.0020 / 0.0020         |
 
 ² With ENCODE's own TSS file (GENCODE v29), the workflow's TSS enrichment is 29.3 and 26.9.
 The remaining difference comes from the Ensembl TSS annotation.
 
-Both replicates met the ENCODE standards for alignment rate, read depth, FRiP, TSS enrichment
-and reproducibility. Their library complexity was acceptable (mild PCR bottlenecking).
+Both replicates met the ENCODE standards for alignment rate, read depth, FRiP, TSS enrichment,
+nucleosomal pattern (NFR and mononucleosome peaks present) and reproducibility. Their library
+complexity was acceptable (mild PCR bottlenecking).
 
 ## Authors
 

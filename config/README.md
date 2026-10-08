@@ -5,7 +5,8 @@ This workflow analyses paired-end ATAC-seq data following the
 and checks the results against the [ENCODE ATAC-seq data standards](https://www.encodeproject.org/atac-seq/).
 Samples of the same condition are treated as biological replicates of one ENCODE experiment.
 
-1. Download genome sequence and annotation from Ensembl, ENCODE blacklist from AnnotationHub
+1. Download genome sequence and annotation from Ensembl, and the ENCODE exclusion list
+   (blacklist) and annotated regions (GRCh38, mm10; other genomes: blacklist from AnnotationHub)
 2. Quality control of reads (`FastQC`)
 3. Adapter trimming (`cutadapt -e 0.1 -m 5`, Nextera adapter)
 4. Alignment (`bowtie2 -k 5 -X2000 --mm`)
@@ -21,12 +22,17 @@ Samples of the same condition are treated as biological replicates of one ENCODE
     giving the optimal and conservative peak set of each condition
 12. Fold enrichment and p-value signal tracks (`MACS2 bdgcmp`) of each replicate and condition
 13. QC: library complexity (NRF, PBC1, PBC2), fraction of mitochondrial reads, FRiP,
-    TSS enrichment (calculated as by ENCODE), rescue and self-consistency ratios,
-    `ataqv` (fragment length distribution and other metrics), `MultiQC`
+    TSS enrichment (calculated as by ENCODE), fragment length distribution and nucleosomal
+    pattern (`Picard CollectInsertSizeMetrics`), GC bias (`Picard CollectGcBiasMetrics`),
+    fingerprint and Jensen-Shannon distance (`deepTools plotFingerprint`), fraction of reads in
+    DHS, promoters, enhancers and blacklisted regions, rescue and self-consistency ratios,
+    `ataqv`, `MultiQC`
 14. Annotation of the optimal peak set (`ChIPseeker`)
 
-Not included from the ENCODE pipeline: JSD fingerprints, GC bias, annotated region enrichment
-(DNase, promoters, enhancers), preseq and comparison to Roadmap.
+Not included from the ENCODE pipeline: its optional (off by default) preseq, cross-correlation
+and Roadmap comparison, its HTML/JSON QC report and the bigBed/starch/hammock peak formats.
+The fraction of reads in DHS, promoters and enhancers is only calculated for GRCh38 and mm10
+(`mm38`), for which ENCODE provides these regions.
 As in ENCODE, TSS enrichment uses one TSS per protein coding gene (5' end of each Ensembl
 protein coding gene).
 
@@ -92,5 +98,9 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/bigwig/{sample,pooled/condition}.{fc,pval}.signal.bigwig` | fold enrichment and -log10(p-value) signal tracks   |
 | `results/qc/encode_qc_summary.tsv`                     | QC metrics of each sample, graded against the ENCODE standards  |
 | `results/qc/encode_reproducibility_summary.tsv`        | reproducibility of each condition, graded against the standards |
-| `results/multiqc/multiqc_report.html`                  | FastQC, cutadapt, bowtie2, Picard and samtools stats report     |
+| `results/multiqc/multiqc_report.html`                  | FastQC, cutadapt, bowtie2, Picard, deepTools and samtools stats report |
+| `results/qc/{sample}.fraglen_dist.png`, `.nucleosomal.qc` | fragment length distribution and nucleosomal QC             |
+| `results/qc/{sample}.tss_enrich.png`                   | TSS enrichment profile                                          |
+| `results/qc/{sample}.gc_plot.png`                      | GC bias                                                         |
+| `results/qc/{condition}.jsd_plot.png`                  | fingerprint plot of the replicates                              |
 | `results/ataqv_report/index.html`                      | ataqv report                                                    |
