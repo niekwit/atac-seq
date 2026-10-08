@@ -8,6 +8,7 @@ rule get_fasta:
         url=resources.fasta_url,
     resources:
         runtime=runtime(60),
+        mem_mb=1000,
     log:
         "logs/resources/get_fasta.log",
     threads: 1
@@ -30,6 +31,7 @@ rule create_chrom_sizes:
         "resources/chrom_sizes.txt",
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/resources/create_chrom_sizes.log",
     threads: 1
@@ -52,6 +54,7 @@ rule create_keep_chroms_bed:
         filter_chrs=" ".join(config["filter"]["filter_chrs"]),
     resources:
         runtime=runtime(10),
+        mem_mb=1000,
     log:
         "logs/resources/create_keep_chroms_bed.log",
     threads: 1
@@ -73,6 +76,7 @@ rule create_annotation_file:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     resources:
         runtime=runtime(60),
+        mem_mb=10000,
     log:
         "logs/resources/create_annotation_file.log",
     threads: 2
@@ -92,6 +96,7 @@ rule get_gtf:
         url=resources.gtf_url,
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/resources/get_gtf.log",
     threads: 1
@@ -110,6 +115,7 @@ rule generate_tss_file:
         bed="resources/tss.bed",
     resources:
         runtime=runtime(30),
+        mem_mb=10000,
     log:
         "logs/resources/generate_tss_file.log",
     conda:
@@ -138,6 +144,7 @@ rule bowtie2_index:
     threads: 24
     resources:
         runtime=runtime(240),
+        mem_mb=16000,
     log:
         "logs/bowtie2/index.log",
     conda:
@@ -155,6 +162,7 @@ rule create_blacklist_bed:
         genome=resources.genome,
     resources:
         runtime=runtime(30),
+        mem_mb=2000,
     log:
         "logs/resources/create_blacklist_bed.log",
     threads: 1
@@ -176,6 +184,7 @@ rule fastqc:
         extra="--quiet --memory 1024",
     resources:
         runtime=runtime(120),
+        mem_mb=2000,
     message:
         """--- Checking fastq files with FastQC."""
     log:
@@ -201,6 +210,7 @@ rule cutadapt:
     threads: 4
     resources:
         runtime=runtime(60),
+        mem_mb=2000,
     log:
         # Report (stdout) is parsed by MultiQC, so errors go to a separate log
         report="logs/cutadapt/{sample}.log",
@@ -234,6 +244,7 @@ rule bowtie2_align:
     threads: 8
     resources:
         runtime=runtime(480),
+        mem_mb=12000,
     log:
         bowtie2="logs/bowtie2/{sample}.log",
         sort="logs/bowtie2/{sample}.sort.log",
@@ -259,6 +270,7 @@ rule filter_bam:
     threads: 4
     resources:
         runtime=runtime(120),
+        mem_mb=6000,
     log:
         "logs/filter_bam/{sample}.log",
     conda:
@@ -297,6 +309,7 @@ rule remove_duplicates:
     threads: 4
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/remove_duplicates/{sample}.log",
     conda:
@@ -315,6 +328,7 @@ rule samtools_index:
         "results/{dir}/{sample}.bam.bai",
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/samtools_index/{dir}/{sample}.log",
     wildcard_constraints:
@@ -343,6 +357,7 @@ rule samtools_stats:
         region="",  # Optional: region string.
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/samtools_stats/{dir}/{sample}.log",
     wrapper:

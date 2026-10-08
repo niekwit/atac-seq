@@ -82,8 +82,13 @@ snakemake -n
 Then run the workflow, letting Snakemake create the conda environments:
 
 ```bash
-snakemake --sdm conda --cores 16
+snakemake --sdm conda --cores 16 --resources mem_mb=100000
 ```
+
+Each rule declares how much memory it needs (`mem_mb`), so `--resources mem_mb=100000` makes
+Snakemake run only as many jobs at the same time as fit in 100 GB of RAM. Set it to somewhat
+less than the RAM of your computer. The largest jobs need about 10-16 GB (genome index,
+alignment, signal tracks, annotation).
 
 Genome files and the blacklist are downloaded on the first run. The main results are the
 reproducible peak sets in `results/idr/{condition}/` and the QC summary in
@@ -98,7 +103,8 @@ executors pass on as the job's time limit. The limits are about 3-5 times the ru
 replicates of ~50 million read pairs (human), and are multiplied by the attempt number, so jobs
 that run out of time are resubmitted with more time when the workflow is run with `--retries`
 (e.g. `--retries 2`). For much deeper data, or to change a limit, override it in a profile or on
-the command line, e.g. `--set-resources bowtie2_align:runtime=1440`.
+the command line, e.g. `--set-resources bowtie2_align:runtime=1440`. The memory limits
+(`mem_mb`) are passed on as well, for clusters that schedule by memory.
 
 ## QC summary
 
@@ -128,7 +134,7 @@ on their 5' end, their coverage is averaged over ±2 kb windows around the TSSs 
 coding genes, and the maximum is divided by the coverage at the window edges. As in ENCODE,
 reads near the window edges are partly excluded, which raises the score by about a third. The
 ENCODE thresholds only apply to scores calculated this way: ataqv calculates TSS enrichment on
-a different scale (about 4 where ENCODE reports about 29), so `TSS_enrichment_ataqv` is not
+a different scale (about 5 where ENCODE reports about 29), so `TSS_enrichment_ataqv` is not
 graded.
 
 `results/qc/encode_reproducibility_summary.tsv` has one row per condition and reproducibility
@@ -168,8 +174,25 @@ to ENCODE's (Pearson r = 1.000).
 
 The remaining differences are expected from the different genome assembly (Ensembl primary
 assembly instead of ENCODE's GRCh38 no-alt analysis set) and the newer pipeline and tool
-versions. Both replicates passed the ENCODE standards for alignment rate, read depth, FRiP
-and reproducibility.
+versions.
+
+QC metrics (workflow / ENCODE):
+
+| Metric                       | Replicate 1             | Replicate 2             |
+| ---------------------------- | ----------------------- | ----------------------- |
+| Alignment rate               | 0.955 / 0.955           | 0.974 / 0.974           |
+| Fraction mitochondrial reads | 0.041 / 0.042           | 0.020 / 0.021           |
+| Non-duplicate reads          | 61,376,290 / 61,376,458 | 56,295,148 / 56,295,774 |
+| NRF                          | 0.8219 / 0.8218         | 0.8361 / 0.8361         |
+| PBC1                         | 0.8301 / 0.8300         | 0.8440 / 0.8440         |
+| PBC2                         | 6.13 / 6.13             | 6.70 / 6.70             |
+| TSS enrichment²              | 27.5 / 29.7             | 25.4 / 27.2             |
+
+² With ENCODE's own TSS file (GENCODE v29), the workflow's TSS enrichment is 29.3 and 26.9.
+The remaining difference comes from the Ensembl TSS annotation.
+
+Both replicates met the ENCODE standards for alignment rate, read depth, FRiP, TSS enrichment
+and reproducibility. Their library complexity was acceptable (mild PCR bottlenecking).
 
 ## Authors
 

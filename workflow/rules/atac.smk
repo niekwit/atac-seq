@@ -18,6 +18,7 @@ rule bam2ta:
     threads: 4
     resources:
         runtime=runtime(60),
+        mem_mb=5000,
     log:
         "logs/bam2ta/{sample}.log",
     conda:
@@ -39,6 +40,7 @@ rule pseudoreplicates:
     threads: 1
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/pseudoreplicates/{sample}.log",
     conda:
@@ -59,6 +61,7 @@ rule pool_tagalign:
     threads: 1
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/pool_tagalign/{condition}.log",
     conda:
@@ -100,6 +103,7 @@ rule macs2_callpeak:
     threads: 1
     resources:
         runtime=runtime(60),
+        mem_mb=6000,
     log:
         "logs/macs2/{prefix}.log",
     conda:
@@ -124,6 +128,7 @@ rule idr:
     threads: 1
     resources:
         runtime=runtime(30),
+        mem_mb=4000,
     log:
         "logs/idr/{condition}/{pair}.log",
     conda:
@@ -145,6 +150,7 @@ rule overlap:
     threads: 1
     resources:
         runtime=runtime(15),
+        mem_mb=2000,
     log:
         "logs/overlap/{condition}/{pair}.log",
     conda:
@@ -173,6 +179,7 @@ rule blacklist_filter:
     threads: 1
     resources:
         runtime=runtime(15),
+        mem_mb=2000,
     log:
         "logs/blacklist_filter/{stem}.log",
     conda:
@@ -196,6 +203,7 @@ rule frip:
     threads: 1
     resources:
         runtime=runtime(30),
+        mem_mb=2000,
     log:
         "logs/frip/{stem}.log",
     conda:
@@ -237,6 +245,7 @@ rule reproducibility:
     threads: 1
     resources:
         runtime=runtime(10),
+        mem_mb=1000,
     log:
         "logs/reproducibility/{method}/{condition}.log",
     conda:
@@ -263,6 +272,7 @@ rule ataqv:
         extra="",
     resources:
         runtime=runtime(180),
+        mem_mb=2000,
     log:
         "logs/ataqv/{sample}.log",
     threads: 4
@@ -293,6 +303,7 @@ rule ataqv_report:
         extra="",
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/ataqv/ataqv_report.log",
     threads: 1
@@ -314,6 +325,7 @@ rule annotate_peaks:
     threads: 2
     resources:
         runtime=runtime(30),
+        mem_mb=4000,
     log:
         "logs/annotate_peaks/{method}/{condition}.log",
     conda:

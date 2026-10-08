@@ -17,6 +17,7 @@ rule library_complexity:
     threads: 4
     resources:
         runtime=runtime(60),
+        mem_mb=6000,
     log:
         "logs/library_complexity/{sample}.log",
     conda:
@@ -27,7 +28,7 @@ rule library_complexity:
         "samtools sort -@ {threads} -n -T {output}.tmp -o - {input} | "
         "bedtools bamtobed -bedpe -i stdin | "
         "awk 'BEGIN{{OFS=\"\\t\"}}{{print $1,$2,$4,$6,$9,$10}}' | "
-        "grep -v '^{params.mito}\\s' | sort | uniq -c | "
+        "grep -v '^{params.mito}\\s' | sort -S 2G -T $(dirname {output}) | uniq -c | "
         "awk '{params.awk}' >> {output}) 2> {log}"
 
 
@@ -44,6 +45,7 @@ rule frac_mito:
     threads: 1
     resources:
         runtime=runtime(30),
+        mem_mb=1000,
     log:
         "logs/frac_mito/{sample}.log",
     conda:
@@ -73,7 +75,7 @@ rule tss_enrichment:
     threads: 1
     resources:
         runtime=runtime(30),
-        mem_mb=12000,
+        mem_mb=2000,
     log:
         "logs/tss_enrichment/{sample}.log",
     conda:
@@ -105,6 +107,7 @@ rule multiqc:
         extra="--verbose --dirs",
     resources:
         runtime=runtime(30),
+        mem_mb=2000,
     log:
         "logs/multiqc.log",
     wrapper:
@@ -148,6 +151,7 @@ rule encode_qc_summary:
     threads: 1
     resources:
         runtime=runtime(10),
+        mem_mb=1000,
     log:
         "logs/encode_qc_summary.log",
     conda:
