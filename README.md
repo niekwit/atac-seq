@@ -104,7 +104,9 @@ replicates of ~50 million read pairs (human), and are multiplied by the attempt 
 that run out of time are resubmitted with more time when the workflow is run with `--retries`
 (e.g. `--retries 2`). For much deeper data, or to change a limit, override it in a profile or on
 the command line, e.g. `--set-resources bowtie2_align:runtime=1440`. The memory limits
-(`mem_mb`) are passed on as well, for clusters that schedule by memory.
+(`mem_mb`) are passed on as well, for clusters that schedule by memory. For clusters that
+assign memory per CPU, each rule requests enough threads to cover its `mem_mb` at 3,370 MiB per
+CPU; on clusters with less memory per CPU, raise the threads with `--set-threads`.
 
 ## QC summary
 

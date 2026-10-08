@@ -96,7 +96,7 @@ rule fraglen_stat:
         plot="results/qc/{sample}.fraglen_dist.png",
     params:
         java_heap="3g",
-    threads: 1
+    threads: 2
     resources:
         runtime=runtime(30),
         mem_mb=4000,
@@ -121,7 +121,7 @@ rule gc_bias:
         plot="results/qc/{sample}.gc_plot.png",
     params:
         java_heap="8g",
-    threads: 1
+    threads: 3
     resources:
         runtime=runtime(180),
         mem_mb=10000,
@@ -142,7 +142,7 @@ rule annot_enrich:
         blacklist="resources/blacklist.bed",
     output:
         "results/qc/{sample}.annot_enrich.qc",
-    threads: 1
+    threads: 2
     resources:
         runtime=runtime(60),
         mem_mb=4000,
@@ -207,6 +207,7 @@ rule multiqc:
         report="results/multiqc/multiqc_report.html",
     params:
         extra="--verbose --dirs",
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=2000,

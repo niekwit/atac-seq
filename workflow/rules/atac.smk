@@ -100,7 +100,7 @@ rule macs2_callpeak:
         pval_thresh=config["macs2"]["pval_thresh"],
         smooth_win=config["macs2"]["smooth_win"],
         cap_num_peak=config["macs2"]["cap_num_peak"],
-    threads: 1
+    threads: 2
     resources:
         runtime=runtime(60),
         mem_mb=6000,
@@ -125,7 +125,7 @@ rule idr:
         idr_log="results/idr/{condition}/{pair}.idr.log",
     params:
         threshold=config["idr"]["threshold"],
-    threads: 1
+    threads: 2
     resources:
         runtime=runtime(30),
         mem_mb=4000,

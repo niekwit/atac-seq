@@ -79,7 +79,7 @@ rule create_annotation_file:
         mem_mb=10000,
     log:
         "logs/resources/create_annotation_file.log",
-    threads: 2
+    threads: 3
     conda:
         "../envs/r.yaml"
     script:
@@ -143,6 +143,7 @@ rule generate_tss_file:
         gtf=resources.gtf,
     output:
         bed="resources/tss.bed",
+    threads: 3
     resources:
         runtime=runtime(30),
         mem_mb=10000,
@@ -350,6 +351,7 @@ rule markduplicates:
         "logs/mark_duplicates/{sample}.log",
     params:
         extra="--REMOVE_DUPLICATES false --VALIDATION_STRINGENCY LENIENT",
+    threads: 2
     resources:
         runtime=runtime(120),
         mem_mb=4096,
@@ -414,6 +416,7 @@ rule samtools_stats:
     params:
         extra="",  # Optional: extra arguments.
         region="",  # Optional: region string.
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=1000,

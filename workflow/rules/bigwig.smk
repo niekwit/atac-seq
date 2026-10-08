@@ -10,7 +10,7 @@ rule macs2_signal_track:
     output:
         fc="results/bigwig/{prefix}.fc.signal.bigwig",
         pval="results/bigwig/{prefix}.pval.signal.bigwig",
-    threads: 1
+    threads: 3
     resources:
         runtime=runtime(180),
         mem_mb=10000,
