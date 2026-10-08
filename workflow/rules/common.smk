@@ -151,3 +151,12 @@ def ataqv_organism():
         return "mouse"
     else:
         raise ValueError(f"Unsupported genome: {genome}")
+
+
+def runtime(minutes):
+    """
+    Runtime limit (minutes) for cluster executors, e.g. SLURM's --time.
+    The limit is multiplied by the attempt number, so that jobs that run out
+    of time get more time when the workflow is run with --retries.
+    """
+    return lambda wildcards, attempt: minutes * attempt

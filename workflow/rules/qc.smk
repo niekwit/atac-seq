@@ -15,6 +15,8 @@ rule library_complexity:
             'printf "%d\\t%d\\t%d\\t%d\\t%f\\t%f\\t%f\\n",mt,m0,m1,m2,m0_mt,m1_m0,m1_m2}'
         ),
     threads: 4
+    resources:
+        runtime=runtime(60),
     log:
         "logs/library_complexity/{sample}.log",
     conda:
@@ -40,6 +42,8 @@ rule frac_mito:
     params:
         mito=config["mito_chr_name"],
     threads: 1
+    resources:
+        runtime=runtime(30),
     log:
         "logs/frac_mito/{sample}.log",
     conda:
@@ -52,6 +56,30 @@ rule frac_mito:
         "awk -v t=$total -v m=$mito "
         "'BEGIN{{printf \"%d\\t%d\\t%f\\n\", t - m, m, (t > 0 ? m / t : 0)}}' >> {output}"
         ") 2> {log}"
+
+
+# TSS enrichment as calculated by ENCODE (encode_task_tss_enrich.py)
+# -----------------------------------------------------
+rule tss_enrichment:
+    input:
+        bam="results/filtered/{sample}.nodup.bam",
+        bai="results/filtered/{sample}.nodup.bam.bai",
+        tss="resources/tss.bed",
+        fastq="reads/{sample}_R1_001.fastq.gz",
+    output:
+        score="results/qc/{sample}.tss_enrich.qc",
+        profile="results/qc/{sample}.tss_enrich_profile.tsv",
+        plot="results/qc/{sample}.tss_enrich.png",
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=12000,
+    log:
+        "logs/tss_enrichment/{sample}.log",
+    conda:
+        "../envs/tss.yaml"
+    script:
+        "../scripts/tss_enrichment.py"
 
 
 # Collate FastQC, cutadapt, bowtie2, Picard and samtools stats output
@@ -75,6 +103,8 @@ rule multiqc:
         report="results/multiqc/multiqc_report.html",
     params:
         extra="--verbose --dirs",
+    resources:
+        runtime=runtime(30),
     log:
         "logs/multiqc.log",
     wrapper:
@@ -94,6 +124,7 @@ rule encode_qc_summary:
         frip=expand("results/macs2/{sample}.frip.qc", sample=SAMPLES),
         peaks=expand("results/macs2/{sample}.bfilt.narrowPeak", sample=SAMPLES),
         ataqv=expand("results/ataqv/{sample}.json.gz", sample=SAMPLES),
+        tss_enrich=expand("results/qc/{sample}.tss_enrich.qc", sample=SAMPLES),
         reproducibility=expand(
             "results/{method}/{condition}/reproducibility.qc",
             method=reproducibility_methods(),
@@ -113,7 +144,10 @@ rule encode_qc_summary:
         conditions=CONDITIONS,
         replicates={c: replicates(c) for c in CONDITIONS},
         methods=reproducibility_methods(),
+        genome=config["genome"]["ensembl"],
     threads: 1
+    resources:
+        runtime=runtime(10),
     log:
         "logs/encode_qc_summary.log",
     conda:

@@ -11,6 +11,8 @@ rule macs2_signal_track:
         fc="results/bigwig/{prefix}.fc.signal.bigwig",
         pval="results/bigwig/{prefix}.pval.signal.bigwig",
     threads: 1
+    resources:
+        runtime=runtime(180),
     log:
         "logs/macs2_signal_track/{prefix}.log",
     conda:

@@ -21,14 +21,14 @@ Samples of the same condition are treated as biological replicates of one ENCODE
     giving the optimal and conservative peak set of each condition
 12. Fold enrichment and p-value signal tracks (`MACS2 bdgcmp`) of each replicate and condition
 13. QC: library complexity (NRF, PBC1, PBC2), fraction of mitochondrial reads, FRiP,
-    rescue and self-consistency ratios, `ataqv` (TSS enrichment, fragment length distribution),
-    `MultiQC`
+    TSS enrichment (calculated as by ENCODE), rescue and self-consistency ratios,
+    `ataqv` (fragment length distribution and other metrics), `MultiQC`
 14. Annotation of the optimal peak set (`ChIPseeker`)
 
 Not included from the ENCODE pipeline: JSD fingerprints, GC bias, annotated region enrichment
 (DNase, promoters, enhancers), preseq and comparison to Roadmap.
-TSS enrichment is calculated by `ataqv` instead of the ENCODE script, so its values differ somewhat.
-As in ENCODE, one TSS per gene (5' end of each Ensembl gene) is used.
+As in ENCODE, TSS enrichment uses one TSS per protein coding gene (5' end of each Ensembl
+protein coding gene).
 
 ## Running the workflow
 

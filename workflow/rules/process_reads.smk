@@ -6,6 +6,8 @@ rule get_fasta:
     retries: 3
     params:
         url=resources.fasta_url,
+    resources:
+        runtime=runtime(60),
     log:
         "logs/resources/get_fasta.log",
     threads: 1
@@ -26,6 +28,8 @@ rule create_chrom_sizes:
         resources.fasta,
     output:
         "resources/chrom_sizes.txt",
+    resources:
+        runtime=runtime(30),
     log:
         "logs/resources/create_chrom_sizes.log",
     threads: 1
@@ -46,6 +50,8 @@ rule create_keep_chroms_bed:
         "resources/keep_chroms.bed",
     params:
         filter_chrs=" ".join(config["filter"]["filter_chrs"]),
+    resources:
+        runtime=runtime(10),
     log:
         "logs/resources/create_keep_chroms_bed.log",
     threads: 1
@@ -65,6 +71,8 @@ rule create_annotation_file:
     output:
         rdata=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
+    resources:
+        runtime=runtime(60),
     log:
         "logs/resources/create_annotation_file.log",
     threads: 2
@@ -82,13 +90,15 @@ rule get_gtf:
     retries: 3
     params:
         url=resources.gtf_url,
+    resources:
+        runtime=runtime(30),
     log:
         "logs/resources/get_gtf.log",
     threads: 1
     conda:
         "../envs/atac.yaml"
-    script:
-        "../scripts/get_resource.sh"
+    shell:
+        "(wget -q {params.url} -O - | pigz -dc > {output}) 2> {log}"
 
 
 # Generate BED file of TSS regions from GTF file for ataqv
@@ -98,6 +108,8 @@ rule generate_tss_file:
         gtf=resources.gtf,
     output:
         bed="resources/tss.bed",
+    resources:
+        runtime=runtime(30),
     log:
         "logs/resources/generate_tss_file.log",
     conda:
@@ -124,6 +136,8 @@ rule bowtie2_index:
     params:
         prefix=lambda w, output: output[0].removesuffix(".1.bt2"),
     threads: 24
+    resources:
+        runtime=runtime(240),
     log:
         "logs/bowtie2/index.log",
     conda:
@@ -139,6 +153,8 @@ rule create_blacklist_bed:
         bed="resources/blacklist.bed",
     params:
         genome=resources.genome,
+    resources:
+        runtime=runtime(30),
     log:
         "logs/resources/create_blacklist_bed.log",
     threads: 1
@@ -158,6 +174,8 @@ rule fastqc:
         zip="results/fastqc/{sample}_{read}_fastqc.zip",
     params:
         extra="--quiet --memory 1024",
+    resources:
+        runtime=runtime(120),
     message:
         """--- Checking fastq files with FastQC."""
     log:
@@ -181,6 +199,8 @@ rule cutadapt:
         adapter_r2=config["cutadapt"]["adapter_r2"],
         extra=config["cutadapt"]["extra"],
     threads: 4
+    resources:
+        runtime=runtime(60),
     log:
         # Report (stdout) is parsed by MultiQC, so errors go to a separate log
         report="logs/cutadapt/{sample}.log",
@@ -212,6 +232,8 @@ rule bowtie2_align:
         ),
         extra=config["bowtie2"]["extra"],
     threads: 8
+    resources:
+        runtime=runtime(480),
     log:
         bowtie2="logs/bowtie2/{sample}.log",
         sort="logs/bowtie2/{sample}.sort.log",
@@ -235,6 +257,8 @@ rule filter_bam:
         multimapping=config["bowtie2"]["multimapping"],
         mapq_thresh=config["filter"]["mapq_thresh"],
     threads: 4
+    resources:
+        runtime=runtime(120),
     log:
         "logs/filter_bam/{sample}.log",
     conda:
@@ -256,6 +280,7 @@ rule markduplicates:
     params:
         extra="--REMOVE_DUPLICATES false --VALIDATION_STRINGENCY LENIENT",
     resources:
+        runtime=runtime(120),
         mem_mb=4096,
     wrapper:
         "v9.0.0/bio/picard/markduplicates"
@@ -270,6 +295,8 @@ rule remove_duplicates:
     output:
         "results/filtered/{sample}.nodup.bam",
     threads: 4
+    resources:
+        runtime=runtime(30),
     log:
         "logs/remove_duplicates/{sample}.log",
     conda:
@@ -286,6 +313,8 @@ rule samtools_index:
         "results/{dir}/{sample}.bam",
     output:
         "results/{dir}/{sample}.bam.bai",
+    resources:
+        runtime=runtime(30),
     log:
         "logs/samtools_index/{dir}/{sample}.log",
     wildcard_constraints:
@@ -312,6 +341,8 @@ rule samtools_stats:
     params:
         extra="",  # Optional: extra arguments.
         region="",  # Optional: region string.
+    resources:
+        runtime=runtime(30),
     log:
         "logs/samtools_stats/{dir}/{sample}.log",
     wrapper:

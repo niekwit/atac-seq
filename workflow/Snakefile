@@ -51,6 +51,10 @@ onerror:
 
 # Target rules
 # -----------------------------------------------------
+localrules:
+    all,
+
+
 rule all:
     input:
         "results/multiqc/multiqc_report.html",
