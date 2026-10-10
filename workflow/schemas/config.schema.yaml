@@ -118,6 +118,22 @@ properties:
         type: number
         minimum: 0
 
+  te:
+    type: object
+    properties:
+      enable:
+        type: boolean
+        default: false
+      max_alignments:
+        type: integer
+        minimum: 2
+        default: 100
+      classes:
+        type: array
+        items:
+          type: string
+        default: []
+
 required:
   - genome
   - mito_chr_name

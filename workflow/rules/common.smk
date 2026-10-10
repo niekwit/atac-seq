@@ -354,3 +354,19 @@ class GenomeFiles:
         """Returns file path for unzipped downloaded file"""
 
         return f"resources/{os.path.basename(url).replace('.gz', '')}"
+
+
+# UCSC names of the genomes, for the RepeatMasker annotation of the TE module
+UCSC_GENOMES = {
+    "hg19": "hg19",
+    "hg38": "hg38",
+    "test": "hg38",
+    "mm38": "mm10",
+    "mm39": "mm39",
+    "dm6": "dm6",
+}
+
+
+def te_enabled():
+    """The transposable element (TE) module is optional (off by default)"""
+    return config.get("te", {}).get("enable", False)

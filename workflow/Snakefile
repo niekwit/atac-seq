@@ -36,6 +36,7 @@ include: "rules/atac.smk"
 include: "rules/bigwig.smk"
 include: "rules/qc.smk"
 include: "rules/deseq2.smk"
+include: "rules/te.smk"
 
 
 onstart:
@@ -92,5 +93,16 @@ rule all:
                 contrast=deseq2_contrasts(),
             )
             if deseq2_enabled()
+            else []
+        ),
+        # Optional TE module
+        (
+            [
+                "results/te/te_subfamily.tsv",
+                "results/te/te_family.tsv",
+                "results/te/te_class.tsv",
+                "results/te/te_library_stats.tsv",
+            ]
+            if te_enabled()
             else []
         ),

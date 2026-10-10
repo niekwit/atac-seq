@@ -17,6 +17,7 @@ See [config/README.md](config/README.md) for the workflow steps, parameters and 
     - [Run the workflow](#run-the-workflow)
   - [QC summary](#qc-summary)
   - [Comparing samples](#comparing-samples)
+  - [Transposable elements](#transposable-elements)
   - [Validation against ENCODE](#validation-against-encode)
   - [Authors](#authors)
   - [References](#references)
@@ -223,6 +224,57 @@ DESeq2 scales the samples with median-of-ratios size factors, calculated over th
 assumes that most peaks do not change, so a global change in accessibility, or a large
 difference in FRiP between samples, is not measured reliably: check `FRiP` in the QC summary
 and the MA plot, in which the cloud of peaks should be centred on 0.
+
+## Transposable elements
+
+Young transposable elements (TEs), such as L1Md_T/A/Gf LINE-1s and IAPs in mouse or L1HS and
+L1PA2/3 in human, have many nearly identical copies. Their reads align to many places, so the
+ENCODE filter (at most 4 alignments, one of which is kept at random) removes them, and they
+hardly show up in the peaks and signal tracks. Older, diverged copies map uniquely and are
+analysed like the rest of the genome.
+
+The optional TE module (`te: enable: true` in `config/config.yaml`) measures the accessibility
+of repeats per subfamily, family and class instead of per copy. It does not change the ENCODE
+outputs.
+
+1. RepeatMasker annotation from UCSC (`rmsk`), with Ensembl chromosome names
+2. A second alignment of the trimmed reads that keeps up to `te: max_alignments` (default 100)
+   alignments per read pair (`bowtie2 -k 100 -X2000 --mm`)
+3. Only the best (highest alignment score) properly paired alignments of each read pair are kept,
+   as `bowtie2 -k` also reports worse alignments; removal of PCR duplicates (read pairs with the
+   same set of alignments) and of reads on `filter_chrs` (MT)
+4. Counting of Tn5 insertions (5' end of each read) in repeats with `featureCounts`, once with
+   multimappers weighted 1/(number of alignments) (`-M --fraction`) and once with uniquely
+   mapping read pairs only
+
+Output in `results/te/`:
+
+| file                     | content                                                                 |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `te_subfamily.tsv`       | per subfamily (repName), with its family and class                      |
+| `te_family.tsv`          | per family (repFamily, e.g. L1, ERVK, Alu)                              |
+| `te_class.tsv`           | per class (repClass, e.g. LINE, LTR, SINE)                              |
+| `te_library_stats.tsv`   | read pairs kept, duplicates, multimappers and fraction of insertions in repeats |
+
+For each sample the tables have:
+
+| column                       | meaning                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `{sample}_count`             | insertions, multimappers weighted 1/(number of best alignments)            |
+| `{sample}_count_unique`      | insertions of uniquely mapping read pairs                                  |
+| `{sample}_frac_unique`       | `count_unique / count`: low for young repeats, whose signal comes from multimappers and is missed by the ENCODE outputs |
+| `{sample}_CPM`               | insertions per million insertions of the sample                            |
+| `{sample}_log2_enrichment`   | log2 of the fraction of insertions in the repeat over the fraction of the genome it covers; > 0: more accessible than the genome average |
+
+Notes:
+
+- Counts are per repeat subfamily, family or class, not per copy: reads of young repeats cannot
+  be assigned to a single copy. Use the counts (rounded) with e.g. DESeq2 to compare conditions.
+- Read pairs with `max_alignments` alignments may have more; they are counted with weight
+  1/`max_alignments` (see `pairs_at_max_alignments` in `te_library_stats.tsv`).
+- Longer reads resolve more copies; with short reads (< 50 bp) more of the signal is in
+  multimappers.
+- The TE alignment roughly doubles the alignment time.
 
 ## Validation against ENCODE
 

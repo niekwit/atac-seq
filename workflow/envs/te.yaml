@@ -1,0 +1,15 @@
+# Transposable element (TE) module: multimapper alignment and repeat counting
+name: te
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - conda-forge::python=3.12
+  - conda-forge::numpy=2.2
+  - conda-forge::pandas=2.2
+  - conda-forge::pigz=2.8
+  - bioconda::bowtie2=2.5.4
+  - bioconda::samtools=1.21
+  - bioconda::pysam=0.23.3
+  - bioconda::subread=2.1.1

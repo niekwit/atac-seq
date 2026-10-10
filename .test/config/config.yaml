@@ -56,3 +56,14 @@ deseq2:
   fdr: 0.05
   # Test against this absolute log2 fold change (0: any change)
   lfc_threshold: 0
+
+# Transposable element (TE) module (not part of the ENCODE pipeline): counts
+# Tn5 insertions in RepeatMasker repeats per subfamily, family and class,
+# keeping multimapping reads that the ENCODE filter removes
+te:
+  enable: true
+  # Maximum number of alignments per read pair (bowtie2 -k); multimappers are
+  # weighted 1/(number of alignments)
+  max_alignments: 100
+  # RepeatMasker classes to count (empty list: all repeats)
+  classes: ["LINE", "SINE", "LTR", "DNA", "Retroposon", "RC", "Satellite"]
