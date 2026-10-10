@@ -117,7 +117,7 @@ pipeline. Most are graded as `ideal`, `acceptable` or `concerning` against the
 | Column                 | Meaning                                                                                                   | Ideal        | Acceptable |
 | ---------------------- | --------------------------------------------------------------------------------------------------------- | ------------ | ---------- |
 | `alignment_rate`       | Fraction of read pairs aligned by bowtie2                                                                 | > 0.95       | > 0.80     |
-| `frac_mito_reads`      | Fraction of aligned reads on the mitochondrial genome (not graded; lower is better)                       |              |            |
+| `frac_mito_reads`      | Fraction of aligned reads that align to the mitochondrial genome, as by ENCODE (not graded; lower is better) |              |            |
 | `nodup_non_mito_reads` | Reads left after filtering and removal of duplicates and mitochondrial reads; these are used for peak calling | ≥ 50 million |            |
 | `NRF`                  | Non-redundant fraction: distinct fragments / all fragments. Low values mean many PCR duplicates           | > 0.9        | > 0.8      |
 | `PBC1`                 | PCR bottlenecking coefficient 1: positions with exactly one fragment / positions with at least one        | > 0.9        | > 0.8      |
@@ -139,7 +139,11 @@ pipeline. Most are graded as `ideal`, `acceptable` or `concerning` against the
 
 `TSS_enrichment` follows the ENCODE pipeline (`encode_task_tss_enrich.py`): reads are centred
 on their 5' end, their coverage is averaged over ±2 kb windows around the TSSs of protein
-coding genes, and the maximum is divided by the coverage at the window edges. As in ENCODE,
+coding genes, and the maximum is divided by the coverage at the window edges. The TSSs are
+those of ENCODE's TSS files (GRCh38, mm10; lifted over for mm39), as the score depends on the
+annotation: in recent Ensembl releases the 5' end of many genes lies upstream of the main TSS,
+which lowers the score (by ~15% for GRCm39, Ensembl 116), whereas the TSSs of canonical
+transcripts raise it (by ~50% for GRCh38) above the scale of the ENCODE thresholds. As in ENCODE,
 reads near the window edges are partly excluded, which raises the score by about a third. The
 ENCODE thresholds only apply to scores calculated this way: ataqv calculates TSS enrichment on
 a different scale (about 5 where ENCODE reports about 29), so `TSS_enrichment_ataqv` is not
@@ -153,6 +157,8 @@ replicate (self-consistency ratio); with one ratio above 2 reproducibility is `b
 with both `fail`.
 
 ## Validation against ENCODE
+
+### Human (MCF-7, GRCh38)
 
 The workflow was run with default settings (hg38, Ensembl release 115) on the raw reads of
 ENCODE experiment [ENCSR422SUG](https://www.encodeproject.org/experiments/ENCSR422SUG/)
@@ -189,12 +195,12 @@ QC metrics (workflow / ENCODE):
 | Metric                       | Replicate 1             | Replicate 2             |
 | ---------------------------- | ----------------------- | ----------------------- |
 | Alignment rate               | 0.955 / 0.955           | 0.974 / 0.974           |
-| Fraction mitochondrial reads | 0.041 / 0.042           | 0.020 / 0.021           |
+| Fraction mitochondrial reads | 0.042 / 0.042           | 0.021 / 0.021           |
 | Non-duplicate reads          | 61,376,290 / 61,376,458 | 56,295,148 / 56,295,774 |
 | NRF                          | 0.8219 / 0.8218         | 0.8361 / 0.8361         |
 | PBC1                         | 0.8301 / 0.8300         | 0.8440 / 0.8440         |
 | PBC2                         | 6.13 / 6.13             | 6.70 / 6.70             |
-| TSS enrichment²              | 27.5 / 29.7             | 25.4 / 27.2             |
+| TSS enrichment²              | 29.3 / 29.7             | 26.9 / 27.2             |
 | Fraction of fragments in NFR | 0.3844 / 0.3844         | 0.3759 / 0.3759         |
 | NFR / mononucleosome         | 1.201 / 1.201           | 1.209 / 1.209           |
 | Synthetic JS distance        | 0.613 / 0.614           | 0.608 / 0.608           |
@@ -203,12 +209,63 @@ QC metrics (workflow / ENCODE):
 | ... in enhancers             | 0.349 / 0.349           | 0.370 / 0.370           |
 | ... in exclusion list        | 0.0024 / 0.0024         | 0.0020 / 0.0020         |
 
-² With ENCODE's own TSS file (GENCODE v29), the workflow's TSS enrichment is 29.3 and 26.9.
-The remaining difference comes from the Ensembl TSS annotation.
+² The small difference comes from the alignments and from the edge normalisation of the
+profile.
 
 Both replicates met the ENCODE standards for alignment rate, read depth, FRiP, TSS enrichment,
 nucleosomal pattern (NFR and mononucleosome peaks present) and reproducibility. Their library
 complexity was acceptable (mild PCR bottlenecking).
+
+### Mouse (dendritic cells, mm10 and GRCm39)
+
+The workflow was also run on ENCODE experiment
+[ENCSR984HFU](https://www.encodeproject.org/experiments/ENCSR984HFU/) (mouse dendritic cells,
+two paired-end replicates, 42 bp), once on mm10 (`mm38`, Ensembl release 102) for comparison
+with ENCODE's processed files (pipeline v1.9.2), and once on GRCm39 (`mm39`, Ensembl release
+116).
+
+mm10 compared with ENCODE:
+
+| Peak set / signal                        | Workflow / ENCODE | Identical to ENCODE peaks¹ | Pearson r (1 kb bins) |
+| ---------------------------------------- | ----------------- | -------------------------- | --------------------- |
+| Overlap, optimal (ENCODE default)        | 163,718 / 163,939 | 95.5%                      |                       |
+| Overlap, conservative                    | 104,145 / 104,153 | 99.7%                      |                       |
+| IDR, optimal                             | 102,595 / 102,490 | 91.6%                      |                       |
+| IDR, conservative                        | 38,987 / 38,986   | 99.7%                      |                       |
+| Pooled replicates, fold change / p-value |                   |                            | 1.000 / 0.999         |
+
+Peak sets of true replicates (conservative) are 99.7% identical; the optimal peak sets, which
+come from pseudoreplicates, differ more because the reads are split into pseudoreplicates at
+random.
+
+QC metrics (workflow / ENCODE):
+
+| Metric                       | Replicate 1             | Replicate 2             |
+| ---------------------------- | ----------------------- | ----------------------- |
+| Fraction mitochondrial reads | 0.0885 / 0.0885         | 0.2072 / 0.2072         |
+| Non-duplicate reads          | 77,816,024 / 77,834,648 | 40,499,660 / 40,502,024 |
+| NRF                          | 0.8793 / 0.8792         | 0.6027 / 0.6027         |
+| PBC1                         | 0.9049 / 0.9048         | 0.5916 / 0.5916         |
+| PBC2                         | 11.95 / 11.94           | 2.162 / 2.162           |
+| TSS enrichment               | 39.9 / 40.0             | 14.2 / 14.2             |
+| Fraction of fragments in NFR | 0.5436 / 0.5436         | 0.7367 / 0.7367         |
+| Synthetic JS distance        | 0.639 / 0.638           | 0.298 / 0.297           |
+| Fraction of reads in DHS     | 0.744 / 0.745           | 0.406 / 0.407           |
+
+The rescue and self-consistency ratios (overlap: 1.57 / 1.57 and 2.76 / 2.77; IDR: 2.63 / 2.63
+and 4.15 / 4.14) agree as well. Replicate 2 has a low library complexity (moderate PCR
+bottlenecking) and FRiP (0.14), so reproducibility is borderline (overlap) or failing (IDR),
+for both the workflow and ENCODE.
+
+GRCm39 gives the same results as mm10. After lifting the mm10 peaks to GRCm39, 99.6-99.9% of
+the GRCm39 replicate and conservative peaks overlap an mm10 peak and 97-98% are identical (same
+coordinates and summit, identical p-values); the optimal peak sets differ more (93% identical),
+as the random split into pseudoreplicates differs. The signal tracks correlate with r = 0.999
+(1 kb bins) and the QC metrics are within 0.5% (e.g. TSS enrichment 39.9 and 14.2, FRiP 0.608
+and 0.144, 163,773 optimal peaks). For GRCm39, ENCODE's mm10 exclusion list and TSS file are lifted over;
+ENCODE has no DHS, promoter and enhancer regions for it. Peak annotation does differ:
+Ensembl 116 has more and longer transcripts than Ensembl 102, so more peaks are annotated as
+promoter (49% instead of 40%) and fewer as distal intergenic (15% instead of 25%).
 
 ## Authors
 
