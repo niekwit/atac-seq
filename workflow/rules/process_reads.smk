@@ -136,23 +136,73 @@ rule get_annotation_region:
         "> {output}) 2> {log}"
 
 
-# Generate BED file of TSS regions from GTF file for ataqv
+# TSS file for the TSS enrichment (ENCODE and ataqv): the ENCODE TSS file used
+# by the ENCODE pipeline (GRCh38, mm10; mm39: the mm10 file lifted over), so
+# that scores can be compared with the ENCODE thresholds, or otherwise the 5'
+# end of each protein coding gene of the Ensembl GTF
 # -----------------------------------------------------
-rule generate_tss_file:
-    input:
-        gtf=resources.gtf,
-    output:
-        bed="resources/tss.bed",
-    threads: 3
-    resources:
-        runtime=runtime(30),
-        mem_mb=10000,
-    log:
-        "logs/resources/generate_tss_file.log",
-    conda:
-        "../envs/atac.yaml"
-    script:
-        "../scripts/generate_tss_file.py"
+if config["genome"]["ensembl"] in ENCODE_TSS:
+
+    rule get_encode_tss:
+        input:
+            chrom_sizes="resources/chrom_sizes.txt",
+        output:
+            bed="resources/tss.bed",
+        retries: 3
+        params:
+            url=(
+                "https://www.encodeproject.org/files/"
+                f"{ENCODE_TSS[config['genome']['ensembl']][0]}/@@download/"
+                f"{ENCODE_TSS[config['genome']['ensembl']][0]}.bed.gz"
+            ),
+            chain_url=(
+                "https://hgdownload.soe.ucsc.edu/goldenPath/"
+                f"{ENCODE_TSS[config['genome']['ensembl']][1]}"
+                if ENCODE_TSS[config["genome"]["ensembl"]][1]
+                else ""
+            ),
+            tmp=lambda w, output: output.bed.removesuffix(".bed"),
+        threads: 1
+        resources:
+            runtime=runtime(30),
+            mem_mb=1000,
+        log:
+            "logs/resources/get_encode_tss.log",
+        conda:
+            "../envs/liftover.yaml"
+        shell:
+            # Ensembl chromosome names; TSSs on chromosomes that are not in
+            # the genome and mitochondrial TSSs are removed
+            "(wget -q {params.url} -O - | pigz -dc > {params.tmp}.encode.bed && "
+            'if [ -n "{params.chain_url}" ]; then '
+            "wget -q {params.chain_url} -O {params.tmp}.chain.gz && "
+            "liftOver -minMatch=0.5 {params.tmp}.encode.bed {params.tmp}.chain.gz "
+            "{params.tmp}.lifted.bed {params.tmp}.unmapped.bed && "
+            "mv {params.tmp}.lifted.bed {params.tmp}.encode.bed && "
+            "rm {params.tmp}.chain.gz; fi && "
+            'awk \'BEGIN{{OFS="\\t"}} NR == FNR {{keep[$1] = 1; next}} '
+            '{{sub(/^chr/, "", $1); if ($1 == "M") $1 = "MT"}} '
+            '($1 in keep) && $1 != "MT"\' '
+            "{input.chrom_sizes} {params.tmp}.encode.bed > {output.bed} && "
+            "rm {params.tmp}.encode.bed) 2> {log}"
+
+else:
+
+    rule generate_tss_file:
+        input:
+            gtf=resources.gtf,
+        output:
+            bed="resources/tss.bed",
+        threads: 1
+        resources:
+            runtime=runtime(30),
+            mem_mb=1000,
+        log:
+            "logs/resources/generate_tss_file.log",
+        conda:
+            "../envs/atac.yaml"
+        script:
+            "../scripts/generate_tss_file.py"
 
 
 # Index genome with bowtie2
@@ -185,10 +235,47 @@ rule bowtie2_index:
 
 
 # Create BED file of blacklisted regions: the ENCODE exclusion list used by
-# the ENCODE pipeline (GRCh38, mm10), or otherwise a blacklist from
+# the ENCODE pipeline (GRCh38, mm10), the ENCODE exclusion list of the
+# previous assembly lifted over (mm39), or otherwise a blacklist from
 # AnnotationHub (Amemiya et al. 2019)
 # -----------------------------------------------------
-if config["genome"]["ensembl"] in ENCODE_BLACKLISTS:
+if config["genome"]["ensembl"] in LIFTED_BLACKLISTS:
+
+    rule lift_encode_blacklist:
+        output:
+            bed="resources/blacklist.bed",
+        retries: 3
+        params:
+            url=(
+                "https://www.encodeproject.org/files/"
+                f"{LIFTED_BLACKLISTS[config['genome']['ensembl']][0]}/@@download/"
+                f"{LIFTED_BLACKLISTS[config['genome']['ensembl']][0]}.bed.gz"
+            ),
+            chain_url=(
+                "https://hgdownload.soe.ucsc.edu/goldenPath/"
+                f"{LIFTED_BLACKLISTS[config['genome']['ensembl']][1]}"
+            ),
+            tmp=lambda w, output: output.bed.removesuffix(".bed"),
+        resources:
+            runtime=runtime(30),
+            mem_mb=1000,
+        log:
+            "logs/resources/lift_encode_blacklist.log",
+        threads: 1
+        conda:
+            "../envs/liftover.yaml"
+        shell:
+            # -minMatch=0.5 keeps regions that are partly deleted or split
+            # in the new assembly
+            "(wget -q {params.url} -O - | pigz -dc > {params.tmp}.old.bed && "
+            "wget -q {params.chain_url} -O {params.tmp}.chain.gz && "
+            "liftOver -minMatch=0.5 {params.tmp}.old.bed {params.tmp}.chain.gz "
+            "{params.tmp}.lifted.bed {params.tmp}.unmapped.bed && "
+            'awk \'BEGIN{{OFS="\\t"}} {{sub(/^chr/, "", $1); if ($1 == "M") $1 = "MT"; print}}\' '
+            "{params.tmp}.lifted.bed > {output} && "
+            "rm {params.tmp}.old.bed {params.tmp}.chain.gz {params.tmp}.lifted.bed) 2> {log}"
+
+elif config["genome"]["ensembl"] in ENCODE_BLACKLISTS:
 
     rule get_encode_blacklist:
         output:

@@ -6,7 +6,8 @@ and checks the results against the [ENCODE ATAC-seq data standards](https://www.
 Samples of the same condition are treated as biological replicates of one ENCODE experiment.
 
 1. Download genome sequence and annotation from Ensembl, and the ENCODE exclusion list
-   (blacklist) and annotated regions (GRCh38, mm10; other genomes: blacklist from AnnotationHub)
+   (blacklist), TSS file and annotated regions (GRCh38, mm10; mm39: ENCODE mm10 exclusion list
+   and TSS file lifted to mm39; other genomes: blacklist from AnnotationHub)
 2. Quality control of reads (`FastQC`)
 3. Adapter trimming (`cutadapt -e 0.1 -m 5`, Nextera adapter)
 4. Alignment (`bowtie2 -k 5 -X2000 --mm`)
@@ -33,8 +34,9 @@ Not included from the ENCODE pipeline: its optional (off by default) preseq, cro
 and Roadmap comparison, its HTML/JSON QC report and the bigBed/starch/hammock peak formats.
 The fraction of reads in DHS, promoters and enhancers is only calculated for GRCh38 and mm10
 (`mm38`), for which ENCODE provides these regions.
-As in ENCODE, TSS enrichment uses one TSS per protein coding gene (5' end of each Ensembl
-protein coding gene).
+TSS enrichment uses ENCODE's TSS files (one TSS per protein coding gene; GRCh38, mm10, and for
+mm39 the mm10 file lifted to mm39), so that scores can be compared with the ENCODE thresholds.
+For other genomes it uses the 5' end of each Ensembl protein coding gene.
 
 ## Running the workflow
 

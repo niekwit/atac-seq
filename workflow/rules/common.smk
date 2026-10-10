@@ -183,3 +183,19 @@ ENCODE_BLACKLISTS = {
     "test": "ENCFF356LFX",
     "mm38": "ENCFF547MET",
 }
+
+# Genomes without an ENCODE exclusion list get the list of the previous
+# assembly lifted over with a UCSC chain: (ENCODE accession, UCSC chain)
+LIFTED_BLACKLISTS = {
+    "mm39": ("ENCFF547MET", "mm10/liftOver/mm10ToMm39.over.chain.gz"),
+}
+
+# ENCODE TSS files (one TSS per protein coding gene) used by the ENCODE
+# ATAC-seq pipeline for the TSS enrichment: (ENCODE accession, UCSC chain to
+# lift it to the genome, or None)
+ENCODE_TSS = {
+    "hg38": ("ENCFF493CCB", None),
+    "test": ("ENCFF493CCB", None),
+    "mm38": ("ENCFF498BEJ", None),
+    "mm39": ("ENCFF498BEJ", "mm10/liftOver/mm10ToMm39.over.chain.gz"),
+}

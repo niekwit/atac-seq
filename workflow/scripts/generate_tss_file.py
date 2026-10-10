@@ -1,33 +1,30 @@
-import sys
+"""
+Writes one transcription start site (TSS) per protein coding gene (its 5'
+end) to a BED file, for the TSS enrichment (ENCODE and ataqv) of genomes
+without an ENCODE TSS file. This is how the ENCODE TSS files (e.g.
+ENCFF493CCB for GRCh38) were made from GENCODE.
+
+TSS enrichment scores are lower with one TSS per transcript or with all
+genes, as many non-coding genes have little accessibility at their TSS.
+Mitochondrial genes are left out.
+
+The GTF file is read line by line, so that memory use stays low.
+"""
+
 import logging
-import time
-import pyranges1 as pr
+import re
+import sys
 
-"""
-Note to self about 1-based GTF vs 0-based BED:
-
-Some genomic coordinate formats (GFF, GTF) use a 1-based, start-and-end-included format. Pyranges takes care of converting between these conventions when loading and writing files in these formats.
-
-Source:
-https://pyranges1.readthedocs.io/en/latest/tutorial.html
-
-"""
-
-if "snakemake" not in globals():
-    # For testing pruposes
-    # Get command line arguments
-    args = sys.argv[1:]
-    if len(args) != 2:
-        print("Usage: python generate_tss_file.py <annotations.gtf> <output.bed>")
-        sys.exit(1)
-    gtf = args[0]
-    output_bed = args[1]
-    date_time = time.strftime("%Y-%m-%d_%H:%M:%S")
-    log = f"generate_tss_file_{date_time}.log"
-else:
+if "snakemake" in globals():
     gtf = snakemake.input["gtf"]
     output_bed = snakemake.output["bed"]
     log = snakemake.log[0]
+else:
+    # For testing: python generate_tss_file.py <annotation.gtf> <output.bed>
+    if len(sys.argv) != 3:
+        sys.exit("Usage: python generate_tss_file.py <annotation.gtf> <output.bed>")
+    gtf, output_bed = sys.argv[1:]
+    log = f"{output_bed}.log"
 
 # Set up logging
 logging.basicConfig(
@@ -38,37 +35,36 @@ logging.basicConfig(
     force=True,
 )
 
-# Load the GTF
-logging.info(f"Loading GTF file {gtf}")
-gr = pr.read_gtf(gtf)
+MITO = {"MT", "chrM", "M"}
+ATTRIBUTE = re.compile(r'(\S+) "([^"]*)"')
 
-# Filter for protein coding genes: one TSS per protein coding gene, as in the
-# ENCODE TSS files (e.g. ENCFF493CCB for GRCh38). TSS enrichment scores are
-# lower with one TSS per transcript or with all genes, as many non-coding
-# genes have little accessibility at their TSS.
-logging.info("Filtering for protein coding genes...")
-genes = gr[(gr.Feature == "gene") & (gr.gene_biotype == "protein_coding")]
 
-# Remove mitochondrial genes
-logging.info("Removing mitochondrial genes...")
-genes = genes[genes.Chromosome != "MT"]
+def five_end(chrom, start, end, strand):
+    """0-based BED interval of the 5' end of a 1-based GTF feature"""
+    pos = start - 1 if strand == "+" else end - 1
+    return chrom, pos, pos + 1, strand
 
-# Calculate TSS
-# .five_end() handles the strand-specific logic
-logging.info("Calculating TSS...")
-tss = genes.five_end()
 
-logging.info("Using Gene ID for the Name column...")
-tss["Name"] = tss.gene_id
+genes = {}  # gene_id: TSS
+logging.info(f"Reading {gtf}")
+with open(gtf) as fh:
+    for line in fh:
+        if line.startswith("#"):
+            continue
+        fields = line.rstrip("\n").split("\t")
+        if fields[2] != "gene" or fields[0] in MITO:
+            continue
+        values = dict(ATTRIBUTE.findall(fields[8]))
+        if values.get("gene_biotype") != "protein_coding":
+            continue
+        genes[values["gene_id"]] = five_end(
+            fields[0], int(fields[3]), int(fields[4]), fields[6]
+        )
+logging.info(f"{len(genes)} protein coding genes")
 
-# Add a dummy score
-tss["Score"] = 0
-
-# Select only the columns needed for BED
-tss = tss[["Chromosome", "Start", "End", "Name", "Score", "Strand"]]
-
-# Export to BED
-logging.info(f"Exporting TSS to BED file: {output_bed}")
-output_bed = output_bed
-tss.to_bed(output_bed)
+with open(output_bed, "w") as fh:
+    for gene_id, (chrom, start, end, strand) in sorted(
+        genes.items(), key=lambda x: (x[1], x[0])
+    ):
+        fh.write(f"{chrom}\t{start}\t{end}\t{gene_id}\t0\t{strand}\n")
 logging.info("Done!")

@@ -42,22 +42,16 @@ rule frac_mito:
         "results/qc/{sample}.frac_mito.qc",
     params:
         mito=config["mito_chr_name"],
-    threads: 1
+    threads: 2
     resources:
-        runtime=runtime(30),
-        mem_mb=1000,
+        runtime=runtime(60),
+        mem_mb=3000,
     log:
         "logs/frac_mito/{sample}.log",
     conda:
         "../envs/encode.yaml"
-    shell:
-        "(total=$(samtools view -c -F 0x904 {input.bam}); "
-        "if samtools idxstats {input.bam} | cut -f 1 | grep -qx '{params.mito}'; then "
-        "mito=$(samtools view -c -F 0x904 {input.bam} {params.mito}); else mito=0; fi; "
-        "printf 'non_mito_reads\\tmito_reads\\tfrac_mito_reads\\n' > {output}; "
-        "awk -v t=$total -v m=$mito "
-        "'BEGIN{{printf \"%d\\t%d\\t%f\\n\", t - m, m, (t > 0 ? m / t : 0)}}' >> {output}"
-        ") 2> {log}"
+    script:
+        "../scripts/frac_mito.py"
 
 
 # TSS enrichment as calculated by ENCODE (encode_task_tss_enrich.py)

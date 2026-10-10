@@ -1,0 +1,9 @@
+# Lifting the ENCODE exclusion list to a newer assembly
+name: liftover
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - conda-forge::pigz=2.8
+  - bioconda::ucsc-liftover=482
