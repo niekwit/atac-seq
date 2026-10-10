@@ -55,12 +55,15 @@ with open(gtf) as fh:
         if fields[2] != "gene" or fields[0] in MITO:
             continue
         values = dict(ATTRIBUTE.findall(fields[8]))
-        if values.get("gene_biotype") != "protein_coding":
+        # Ensembl: gene_biotype, GENCODE: gene_type
+        if values.get("gene_biotype", values.get("gene_type")) != "protein_coding":
             continue
         genes[values["gene_id"]] = five_end(
             fields[0], int(fields[3]), int(fields[4]), fields[6]
         )
 logging.info(f"{len(genes)} protein coding genes")
+if not genes:
+    sys.exit(f"No protein coding genes found in {gtf}")
 
 with open(output_bed, "w") as fh:
     for gene_id, (chrom, start, end, strand) in sorted(
