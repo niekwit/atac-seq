@@ -235,4 +235,11 @@ def deseq2_contrasts():
             for i, control in enumerate(replicated)
             for treatment in replicated[i + 1 :]
         ]
-    return {f"{t}_vs_{c}": (t, c) for t, c in configured}
+    contrasts = {}
+    for t, c in configured:
+        name = f"{t}_vs_{c}"
+        if contrasts.setdefault(name, (t, c)) != (t, c):
+            raise ValueError(
+                f"Contrasts {contrasts[name]} and {(t, c)} have the same name {name}"
+            )
+    return contrasts
