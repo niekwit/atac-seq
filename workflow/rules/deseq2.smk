@@ -79,3 +79,74 @@ rule deseq2_qc:
         "../envs/deseq2.yaml"
     script:
         "../scripts/deseq2_qc.R"
+
+
+# Annotate the consensus peaks with ChIPseeker
+# -----------------------------------------------------
+rule annotate_consensus_peaks:
+    input:
+        peaks="results/deseq2/consensus_peaks.bed",
+        edb=f"resources/{resources.genome}_{resources.build}_annotation.Rdata",
+        txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
+    output:
+        txt="results/deseq2/consensus_peaks_annotated.txt",
+    threads: 2
+    resources:
+        runtime=runtime(30),
+        mem_mb=4000,
+    log:
+        "logs/deseq2/annotate_consensus_peaks.log",
+    conda:
+        "../envs/r.yaml"
+    script:
+        "../scripts/annotate_peaks.R"
+
+
+# Fit the DESeq2 model (~ condition) to all samples
+# -----------------------------------------------------
+rule deseq2_fit:
+    input:
+        counts="results/deseq2/consensus_peak_counts.txt",
+    output:
+        dds="results/deseq2/dds.rds",
+    params:
+        samples=SAMPLES,
+        conditions=SAMPLE_SHEET["condition"].tolist(),
+    threads: 4
+    resources:
+        runtime=runtime(120),
+        mem_mb=12000,
+    log:
+        "logs/deseq2/deseq2_fit.log",
+    conda:
+        "../envs/deseq2.yaml"
+    script:
+        "../scripts/deseq2_fit.R"
+
+
+# Differential accessibility between two conditions
+# -----------------------------------------------------
+rule deseq2_contrast:
+    input:
+        dds="results/deseq2/dds.rds",
+        annotation="results/deseq2/consensus_peaks_annotated.txt",
+        peaks="results/deseq2/consensus_peaks.bed",
+    output:
+        table="results/deseq2/{contrast}/differential_peaks.tsv",
+        ma="results/deseq2/{contrast}/ma_plot.png",
+        volcano="results/deseq2/{contrast}/volcano_plot.png",
+    params:
+        treatment=lambda w: deseq2_contrasts()[w.contrast][0],
+        control=lambda w: deseq2_contrasts()[w.contrast][1],
+        fdr=config.get("deseq2", {}).get("fdr", 0.05),
+        lfc_threshold=config.get("deseq2", {}).get("lfc_threshold", 0),
+    threads: 2
+    resources:
+        runtime=runtime(60),
+        mem_mb=6000,
+    log:
+        "logs/deseq2/{contrast}.log",
+    conda:
+        "../envs/deseq2.yaml"
+    script:
+        "../scripts/deseq2_contrast.R"

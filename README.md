@@ -168,6 +168,10 @@ also uses [DESeq2](https://doi.org/10.1186/s13059-014-0550-8) (`deseq2: enable: 
    counted with `featureCounts`
 3. Variance stabilising transformation (blind to the conditions) of the peaks with at least 10
    insertions, which is used for the PCA and the sample correlations
+4. Differential accessibility between conditions, for each pair in `deseq2: contrasts` or, if
+   that is empty, each pair of conditions with at least 2 replicates (the later condition of the
+   sample sheet is the treatment): DESeq2 model `~ condition` fitted to all samples, Wald test,
+   and log2 fold changes shrunken with [ashr](https://doi.org/10.1093/biostatistics/kxw041)
 
 Output in `results/deseq2/`:
 
@@ -178,6 +182,19 @@ Output in `results/deseq2/`:
 | `vst_counts.tsv`                                      | variance stabilised counts                                  |
 | `pca.png`, `pca.tsv`                                  | PCA of the most variable peaks (`deseq2: pca_ntop`)         |
 | `sample_correlation.png`, `sample_correlation.tsv`    | Pearson correlation of the samples over all peaks           |
+| `consensus_peaks_annotated.txt`                       | consensus peaks annotated with `ChIPseeker`                 |
+| `dds.rds`                                             | fitted DESeq2 object                                        |
+| `{treatment}_vs_{control}/differential_peaks.tsv`     | peak coordinates, annotation and test results, by p-value   |
+| `{treatment}_vs_{control}/ma_plot.png`, `volcano_plot.png` | plots of the shrunken log2 fold changes                |
+
+In `differential_peaks.tsv`, `change` is `more accessible` or `less accessible` in the treatment
+if `padj` is below `deseq2: fdr`. The p-values come from the unshrunken `log2FoldChange` (against
+`deseq2: lfc_threshold`); use `log2FoldChange_shrunken` for ranking and plots.
+
+DESeq2 scales the samples with median-of-ratios size factors, calculated over the peaks. This
+assumes that most peaks do not change, so a global change in accessibility, or a large
+difference in FRiP between samples, is not measured reliably: check `FRiP` in the QC summary
+and the MA plot, in which the cloud of peaks should be centred on 0.
 
 ## Validation against ENCODE
 

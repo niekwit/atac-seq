@@ -27,6 +27,7 @@ wildcard_constraints:
     prefix=r"(pooled/)?[a-zA-Z0-9_]+(\.pr[12])?",
     pair=r"rep\d+_vs_rep\d+|rep\d+-pr1_vs_rep\d+-pr2|pooled-pr1_vs_pooled-pr2",
     method="idr|overlap",
+    contrast="[a-zA-Z0-9_]+",
 
 
 # Load rules
@@ -77,6 +78,14 @@ rule all:
                 "results/deseq2/pca.png",
                 "results/deseq2/sample_correlation.png",
             ]
+            if deseq2_enabled()
+            else []
+        ),
+        (
+            expand(
+                "results/deseq2/{contrast}/differential_peaks.tsv",
+                contrast=deseq2_contrasts(),
+            )
             if deseq2_enabled()
             else []
         ),

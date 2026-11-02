@@ -212,3 +212,27 @@ def deseq2_peak_method():
     if deseq2_enabled() and method not in reproducibility_methods():
         raise ValueError(f"deseq2: peak_method {method} needs idr: enable: true")
     return method
+
+
+def deseq2_contrasts():
+    """
+    Returns the comparisons of the differential accessibility analysis as
+    {name: (treatment, control)}: deseq2: contrasts, or otherwise each pair of
+    conditions with at least 2 replicates, with the later condition of the
+    sample sheet as treatment.
+    """
+    configured = config.get("deseq2", {}).get("contrasts") or []
+    for pair in configured:
+        unknown = [c for c in pair if c not in CONDITIONS]
+        if unknown:
+            raise ValueError(f"Unknown conditions in deseq2: contrasts: {unknown}")
+        if min(len(replicates(c)) for c in pair) < 2:
+            raise ValueError(f"Contrast {pair} needs at least 2 replicates of each")
+    if not configured:
+        replicated = [c for c in CONDITIONS if len(replicates(c)) > 1]
+        configured = [
+            (treatment, control)
+            for i, control in enumerate(replicated)
+            for treatment in replicated[i + 1 :]
+        ]
+    return {f"{t}_vs_{c}": (t, c) for t, c in configured}

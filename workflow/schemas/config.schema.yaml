@@ -97,6 +97,21 @@ properties:
       pca_ntop:
         type: integer
         minimum: 2
+      contrasts:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+      fdr:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+      lfc_threshold:
+        type: number
+        minimum: 0
 
 required:
   - genome

@@ -14,24 +14,23 @@ edb_file <- snakemake@input[["edb"]]
 txdb_file <- snakemake@input[["txdb"]]
 txt <- snakemake@output[["txt"]]
 
-# Load narrowPeak file (0-based BED coordinates)
-peaks <- read.delim(
-  peak_file,
-  header = FALSE,
-  col.names = c(
-    "chr",
-    "start",
-    "end",
-    "peak_id",
-    "score",
-    "strand",
-    "signal_value",
-    "p_value",
-    "q_value",
-    "summit"
-  ),
-  colClasses = c("character", rep(NA, 9))
-) %>%
+# Load peaks: narrowPeak or BED with the peak ID in column 4 (0-based BED
+# coordinates)
+columns <- c(
+  "chr",
+  "start",
+  "end",
+  "peak_id",
+  "score",
+  "strand",
+  "signal_value",
+  "p_value",
+  "q_value",
+  "summit"
+)
+peaks <- read.delim(peak_file, header = FALSE, colClasses = c(V1 = "character"))
+names(peaks) <- columns[seq_len(ncol(peaks))]
+peaks <- peaks %>%
   mutate(start = start + 1, strand = "*")
 peaks <- makeGRangesFromDataFrame(
   peaks,
