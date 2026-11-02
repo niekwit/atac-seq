@@ -86,6 +86,33 @@ properties:
     type: integer
     minimum: 0
 
+  deseq2:
+    type: object
+    properties:
+      enable:
+        type: boolean
+      peak_method:
+        type: string
+        enum: ["overlap", "idr"]
+      pca_ntop:
+        type: integer
+        minimum: 2
+      contrasts:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+      fdr:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+      lfc_threshold:
+        type: number
+        minimum: 0
+
 required:
   - genome
   - mito_chr_name

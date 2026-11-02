@@ -34,3 +34,20 @@ idr:
   threshold: 0.05
 
 pseudoreplication_random_seed: 0
+
+# Comparison of all samples with DESeq2 (not part of the ENCODE pipeline):
+# PCA, sample correlation and differential accessibility from Tn5 insertions
+# in the consensus peaks
+deseq2:
+  enable: true
+  # Optimal peak sets that are merged into the consensus peaks: overlap or idr
+  peak_method: overlap
+  # Number of most variable peaks used for the PCA
+  pca_ntop: 500
+  # Differential accessibility: [treatment, control] pairs of conditions; empty:
+  # all pairs of conditions with at least 2 replicates
+  contrasts: []
+  # Adjusted p-value below which a peak is called differential
+  fdr: 0.05
+  # Test against this absolute log2 fold change (0: any change)
+  lfc_threshold: 0

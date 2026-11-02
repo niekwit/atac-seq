@@ -29,6 +29,9 @@ Samples of the same condition are treated as biological replicates of one ENCODE
     DHS, promoters, enhancers and blacklisted regions, rescue and self-consistency ratios,
     `ataqv`, `MultiQC`
 14. Annotation of the optimal peak set (`ChIPseeker`)
+15. Comparison of all samples (not part of the ENCODE pipeline): PCA, sample correlation and
+    differential accessibility between conditions from Tn5 insertions in the merged optimal peaks
+    (`DESeq2`)
 
 Not included from the ENCODE pipeline: its optional (off by default) preseq, cross-correlation
 and Roadmap comparison, its HTML/JSON QC report and the bigBed/starch/hammock peak formats.
@@ -86,6 +89,13 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | enable                            | run IDR (naive overlap is always run)                                      | true           |
 | threshold                         | IDR threshold                                                              | 0.05           |
 | **pseudoreplication_random_seed** | seed for pseudoreplication (0: tagAlign file size, as ENCODE)              | 0              |
+| **deseq2**                        |                                                                            |                |
+| enable                            | compare all samples with DESeq2                                            | true           |
+| peak_method                       | optimal peak sets merged into consensus peaks: overlap or idr              | overlap        |
+| pca_ntop                          | number of most variable peaks used for the PCA                             | 500            |
+| contrasts                         | [treatment, control] pairs; empty: all pairs with ≥ 2 replicates           | []             |
+| fdr                               | adjusted p-value below which a peak is differential                        | 0.05           |
+| lfc_threshold                     | test against this absolute log2 fold change (0: any change)                | 0              |
 
 ### Output
 
@@ -106,3 +116,5 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/qc/{sample}.gc_plot.png`                      | GC bias                                                         |
 | `results/qc/{condition}.jsd_plot.png`                  | fingerprint plot of the replicates                              |
 | `results/ataqv_report/index.html`                      | ataqv report                                                    |
+| `results/deseq2/pca.png`, `sample_correlation.png`     | PCA and correlation of all samples                              |
+| `results/deseq2/{treatment}_vs_{control}/differential_peaks.tsv` | differential accessibility between conditions         |
