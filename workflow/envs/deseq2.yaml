@@ -1,0 +1,12 @@
+# Counting reads in peaks and DESeq2 analysis of all samples
+name: deseq2
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - bioconda::bioconductor-deseq2=1.50.2
+  - bioconda::subread=2.1.1
+  - conda-forge::r-ggplot2
+  - conda-forge::r-ggrepel
+  - conda-forge::r-pheatmap

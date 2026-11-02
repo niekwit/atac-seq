@@ -199,3 +199,16 @@ ENCODE_TSS = {
     "mm38": ("ENCFF498BEJ", None),
     "mm39": ("ENCFF498BEJ", "mm10/liftOver/mm10ToMm39.over.chain.gz"),
 }
+
+
+def deseq2_enabled():
+    """The DESeq2 analysis of all samples is optional and needs at least 2 samples"""
+    return config.get("deseq2", {}).get("enable", False) and len(SAMPLES) > 1
+
+
+def deseq2_peak_method():
+    """Reproducibility method of the optimal peak sets used as consensus peaks"""
+    method = config.get("deseq2", {}).get("peak_method", "overlap")
+    if deseq2_enabled() and method not in reproducibility_methods():
+        raise ValueError(f"deseq2: peak_method {method} needs idr: enable: true")
+    return method

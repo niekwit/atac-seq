@@ -35,6 +35,7 @@ include: "rules/process_reads.smk"
 include: "rules/atac.smk"
 include: "rules/bigwig.smk"
 include: "rules/qc.smk"
+include: "rules/deseq2.smk"
 
 
 onstart:
@@ -69,4 +70,13 @@ rule all:
             "results/bigwig/{prefix}.{signal}.signal.bigwig",
             prefix=SAMPLES + [f"pooled/{c}" for c in CONDITIONS],
             signal=["fc", "pval"],
+        ),
+        # Optional comparison of all samples
+        (
+            [
+                "results/deseq2/pca.png",
+                "results/deseq2/sample_correlation.png",
+            ]
+            if deseq2_enabled()
+            else []
         ),

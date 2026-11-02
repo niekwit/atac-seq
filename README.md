@@ -16,6 +16,7 @@ See [config/README.md](config/README.md) for the workflow steps, parameters and 
     - [Configure the analysis](#configure-the-analysis)
     - [Run the workflow](#run-the-workflow)
   - [QC summary](#qc-summary)
+  - [Comparing samples](#comparing-samples)
   - [Validation against ENCODE](#validation-against-encode)
   - [Authors](#authors)
   - [References](#references)
@@ -155,6 +156,28 @@ method (IDR and overlap): the optimal and conservative peak sets, their number o
 ratios. A ratio above 2 means poor agreement between replicates (rescue ratio) or within a
 replicate (self-consistency ratio); with one ratio above 2 reproducibility is `borderline`,
 with both `fail`.
+
+## Comparing samples
+
+The ENCODE pipeline analyses each condition on its own. To compare all samples, the workflow
+also uses [DESeq2](https://doi.org/10.1186/s13059-014-0550-8) (`deseq2: enable: true`):
+
+1. Consensus peaks: the optimal peak sets of all conditions (`deseq2: peak_method`, overlap or
+   IDR) are merged with `bedtools merge`
+2. Tn5 insertions (the 5' end of each read of `{sample}.nodup.bam`) in the consensus peaks are
+   counted with `featureCounts`
+3. Variance stabilising transformation (blind to the conditions) of the peaks with at least 10
+   insertions, which is used for the PCA and the sample correlations
+
+Output in `results/deseq2/`:
+
+| file                                                  | content                                                     |
+| ----------------------------------------------------- | ----------------------------------------------------------- |
+| `consensus_peaks.bed`                                 | consensus peaks                                             |
+| `consensus_peak_counts.txt`                           | Tn5 insertions per peak and sample                          |
+| `vst_counts.tsv`                                      | variance stabilised counts                                  |
+| `pca.png`, `pca.tsv`                                  | PCA of the most variable peaks (`deseq2: pca_ntop`)         |
+| `sample_correlation.png`, `sample_correlation.tsv`    | Pearson correlation of the samples over all peaks           |
 
 ## Validation against ENCODE
 

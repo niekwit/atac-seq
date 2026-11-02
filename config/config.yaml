@@ -48,3 +48,12 @@ idr:
 
 # Random seed for pseudoreplication (0: use the tagAlign file size, as ENCODE)
 pseudoreplication_random_seed: 0
+
+# Comparison of all samples with DESeq2 (not part of the ENCODE pipeline):
+# PCA and sample correlation from Tn5 insertions in the consensus peaks
+deseq2:
+  enable: true
+  # Optimal peak sets that are merged into the consensus peaks: overlap or idr
+  peak_method: overlap
+  # Number of most variable peaks used for the PCA
+  pca_ntop: 500
