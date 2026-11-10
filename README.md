@@ -26,12 +26,17 @@ See [config/README.md](config/README.md) for the workflow steps, parameters and 
 ### Requirements
 
 - Linux with [conda](https://docs.conda.io/en/latest/) (or mamba) installed
-- [Snakemake](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) ≥8.25.5:
+- [Snakemake](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) ≥8.25.5
+  (tested with 8.25.5 and 9.27.1). Install it in a new environment, so that conda picks a
+  Python version that Snakemake and snakedeploy support:
 
 ```bash
-conda create -c conda-forge -c bioconda -n snakemake snakemake=8.25.5 snakedeploy
+conda create -c conda-forge -c bioconda -n snakemake snakemake=9.27.1 snakedeploy
 conda activate snakemake
 ```
+
+On a cluster, also install the executor plugin of its scheduler, e.g.
+`snakemake-executor-plugin-slurm` for SLURM.
 
 All other software is installed automatically by Snakemake in conda environments.
 
@@ -66,7 +71,8 @@ path/to/analysis
 
 1. Put the paired-end reads in `reads/` as `{sample}_R1_001.fastq.gz` and `{sample}_R2_001.fastq.gz`.
 2. List the samples and their condition in `config/samples.csv`. Samples of the same condition are
-   analysed as biological replicates.
+   analysed as biological replicates. Mark the samples of the reference (control) condition with
+   `yes` in the `reference` column.
 3. Set the genome (`genome: ensembl` and `release`) and the effective genome size
    (`macs2: gsize`) in `config/config.yaml`. The other defaults follow the ENCODE pipeline.
 
@@ -168,10 +174,12 @@ also uses [DESeq2](https://doi.org/10.1186/s13059-014-0550-8) (`deseq2: enable: 
    counted with `featureCounts`
 3. Variance stabilising transformation (blind to the conditions) of the peaks with at least 10
    insertions, which is used for the PCA and the sample correlations
-4. Differential accessibility between conditions, for each pair in `deseq2: contrasts` or, if
-   that is empty, each pair of conditions with at least 2 replicates (the later condition of the
-   sample sheet is the treatment): DESeq2 model `~ condition` fitted to all samples, Wald test,
-   and log2 fold changes shrunken with [ashr](https://doi.org/10.1093/biostatistics/kxw041)
+4. Differential accessibility between conditions, for each `[treatment, control]` pair in
+   `deseq2: contrasts` or, if that is empty, each condition with at least 2 replicates against
+   the reference condition (`reference` column of the sample sheet, see
+   [config/README.md](config/README.md#input-data)): DESeq2 model `~ condition` fitted to all
+   samples, Wald test, and log2 fold changes shrunken with
+   [ashr](https://doi.org/10.1093/biostatistics/kxw041)
 
 Output in `results/deseq2/`:
 

@@ -333,6 +333,7 @@ rule fastqc:
         zip="results/fastqc/{sample}_{read}_fastqc.zip",
     params:
         extra="--quiet --memory 1024",
+        outdir="results/fastqc/{sample}_{read}",
     resources:
         runtime=runtime(120),
         mem_mb=2000,
@@ -340,9 +341,17 @@ rule fastqc:
         """--- Checking fastq files with FastQC."""
     log:
         "logs/fastqc/{sample}_{read}.log",
-    threads: 4
-    wrapper:
-        "v6.0.0/bio/fastqc"
+    # FastQC uses one thread per input file
+    threads: 1
+    conda:
+        "../envs/reports.yaml"
+    shell:
+        "mkdir -p {params.outdir} && "
+        "fastqc {params.extra} --threads {threads} --outdir {params.outdir} "
+        "{input.fastq} > {log} 2>&1 && "
+        "mv {params.outdir}/{wildcards.sample}_{wildcards.read}_001_fastqc.html {output.html} && "
+        "mv {params.outdir}/{wildcards.sample}_{wildcards.read}_001_fastqc.zip {output.zip} && "
+        "rmdir {params.outdir}"
 
 
 # Adapter trimming (ENCODE: cutadapt -e 0.1 -m 5)
@@ -442,12 +451,17 @@ rule markduplicates:
         "logs/mark_duplicates/{sample}.log",
     params:
         extra="--REMOVE_DUPLICATES false --VALIDATION_STRINGENCY LENIENT",
+        java_heap="3g",
     threads: 2
     resources:
         runtime=runtime(120),
         mem_mb=4096,
-    wrapper:
-        "v9.0.0/bio/picard/markduplicates"
+    conda:
+        "../envs/qc.yaml"
+    shell:
+        "picard -Xmx{params.java_heap} MarkDuplicates {params.extra} "
+        "-I {input.bams} -O {output.bam} -M {output.metrics} "
+        "--TMP_DIR {resources.tmpdir} > {log} 2>&1"
 
 
 # Remove duplicates and reads on filter_chrs (e.g. mitochondrial reads)
@@ -486,11 +500,14 @@ rule samtools_index:
     wildcard_constraints:
         dir="bowtie2|filtered",
         sample=r"[a-zA-Z0-9_]+(\.dupmark|\.nodup)?",
+    threads: 3
     params:
-        extra="",  # optional params string
-    threads: 3  # This value - 1 will be sent to -@
-    wrapper:
-        "v8.1.1/bio/samtools/index"
+        # -@: threads in addition to the main thread
+        extra_threads=lambda w, threads: threads - 1,
+    conda:
+        "../envs/encode.yaml"
+    shell:
+        "samtools index -@ {params.extra_threads} {input} {output} 2> {log}"
 
 
 # Get BAM file statistics with samtools stats
@@ -504,14 +521,13 @@ rule samtools_stats:
     wildcard_constraints:
         dir="bowtie2|filtered",
         sample=r"[a-zA-Z0-9_]+(\.nodup)?",
-    params:
-        extra="",  # Optional: extra arguments.
-        region="",  # Optional: region string.
     threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=1000,
     log:
         "logs/samtools_stats/{dir}/{sample}.log",
-    wrapper:
-        "v8.1.1/bio/samtools/stats"
+    conda:
+        "../envs/encode.yaml"
+    shell:
+        "samtools stats {input.bam} > {output} 2> {log}"

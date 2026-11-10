@@ -45,7 +45,8 @@ deseq2:
   # Number of most variable peaks used for the PCA
   pca_ntop: 500
   # Differential accessibility: [treatment, control] pairs of conditions; empty:
-  # all pairs of conditions with at least 2 replicates
+  # each condition with at least 2 replicates against the reference condition
+  # (reference column of the sample sheet)
   contrasts: []
   # Adjusted p-value below which a peak is called differential
   fdr: 0.05

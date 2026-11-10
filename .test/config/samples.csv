@@ -1,5 +1,5 @@
-sample,condition
-Rep_1,wt
-Rep_2,wt
-Rep_3,ko
-Rep_4,ko
+sample,condition,reference
+Rep_1,wt,yes
+Rep_2,wt,yes
+Rep_3,ko,no
+Rep_4,ko,no

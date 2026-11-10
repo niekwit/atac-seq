@@ -113,6 +113,8 @@ rule gc_bias:
         summary="results/qc/{sample}.gc_bias_summary.txt",
         chart_pdf="results/qc/{sample}.gc_bias.pdf",
         plot="results/qc/{sample}.gc_plot.png",
+    # Picard can fail to start Rscript on a compute node
+    retries: 2
     params:
         java_heap="8g",
     threads: 3
@@ -200,15 +202,20 @@ rule multiqc:
     output:
         report="results/multiqc/multiqc_report.html",
     params:
-        extra="--verbose --dirs",
+        extra="--verbose --dirs --no-data-dir",
+        # MultiQC searches the directories of the input files
+        dirs=lambda w, input: sorted({os.path.dirname(f) for f in input}),
     threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=2000,
     log:
         "logs/multiqc.log",
-    wrapper:
-        "v8.1.1/bio/multiqc"
+    conda:
+        "../envs/reports.yaml"
+    shell:
+        "multiqc {params.extra} --force --outdir results/multiqc "
+        "--filename multiqc_report {params.dirs} > {log} 2>&1"
 
 
 # Summary of ENCODE QC metrics with ENCODE standards

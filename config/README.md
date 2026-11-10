@@ -48,15 +48,20 @@ For other genomes it uses the 5' end of each Ensembl protein coding gene.
 Paired-end reads go in `reads/{sample}_R1_001.fastq.gz` and `reads/{sample}_R2_001.fastq.gz`.
 The sample sheet `config/samples.csv` has the following layout:
 
-| sample | condition |
-| ------ | --------- |
-| WT_1   | wt        |
-| WT_2   | wt        |
-| KO_1   | ko        |
-| KO_2   | ko        |
+| sample | condition | reference |
+| ------ | --------- | --------- |
+| WT_1   | wt        | yes       |
+| WT_2   | wt        | yes       |
+| KO_1   | ko        | no        |
+| KO_2   | ko        | no        |
 
 Sample names may only contain letters, numbers and underscores, and must end with `_[0-9]`.
 The replicates of a condition are numbered (rep1, rep2, ...) in the order of the sample sheet.
+
+`reference` marks the samples of the reference (control) condition with `yes`, and all other
+samples with `no`. It is the reference level of the DESeq2 model, and without `deseq2: contrasts` each other
+condition is compared to it (positive log2 fold changes: more accessible than in the reference). The column is needed for the DESeq2 analysis of more than one condition, unless
+all comparisons are listed in `deseq2: contrasts`.
 
 ### Parameters
 
@@ -93,7 +98,7 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | enable                            | compare all samples with DESeq2                                            | true           |
 | peak_method                       | optimal peak sets merged into consensus peaks: overlap or idr              | overlap        |
 | pca_ntop                          | number of most variable peaks used for the PCA                             | 500            |
-| contrasts                         | [treatment, control] pairs; empty: all pairs with ≥ 2 replicates           | []             |
+| contrasts                         | [treatment, control] pairs; empty: each condition against the reference    | []             |
 | fdr                               | adjusted p-value below which a peak is differential                        | 0.05           |
 | lfc_threshold                     | test against this absolute log2 fold change (0: any change)                | 0              |
 

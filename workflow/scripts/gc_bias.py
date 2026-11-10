@@ -6,6 +6,7 @@ the fraction of genomic windows at each GC percentage.
 """
 
 import logging
+import shutil
 import subprocess
 
 import matplotlib
@@ -33,6 +34,25 @@ logging.basicConfig(
     force=True,
 )
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
+# Picard needs Rscript for its chart. When it cannot start Rscript, for any
+# reason, it only reports "R is not installed on this machine", so start it
+# here first to log the actual error
+# -----------------------------------------------------
+rscript = shutil.which("Rscript")
+logging.info(f"Rscript: {rscript}")
+try:
+    r_check = subprocess.run(
+        ["Rscript", "-e", "cat(R.version.string)"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    logging.info(r_check.stdout)
+except (OSError, subprocess.CalledProcessError) as error:
+    stderr = getattr(error, "stderr", "")
+    logging.error(f"Rscript could not be run: {error} {stderr}")
+    raise
 
 # GC bias metrics
 # -----------------------------------------------------

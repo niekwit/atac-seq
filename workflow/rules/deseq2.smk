@@ -68,6 +68,7 @@ rule deseq2_qc:
     params:
         samples=SAMPLES,
         conditions=SAMPLE_SHEET["condition"].tolist(),
+        levels=deseq2_levels(),
         ntop=config.get("deseq2", {}).get("pca_ntop", 500),
     threads: 2
     resources:
@@ -112,6 +113,7 @@ rule deseq2_fit:
     params:
         samples=SAMPLES,
         conditions=SAMPLE_SHEET["condition"].tolist(),
+        levels=deseq2_levels(),
     threads: 4
     resources:
         runtime=runtime(120),
