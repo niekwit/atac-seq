@@ -86,6 +86,11 @@ def peak_pairs(condition):
     return true_reps + pseudo_reps + pooled_pseudo_reps
 
 
+def true_replicate_pairs(condition):
+    """Returns the pairs of true replicates of a condition (rep1_vs_rep2, ...)"""
+    return [p for p in peak_pairs(condition) if re.match(r"rep\d+_vs_", p)]
+
+
 def pair_prefixes(condition, pair):
     """
     Returns the tagAlign/peak file prefixes (relative to results/tagalign/

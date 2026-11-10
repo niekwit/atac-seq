@@ -66,6 +66,12 @@ rule all:
             method=reproducibility_methods(),
             condition=CONDITIONS,
         ),
+        # Peaks reproducible in several replicates (conditions with replicates)
+        expand(
+            "results/{method}/{condition}/replicated_peak.narrowPeak",
+            method=reproducibility_methods(),
+            condition=[c for c in CONDITIONS if len(replicates(c)) > 1],
+        ),
         expand(
             "results/bigwig/{prefix}.{signal}.signal.bigwig",
             prefix=SAMPLES + [f"pooled/{c}" for c in CONDITIONS],
