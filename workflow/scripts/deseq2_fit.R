@@ -12,6 +12,8 @@ library(DESeq2)
 # Load Snakemake parameters
 samples <- unlist(snakemake@params[["samples"]])
 conditions <- unlist(snakemake@params[["conditions"]])
+# Reference condition first
+levels <- unlist(snakemake@params[["levels"]])
 
 # Tn5 insertions per peak; the samples are the columns after the annotation
 counts <- read.delim(
@@ -25,7 +27,7 @@ colnames(counts) <- sub(".nodup.bam$", "", basename(colnames(counts)))
 counts <- counts[, samples, drop = FALSE]
 
 sample_info <- data.frame(
-  condition = factor(conditions, levels = unique(conditions)),
+  condition = factor(conditions, levels = levels),
   row.names = samples
 )
 dds <- DESeqDataSetFromMatrix(counts, sample_info, design = ~condition)

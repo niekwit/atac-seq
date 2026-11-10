@@ -4,8 +4,6 @@
 
 # Only mouse and human genomes are supported for now
 
-from scripts.resources import Resources
-
 
 # Load configuration
 # -----------------------------------------------------
@@ -15,7 +13,8 @@ configfile: "config/config.yaml"
 include: "rules/common.smk"
 
 
-resources = Resources(config["genome"]["ensembl"], config["genome"]["release"])
+# URLs and file names of the genome fasta and GTF files
+resources = GenomeFiles(config["genome"]["ensembl"], config["genome"]["release"])
 SAMPLES = samples()
 CONDITIONS = conditions()
 

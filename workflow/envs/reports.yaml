@@ -1,0 +1,9 @@
+# Read QC and the MultiQC report
+name: reports
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - bioconda::fastqc=0.12.1
+  - bioconda::multiqc=1.33

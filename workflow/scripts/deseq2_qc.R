@@ -14,6 +14,8 @@ library(pheatmap)
 # Load Snakemake parameters
 samples <- unlist(snakemake@params[["samples"]])
 conditions <- unlist(snakemake@params[["conditions"]])
+# Reference condition first
+levels <- unlist(snakemake@params[["levels"]])
 ntop <- snakemake@params[["ntop"]]
 
 # Tn5 insertions per peak; the samples are the columns after the annotation
@@ -29,7 +31,7 @@ counts <- counts[, samples, drop = FALSE]
 
 # design ~ 1: the transformation does not use the conditions (blind)
 sample_info <- data.frame(
-  condition = factor(conditions, levels = unique(conditions)),
+  condition = factor(conditions, levels = levels),
   row.names = samples
 )
 dds <- DESeqDataSetFromMatrix(counts, sample_info, design = ~1)

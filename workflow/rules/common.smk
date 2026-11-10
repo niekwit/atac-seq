@@ -1,4 +1,5 @@
 # import basic packages
+import os
 import re
 import pandas as pd
 from snakemake.utils import validate
@@ -214,27 +215,70 @@ def deseq2_peak_method():
     return method
 
 
+def reference_condition():
+    """
+    Returns the reference (control) condition, marked with yes in the
+    reference column of the sample sheet, or None without that column
+    """
+    if "reference" not in SAMPLE_SHEET.columns:
+        return None
+    marked = SAMPLE_SHEET.groupby("condition", sort=False)["reference"].unique()
+    mixed = [c for c, values in marked.items() if len(values) > 1]
+    if mixed:
+        raise ValueError(
+            f"All samples of a condition need the same reference value: {mixed}"
+        )
+    reference = [c for c, values in marked.items() if values[0] == "yes"]
+    if len(reference) != 1:
+        raise ValueError(
+            "Exactly one condition needs reference yes in the sample sheet, "
+            f"found: {reference}"
+        )
+    return reference[0]
+
+
+def deseq2_levels():
+    """
+    Returns the conditions in the order of the DESeq2 factor levels: the
+    reference condition first, then the sample sheet order
+    """
+    reference = reference_condition()
+    if reference is None:
+        return CONDITIONS
+    return [reference] + [c for c in CONDITIONS if c != reference]
+
+
 def deseq2_contrasts():
     """
     Returns the comparisons of the differential accessibility analysis as
-    {name: (treatment, control)}: deseq2: contrasts, or otherwise each pair of
-    conditions with at least 2 replicates, with the later condition of the
-    sample sheet as treatment.
+    {name: (treatment, control)}: deseq2: contrasts, or otherwise each
+    condition with at least 2 replicates against the reference condition of
+    the sample sheet.
     """
     configured = config.get("deseq2", {}).get("contrasts") or []
     for pair in configured:
         unknown = [c for c in pair if c not in CONDITIONS]
         if unknown:
             raise ValueError(f"Unknown conditions in deseq2: contrasts: {unknown}")
+        if pair[0] == pair[1]:
+            raise ValueError(f"Contrast {pair} must compare different conditions")
         if min(len(replicates(c)) for c in pair) < 2:
             raise ValueError(f"Contrast {pair} needs at least 2 replicates of each")
     if not configured:
         replicated = [c for c in CONDITIONS if len(replicates(c)) > 1]
-        configured = [
-            (treatment, control)
-            for i, control in enumerate(replicated)
-            for treatment in replicated[i + 1 :]
-        ]
+        if len(replicated) < 2:
+            return {}
+        reference = reference_condition()
+        if reference is None:
+            raise ValueError(
+                "Mark the reference (control) condition with a reference column "
+                "(yes/no) in the sample sheet, or set deseq2: contrasts"
+            )
+        if reference not in replicated:
+            raise ValueError(
+                f"The reference condition {reference} needs at least 2 replicates"
+            )
+        configured = [(c, reference) for c in replicated if c != reference]
     contrasts = {}
     for t, c in configured:
         name = f"{t}_vs_{c}"
@@ -243,3 +287,62 @@ def deseq2_contrasts():
                 f"Contrasts {contrasts[name]} and {(t, c)} have the same name {name}"
             )
     return contrasts
+
+
+class GenomeFiles:
+    """Gets URLs and file names of fasta and GTF files for a given genome and build"""
+
+    # create genome directory
+    os.makedirs("resources/", exist_ok=True)
+
+    def __init__(self, genome, build):
+        self.genome = genome
+        self.build = build
+
+        # base URLs
+        base_url = f"https://ftp.ensembl.org/pub/release-{build}/"
+
+        if "hg" in genome:
+            if genome == "hg19":
+                name = "GRCh37"
+            elif genome == "hg38":
+                name = "GRCh38"
+
+            # create URLs for genome files
+            self.fasta_url = f"{base_url}fasta/homo_sapiens/dna/Homo_sapiens.{name}.dna.primary_assembly.fa.gz"
+            self.gtf_url = (
+                f"{base_url}gtf/homo_sapiens/Homo_sapiens.{name}.{build}.gtf.gz"
+            )
+
+        elif "mm" in genome:
+            if genome == "mm38":
+                name = "GRCm38"
+
+            elif genome == "mm39":
+                name = "GRCm39"
+
+            # create URLs for genome files
+            self.fasta_url = f"{base_url}fasta/mus_musculus/dna/Mus_musculus.{name}.dna.primary_assembly.fa.gz"
+            self.gtf_url = (
+                f"{base_url}gtf/mus_musculus/Mus_musculus.{name}.{build}.gtf.gz"
+            )
+
+        elif "dm" in genome:
+            if genome == "dm6":
+                name = "BDGP6.46"
+
+            self.fasta_url = f"{base_url}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.toplevel.fa.gz"
+            self.gtf_url = f"{base_url}gtf/drosophila_melanogaster/Drosophila_melanogaster.{name}.{build}.gtf.gz"
+
+        elif "test" in genome:
+            self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
+            self.gtf_url = "https://github.com/niekwit/atac-seq/raw/main/.test/Homo_sapiens.GRCh38.115_chr11.gtf.gz"
+
+        # downloaded unzipped file names
+        self.fasta = self._file_from_url(self.fasta_url)
+        self.gtf = self._file_from_url(self.gtf_url)
+
+    def _file_from_url(self, url):
+        """Returns file path for unzipped downloaded file"""
+
+        return f"resources/{os.path.basename(url).replace('.gz','')}"

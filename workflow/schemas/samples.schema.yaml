@@ -7,6 +7,10 @@ properties:
   condition:
     type: string
     description: condition; samples of the same condition are treated as biological replicates
+  reference:
+    type: string
+    enum: ["yes", "no"]
+    description: yes for the samples of the reference (control) condition of the DESeq2 analysis
 
 required:
   - sample
