@@ -240,8 +240,11 @@ def reference_condition():
 def deseq2_levels():
     """
     Returns the conditions in the order of the DESeq2 factor levels: the
-    reference condition first, then the sample sheet order
+    reference condition first, then the sample sheet order. The reference
+    column is only checked when DESeq2 is run.
     """
+    if not deseq2_enabled():
+        return CONDITIONS
     reference = reference_condition()
     if reference is None:
         return CONDITIONS
@@ -345,4 +348,4 @@ class GenomeFiles:
     def _file_from_url(self, url):
         """Returns file path for unzipped downloaded file"""
 
-        return f"resources/{os.path.basename(url).replace('.gz','')}"
+        return f"resources/{os.path.basename(url).replace('.gz', '')}"

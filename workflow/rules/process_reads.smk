@@ -501,10 +501,13 @@ rule samtools_index:
         dir="bowtie2|filtered",
         sample=r"[a-zA-Z0-9_]+(\.dupmark|\.nodup)?",
     threads: 3
+    params:
+        # -@: threads in addition to the main thread
+        extra_threads=lambda w, threads: threads - 1,
     conda:
         "../envs/encode.yaml"
     shell:
-        "samtools index -@ {threads} {input} {output} 2> {log}"
+        "samtools index -@ {params.extra_threads} {input} {output} 2> {log}"
 
 
 # Get BAM file statistics with samtools stats
