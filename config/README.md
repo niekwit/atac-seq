@@ -21,6 +21,7 @@ Samples of the same condition are treated as biological replicates of one ENCODE
 11. Reproducibility: IDR (threshold 0.05) and naive overlap of all pairs of replicates,
     of the pseudoreplicates of each replicate and of the pooled pseudoreplicates,
     giving the optimal and conservative peak set of each condition
+    and, not part of the ENCODE pipeline, the peaks reproducible in several replicates
 12. Fold enrichment and p-value signal tracks (`MACS2 bdgcmp`) of each replicate and condition
 13. QC: library complexity (NRF, PBC1, PBC2), fraction of mitochondrial reads, FRiP,
     TSS enrichment (calculated as by ENCODE), fragment length distribution and nucleosomal
@@ -92,6 +93,7 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | cap_num_peak                      | maximum number of peaks                                                    | 300000         |
 | **peaks**                         |                                                                            |                |
 | keep_chr_regex                    | peaks on chromosomes not matching this (POSIX extended) regex are removed  | [0-9]+\|X\|Y   |
+| min_replicate_fraction            | fraction of the replicates in which a peak of `replicated_peak.narrowPeak` is reproducible (rounded up, at least 2) | 1 |
 | **idr**                           |                                                                            |                |
 | enable                            | run IDR (naive overlap is always run)                                      | true           |
 | threshold                         | IDR threshold                                                              | 0.05           |
@@ -113,6 +115,7 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/macs2/{sample}.bfilt.narrowPeak`              | blacklist-filtered peaks of each replicate                      |
 | `results/{idr,overlap}/{condition}/optimal_peak.narrowPeak` | optimal reproducible peak set (ENCODE's main output)       |
 | `results/{idr,overlap}/{condition}/conservative_peak.narrowPeak` | conservative reproducible peak set                    |
+| `results/{idr,overlap}/{condition}/replicated_peak.narrowPeak` | peaks reproducible in at least `min_replicate_fraction` of the replicates (conditions with replicates) |
 | `results/{idr,overlap}/{condition}/optimal_peak_annotated.txt` | annotated optimal peak set                              |
 | `results/bigwig/{sample,pooled/condition}.{fc,pval}.signal.bigwig` | fold enrichment and -log10(p-value) signal tracks   |
 | `results/qc/encode_qc_summary.tsv`                     | QC metrics of each sample, graded against the ENCODE standards  |

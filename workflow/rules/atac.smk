@@ -254,6 +254,38 @@ rule reproducibility:
         "../scripts/reproducibility.py"
 
 
+# Peaks reproducible in at least peaks: min_replicate_fraction of the replicates
+# (not part of ENCODE)
+# -----------------------------------------------------
+rule replicated_peaks:
+    input:
+        pooled="results/macs2/pooled/{condition}.bfilt.narrowPeak",
+        replicates=lambda w: expand(
+            "results/macs2/{sample}.narrowPeak", sample=replicates(w.condition)
+        ),
+        pairs=lambda w: expand(
+            "results/{method}/{condition}/{pair}.bfilt.narrowPeak",
+            method=w.method,
+            condition=w.condition,
+            pair=true_replicate_pairs(w.condition),
+        ),
+    output:
+        "results/{method}/{condition}/replicated_peak.narrowPeak",
+    params:
+        pairs=lambda w: true_replicate_pairs(w.condition),
+        min_fraction=config["peaks"].get("min_replicate_fraction", 1),
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=3000,
+    log:
+        "logs/replicated_peaks/{method}/{condition}.log",
+    conda:
+        "../envs/encode.yaml"
+    script:
+        "../scripts/replicated_peaks.py"
+
+
 # QC of ATAC-seq data using ataqv
 # -----------------------------------------------------
 rule ataqv:

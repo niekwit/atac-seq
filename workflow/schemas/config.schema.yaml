@@ -71,6 +71,11 @@ properties:
     properties:
       keep_chr_regex:
         type: string
+      min_replicate_fraction:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+        default: 1
     required: ["keep_chr_regex"]
 
   idr:

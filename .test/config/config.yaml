@@ -28,6 +28,10 @@ macs2:
 
 peaks:
   keep_chr_regex: "[0-9]+|X|Y"
+  # Peaks reproducible in at least this fraction of the replicates of a
+  # condition (rounded up, at least 2; not part of the ENCODE pipeline):
+  # results/{idr,overlap}/{condition}/replicated_peak.narrowPeak
+  min_replicate_fraction: 1
 
 idr:
   enable: true
