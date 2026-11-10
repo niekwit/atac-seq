@@ -59,9 +59,11 @@ Sample names may only contain letters, numbers and underscores, and must end wit
 The replicates of a condition are numbered (rep1, rep2, ...) in the order of the sample sheet.
 
 `reference` marks the samples of the reference (control) condition with `yes`, and all other
-samples with `no`. It is the reference level of the DESeq2 model, and without `deseq2: contrasts` each other
-condition is compared to it (positive log2 fold changes: more accessible than in the reference). The column is needed for the DESeq2 analysis of more than one condition, unless
-all comparisons are listed in `deseq2: contrasts`.
+samples with `no`. It is the reference level of the DESeq2 model. Without `deseq2: contrasts`,
+each other condition with at least 2 replicates is compared to it (positive log2 fold changes:
+more accessible than in the reference); the reference condition then also needs at least 2
+replicates. The column is needed for the DESeq2 analysis of more than one condition, unless all
+comparisons are listed in `deseq2: contrasts`.
 
 ### Parameters
 
