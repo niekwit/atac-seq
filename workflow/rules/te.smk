@@ -162,6 +162,74 @@ rule te_summary:
         "../scripts/te_summary.py"
 
 
+# Coordinate-sorted and indexed BAM for the signal tracks
+# -----------------------------------------------------
+rule te_sort_bam:
+    input:
+        "results/te/{sample}.filtered.bam",
+    output:
+        bam=temp("results/te/{sample}.sorted.bam"),
+        bai=temp("results/te/{sample}.sorted.bam.bai"),
+    threads: 4
+    resources:
+        runtime=runtime(60),
+        mem_mb=6000,
+    log:
+        "logs/te/te_sort_bam_{sample}.log",
+    conda:
+        "../envs/te.yaml"
+    shell:
+        "(samtools sort -@ {threads} -m 1G -T {resources.tmpdir}/{wildcards.sample}.te "
+        "-o {output.bam} {input} && "
+        "samtools index -@ {threads} {output.bam}) 2> {log}"
+
+
+# Tn5 insertions (5' end of each read) per million insertions, including
+# multimappers at one of their best alignments: the signal at a single copy
+# of a young repeat is not reliable, only the pattern over many copies
+# -----------------------------------------------------
+rule te_bigwig:
+    input:
+        bam="results/te/{sample}.sorted.bam",
+        bai="results/te/{sample}.sorted.bam.bai",
+    output:
+        "results/te/bigwig/{sample}.cpm.bigwig",
+    params:
+        options="--binSize 10 --normalizeUsing CPM --Offset 1",
+    threads: 4
+    resources:
+        runtime=runtime(60),
+        mem_mb=6000,
+    log:
+        "logs/te/te_bigwig_{sample}.log",
+    conda:
+        "../envs/qc.yaml"
+    shell:
+        "bamCoverage {params.options} -p {threads} -b {input.bam} -o {output} "
+        "> {log} 2>&1"
+
+
+# Mean signal of the replicates of a condition
+# -----------------------------------------------------
+rule te_bigwig_mean:
+    input:
+        lambda w: expand(
+            "results/te/bigwig/{sample}.cpm.bigwig", sample=replicates(w.condition)
+        ),
+    output:
+        "results/te/bigwig/mean/{condition}.cpm.bigwig",
+    threads: 4
+    resources:
+        runtime=runtime(60),
+        mem_mb=6000,
+    log:
+        "logs/te/te_bigwig_mean_{condition}.log",
+    conda:
+        "../envs/qc.yaml"
+    shell:
+        "bigwigAverage --binSize 10 -p {threads} -b {input} -o {output} > {log} 2>&1"
+
+
 # Fit the DESeq2 model (~ condition) to the subfamily counts of all samples
 # (with deseq2: enable)
 # -----------------------------------------------------

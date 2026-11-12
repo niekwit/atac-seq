@@ -102,6 +102,11 @@ rule all:
                 "results/te/te_family.tsv",
                 "results/te/te_class.tsv",
                 "results/te/te_library_stats.tsv",
+                *expand("results/te/bigwig/{sample}.cpm.bigwig", sample=SAMPLES),
+                *expand(
+                    "results/te/bigwig/mean/{condition}.cpm.bigwig",
+                    condition=CONDITIONS,
+                ),
             ]
             if te_enabled()
             else []

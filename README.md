@@ -246,7 +246,10 @@ outputs.
    `XS` ≥ `AS`) that the pairing does not resolve (MAPQ < 2) are marked as multimappers.
 4. Counting of Tn5 insertions (5' end of each read) in repeats with `featureCounts`, once with
    all read pairs (`-M`) and once with uniquely mapping read pairs only
-5. With `deseq2: enable`: differential accessibility of subfamilies with `DESeq2`, for the same
+5. Signal tracks of Tn5 insertions (5' end of each read, 10 bp bins, per million insertions;
+   `deepTools bamCoverage`) per sample, and the mean of the replicates of each condition
+   (`deepTools bigwigAverage`). Unlike the ENCODE signal tracks, they include multimappers.
+6. With `deseq2: enable`: differential accessibility of subfamilies with `DESeq2`, for the same
    contrasts, `fdr` and `lfc_threshold` as the peaks (Wald test, ashr-shrunken log2 fold
    changes for plots). Library sizes come from the median-of-ratios over the subfamilies
    (`te: normalisation: deseq2`), which assumes that most subfamilies do not change. If a
@@ -261,6 +264,8 @@ Output in `results/te/`:
 | `te_family.tsv`          | per family (repFamily, e.g. L1, ERVK, Alu)                              |
 | `te_class.tsv`           | per class (repClass, e.g. LINE, LTR, SINE)                              |
 | `te_library_stats.tsv`   | read pairs kept, duplicates, multimappers and fraction of insertions in repeats |
+| `bigwig/{sample}.cpm.bigwig` | Tn5 insertions per million insertions, including multimappers (see the caveat below) |
+| `bigwig/mean/{condition}.cpm.bigwig` | mean of the replicates of a condition |
 | `deseq2/{contrast}/differential_subfamilies.tsv` | per subfamily: family, class, copies, `baseMean`, `log2FoldChange` (and shrunken), `pvalue`, `padj`, `change` |
 | `deseq2/{contrast}/{ma,volcano}_plot.png` | MA and volcano plots, most significant subfamilies labelled |
 
@@ -279,6 +284,13 @@ Notes:
 - Counts are per repeat subfamily, family or class, not per copy: a multimapper is assigned to
   a random copy among its best alignments, which is close to the right subfamily total but not a
   reliable per-copy count.
+- **Signal tracks:** a multimapper is shown at one randomly chosen copy among its best
+  alignments, so the signal at a single copy of a young repeat (e.g. one L1MdTf element) does
+  not show the accessibility of that copy. Only the pattern over many copies, such as a higher
+  signal over most L1MdTf copies in one condition, is meaningful. In uniquely mappable regions
+  the tracks show the same insertions as the ENCODE alignments, but as insertions per million
+  instead of MACS2 fold enrichment or p-values. Use the subfamily tables, not the tracks, for
+  quantification.
 - Random assignment of multimappers gives the same subfamily counts and differential
   accessibility as keeping up to 100 alignments per read pair (`bowtie2 -k 100`, multimappers
   weighted 1/number of alignments), at about 1/6 of the alignment time: see
