@@ -37,6 +37,8 @@ include: "rules/bigwig.smk"
 include: "rules/qc.smk"
 include: "rules/deseq2.smk"
 include: "rules/te.smk"
+include: "rules/te_peaks.smk"
+include: "rules/te_qc.smk"
 
 
 onstart:
@@ -59,40 +61,47 @@ localrules:
 
 rule all:
     input:
-        "results/multiqc/multiqc_report.html",
-        "results/ataqv_report/index.html",
-        "results/qc/encode_qc_summary.tsv",
-        expand(
-            "results/{method}/{condition}/optimal_peak_annotated.txt",
-            method=reproducibility_methods(),
-            condition=CONDITIONS,
-        ),
-        # Peaks reproducible in several replicates (conditions with replicates)
-        expand(
-            "results/{method}/{condition}/replicated_peak.narrowPeak",
-            method=reproducibility_methods(),
-            condition=[c for c in CONDITIONS if len(replicates(c)) > 1],
-        ),
-        expand(
-            "results/bigwig/{prefix}.{signal}.signal.bigwig",
-            prefix=SAMPLES + [f"pooled/{c}" for c in CONDITIONS],
-            signal=["fc", "pval"],
-        ),
-        # Optional comparison of all samples
+        # ENCODE peaks, signal tracks and QC, and the optional comparison of all
+        # samples (not with te: only)
         (
             [
-                "results/deseq2/pca.png",
-                "results/deseq2/sample_correlation.png",
+                "results/multiqc/multiqc_report.html",
+                "results/ataqv_report/index.html",
+                "results/qc/encode_qc_summary.tsv",
+                expand(
+                    "results/{method}/{condition}/optimal_peak_annotated.txt",
+                    method=reproducibility_methods(),
+                    condition=CONDITIONS,
+                ),
+                # Peaks reproducible in several replicates (conditions with replicates)
+                expand(
+                    "results/{method}/{condition}/replicated_peak.narrowPeak",
+                    method=reproducibility_methods(),
+                    condition=[c for c in CONDITIONS if len(replicates(c)) > 1],
+                ),
+                expand(
+                    "results/bigwig/{prefix}.{signal}.signal.bigwig",
+                    prefix=SAMPLES + [f"pooled/{c}" for c in CONDITIONS],
+                    signal=["fc", "pval"],
+                ),
+                        (
+                    [
+                        "results/deseq2/pca.png",
+                        "results/deseq2/sample_correlation.png",
+                    ]
+                    if deseq2_enabled()
+                    else []
+                ),
+                (
+                    expand(
+                        "results/deseq2/{contrast}/differential_peaks.tsv",
+                        contrast=deseq2_contrasts(),
+                    )
+                    if deseq2_enabled()
+                    else []
+                ),
             ]
-            if deseq2_enabled()
-            else []
-        ),
-        (
-            expand(
-                "results/deseq2/{contrast}/differential_peaks.tsv",
-                contrast=deseq2_contrasts(),
-            )
-            if deseq2_enabled()
+            if not te_only()
             else []
         ),
         # Optional TE module
@@ -102,6 +111,8 @@ rule all:
                 "results/te/te_family.tsv",
                 "results/te/te_class.tsv",
                 "results/te/te_library_stats.tsv",
+                "results/te/qc/te_qc_summary.tsv",
+                "results/te/multiqc/multiqc_report.html",
                 *expand("results/te/bigwig/{sample}.cpm.bigwig", sample=SAMPLES),
                 *expand(
                     "results/te/bigwig/mean/{condition}.cpm.bigwig",
@@ -117,6 +128,41 @@ rule all:
                 contrast=deseq2_contrasts(),
             )
             if te_enabled() and deseq2_enabled()
+            else []
+        ),
+        (
+            [
+                "results/te/peaks/consensus_peaks_repeats.tsv",
+                "results/te/peaks/consensus_peaks_frac_unique.bed",
+                *expand(
+                    "results/te/peaks/overlap/{condition}/replicated_peak.narrowPeak",
+                    condition=CONDITIONS,
+                ),
+            ]
+            if te_enabled()
+            else []
+        ),
+        (
+            expand(
+                "results/te/peaks/deseq2/{contrast}/{file}",
+                contrast=deseq2_contrasts(),
+                file=[
+                    "differential_peaks.tsv",
+                    "more_accessible.bed",
+                    "less_accessible.bed",
+                ],
+            )
+            if te_enabled() and deseq2_enabled()
+            else []
+        ),
+        (
+            expand(
+                "results/te/correlation/{contrast}/venn.png",
+                contrast=deseq2_contrasts(),
+            )
+            if te_enabled()
+            and deseq2_enabled()
+            and te_correlation_config()["datasets"]
             else []
         ),
         (

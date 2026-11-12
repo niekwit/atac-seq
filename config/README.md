@@ -110,6 +110,7 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | lfc_threshold                     | test against this absolute log2 fold change (0: any change)                | 0              |
 | **te**                            |                                                                            |                |
 | enable                            | run the transposable element module                                        | false          |
+| only                              | run only the TE module (with the genome, index and read trimming it needs), not the ENCODE peaks, signal tracks, QC and DESeq2 of the peaks | false |
 | classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
 | normalisation                     | library size for the DESeq2 comparison of subfamilies: `deseq2` (median-of-ratios over the subfamilies) or `insertions` (all kept insertions of a sample) | deseq2 |
 | heatmap: classes                  | list of classes in the heatmap of each contrast; `["all"]` for every class | ["LINE", "SINE", "LTR", "DNA"] |
@@ -119,6 +120,8 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | profile: min_consensus_fraction   | fraction of the RepeatMasker consensus a copy must cover to count as full-length | 0.9 |
 | profile: flank                    | bp before and after the copies in the profile                              | 2000 |
 | profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |
+| correlation: datasets             | data sets to compare with the differential TE peaks with GAT, as name: BED file (e.g. EM-seq DMRs; UCSC or Ensembl chromosome names) | {} |
+| correlation: gat_samples          | number of random placements of the peaks in GAT                            | 10000 |
 
 ### Output
 
@@ -147,3 +150,7 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/te/deseq2/{contrast}/differential_subfamilies.tsv` | differential accessibility of repeat subfamilies (TE module with `deseq2: enable`) |
 | `results/te/deseq2/{contrast}/heatmap_classes.png` | heatmap of repeat subfamilies, faceted by class (TE module with `deseq2: enable`) |
 | `results/te/profile/{conditions,samples}.png` | profile of the TE signal tracks over full-length copies of `te: profile: subfamilies` |
+| `results/te/multiqc/multiqc_report.html`, `results/te/qc/` | QC of the TE alignments (also with `te: only`) |
+| `results/te/peaks/consensus_peaks_repeats.tsv` | TE consensus peaks with their repeat and fraction of uniquely mapping insertions |
+| `results/te/peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks (with `deseq2: enable`) |
+| `results/te/correlation/{contrast}/venn.png` | GAT enrichment and Venn diagrams of the differential TE peaks and `te: correlation: datasets` |

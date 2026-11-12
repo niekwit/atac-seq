@@ -387,6 +387,30 @@ def te_profile_config():
     }
 
 
+def te_correlation_config():
+    """
+    Returns the data sets ({name: BED file}) to compare with the differential
+    TE peaks with GAT, and the number of GAT samples
+    """
+    correlation = config.get("te", {}).get("correlation", {})
+    datasets = correlation.get("datasets") or {}
+    for name, path in datasets.items():
+        if not os.path.isfile(path):
+            raise ValueError(f"te: correlation: datasets: {name}: no file {path}")
+    return {
+        "datasets": datasets,
+        "gat_samples": correlation.get("gat_samples", 10000),
+    }
+
+
+def te_only():
+    """
+    With te: only, the workflow runs the TE module only (and the read trimming,
+    genome and index it needs), not the ENCODE peaks, signal tracks and QC
+    """
+    return te_enabled() and config.get("te", {}).get("only", False)
+
+
 def te_heatmap_config():
     """
     Returns the selection for the TE heatmap of each DESeq2 contrast: lists of

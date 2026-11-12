@@ -85,14 +85,26 @@ write.table(
 )
 
 cat(sprintf("## log2 fold change %s vs %s\n", treatment, reference))
-# Young subfamilies with too few counts are not in the results
+# Young subfamilies with too few counts are not in the results; combinations
+# of subfamily and mode without a result stay NA (xtabs would give 0)
 young_found <- intersect(young, res_young$subfamily)
-print(round(
-  xtabs(log2FoldChange ~ subfamily + mode, res_young)[young_found, modes],
-  2
-))
+young_table <- function(column) {
+  values <- matrix(
+    NA_real_,
+    nrow = length(young_found),
+    ncol = length(modes),
+    dimnames = list(subfamily = young_found, mode = modes)
+  )
+  rows <- res_young$subfamily %in% young_found & res_young$mode %in% modes
+  values[cbind(
+    res_young$subfamily[rows],
+    res_young$mode[rows]
+  )] <- res_young[[column]][rows]
+  values
+}
+print(round(young_table("log2FoldChange"), 2))
 cat("\n## Adjusted p-value\n")
-print(signif(xtabs(padj ~ subfamily + mode, res_young)[young_found, modes], 2))
+print(signif(young_table("padj"), 2))
 
 # Agreement of log2 fold changes and significant calls with -k 100
 if ("k100" %in% modes) {
