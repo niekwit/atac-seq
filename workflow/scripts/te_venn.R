@@ -42,7 +42,7 @@ gat_label <- function(r) {
 panel <- function(dataset, direction) {
   r <- results[results$dataset == dataset & results$peaks == direction, ]
   heading <- textGrob(
-    dataset,
+    paste0(dataset, "\n", direction, " peaks"),
     gp = gpar(fontsize = 10, fontface = "bold")
   )
   if (r$n_peaks == 0) {
@@ -54,8 +54,8 @@ panel <- function(dataset, direction) {
       "A&B" = r$n_peaks_overlap
     )
     fit <- euler(sizes)
-    # Counts in the legend: labels on the circles are clipped or unreadable
-    # when one set is much smaller than the other
+    # Set names and totals in the legend: labels next to the circles are
+    # clipped when one set is much smaller than the other
     legend_labels <- c(
       sprintf(
         "%s peaks: %s (%s overlap a region)",
@@ -74,7 +74,12 @@ panel <- function(dataset, direction) {
       fills = list(fill = c(colours[[direction]], "grey70"), alpha = 0.6),
       edges = list(col = "grey30"),
       labels = FALSE,
-      quantities = FALSE,
+      # Counts in each area: peaks without overlap, regions without overlap,
+      # peaks overlapping a region
+      quantities = list(
+        labels = format(sizes, big.mark = ",", trim = TRUE),
+        fontsize = 8
+      ),
       legend = list(labels = legend_labels, side = "bottom", fontsize = 8)
     )
   }
@@ -82,7 +87,7 @@ panel <- function(dataset, direction) {
     heading,
     body,
     textGrob(gat_label(r), gp = gpar(fontsize = 8)),
-    heights = unit(c(0.9, 4, 0.8), c("in", "in", "in"))
+    heights = unit(c(0.5, 3.6, 0.45), "in")
   )
 }
 
@@ -95,13 +100,14 @@ for (dataset in datasets) {
 figure <- arrangeGrob(
   grobs = panels,
   ncol = length(directions),
-  top = textGrob(title, gp = gpar(fontsize = 13, fontface = "bold"))
+  top = textGrob(title, gp = gpar(fontsize = 13, fontface = "bold")),
+  padding = unit(0.3, "in")
 )
 
 png(
   snakemake@output[["venn"]],
   width = 4 * length(directions),
-  height = 0.5 + 5.7 * length(datasets),
+  height = 0.5 + 4.65 * length(datasets),
   units = "in",
   res = 300
 )
