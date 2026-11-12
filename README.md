@@ -242,8 +242,8 @@ outputs.
    --mm`): bowtie2's default mode reports one of the best alignments of each read pair, picked
    at random (reproducibly, with the seed) among equally good ones
 3. Properly paired read pairs are kept; PCR duplicates and reads on `filter_chrs` (MT) are
-   removed. Read pairs with an equally good alternative alignment (MAPQ < 2 for either mate)
-   are marked as multimappers.
+   removed. Read pairs in which a mate has an equally good alternative alignment (bowtie2
+   `XS` ≥ `AS`) that the pairing does not resolve (MAPQ < 2) are marked as multimappers.
 4. Counting of Tn5 insertions (5' end of each read) in repeats with `featureCounts`, once with
    all read pairs (`-M`) and once with uniquely mapping read pairs only
 5. With `deseq2: enable`: differential accessibility of subfamilies with `DESeq2`, for the same

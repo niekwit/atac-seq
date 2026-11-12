@@ -87,7 +87,8 @@ for m in modes:
     for s in samples:
         keep = ref[s] >= 50
         x, y = multi[m].loc[keep, s], ref.loc[keep, s]
-        lr = np.log2(((x + 1) / x.sum()) / ((y + 1) / y.sum()))
+        # Library sizes are the totals over all subfamilies
+        lr = np.log2(((x + 1) / multi[m][s].sum()) / ((y + 1) / ref[s].sum()))
         rows.append(
             {
                 "mode": m,
@@ -116,7 +117,11 @@ for m in modes:
                     "sample": s,
                     "subfamily": y,
                     "count": multi[m].loc[y, s],
-                    "unique_count": unique[m].loc[y, s],
+                    # te_filter_multi.py finds multimappers from the number of
+                    # reported alignments, so only for the -k modes
+                    "unique_count": (
+                        unique[m].loc[y, s] if m.startswith("k") else np.nan
+                    ),
                     "cpm": cpm(multi[m])[s][y],
                     f"log2_vs_{REF}": np.log2(cpm(multi[m])[s][y] / cpm(ref)[s][y]),
                 }

@@ -38,7 +38,9 @@ The first 10M read pairs of each run are used.
 - Counting: featureCounts 2.1.1 (Liao et al., 2014,
   [doi:10.1093/bioinformatics/btt656](https://doi.org/10.1093/bioinformatics/btt656)),
   `-p -F SAF --read2pos 5 --largestOverlap -s 0`, with `-M --fraction` (all reads) and
-  without (uniquely aligned reads only), per subfamily.
+  without (uniquely aligned reads only), per subfamily. `te_filter_multi.py` finds multimappers
+  from the number of reported alignments, so the unique counts are only meaningful for the `-k`
+  modes.
 - Comparison with `-k 100` (`compare_modes.py`): correlation of per-subfamily counts,
   library-size-normalised log2 ratios, with young L1 and IAP subfamilies reported
   separately.

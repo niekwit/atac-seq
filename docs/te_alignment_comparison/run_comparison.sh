@@ -61,7 +61,7 @@ for mode in $MODES; do
         [ -s $out ] && continue
         echo "## $(date '+%F %T') align $s $mode (${OPTS[$mode]})"
         /usr/bin/time -f "%e s wall, %M kB max RSS" -o $C/logs/time_${s}_${mode}.txt \
-            bash -c "bowtie2 ${OPTS[$mode]} $EXTRA --threads $THREADS \
+            bash -o pipefail -c "bowtie2 ${OPTS[$mode]} $EXTRA --threads $THREADS \
                 -x resources/bowtie2_index/index \
                 -1 $C/reads/${s}_R1.trim.fastq.gz -2 $C/reads/${s}_R2.trim.fastq.gz \
                 2> $C/logs/bowtie2_${s}_${mode}.log \

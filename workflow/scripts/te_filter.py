@@ -6,10 +6,12 @@ pair, read name order):
 2. Remove PCR duplicates: read pairs with the same chromosome, fragment start,
    fragment length and strand as an earlier read pair
 3. Remove alignments on filter_chrs (e.g. MT)
-4. Mark multimapping read pairs, which have an equally good alternative
-   alignment (bowtie2 MAPQ < 2 for either mate; bowtie2 picked one of the best
-   alignments at random), with NH:i:2, so that featureCounts without -M
-   counts uniquely mapping read pairs only. Other read pairs get NH:i:1.
+4. Mark multimapping read pairs with NH:i:2, so that featureCounts without
+   -M counts uniquely mapping read pairs only (other read pairs get NH:i:1).
+   A read pair is multimapping when a mate has an equally good alternative
+   alignment (XS >= AS) that its mate does not resolve (MAPQ < 2, which
+   bowtie2 also gives to some uniquely aligned reads with low scores);
+   bowtie2 then picked one of the best alignments at random.
 
 Duplicates are found in a first pass over the BAM file, which stores a 64-bit
 hash of each read pair's fragment (8 bytes per read pair), and removed in a
@@ -66,6 +68,18 @@ def read_pairs(fh):
             yield r1, r2
 
 
+def multimapping(r):
+    """
+    True if the mate has an equally good alternative alignment that the
+    pairing does not resolve
+    """
+    return (
+        r.mapping_quality < MIN_UNIQUE_MAPQ
+        and r.has_tag("XS")
+        and r.get_tag("XS") >= r.get_tag("AS")
+    )
+
+
 def fragment(r1):
     """Chromosome, start, length and strand of read 1 of an alignment pair"""
     return (
@@ -114,7 +128,7 @@ with pysam.AlignmentFile(bam, "rb", check_sq=False, threads=threads) as fh_in:
                 stats["filter_chrs_pairs"] += 1
                 continue
             stats["kept_pairs"] += 1
-            unique = min(r1.mapping_quality, r2.mapping_quality) >= MIN_UNIQUE_MAPQ
+            unique = not (multimapping(r1) or multimapping(r2))
             stats["unique_pairs" if unique else "multimapping_pairs"] += 1
             for r in (r1, r2):
                 r.set_tag("NH", 1 if unique else 2, "i")
