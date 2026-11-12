@@ -68,3 +68,22 @@ te:
   # enable): deseq2 (median-of-ratios over the subfamilies) or insertions
   # (all kept insertions of a sample, for when most repeats change)
   normalisation: deseq2
+  # Heatmap per DESeq2 contrast (results/te/deseq2/{contrast}/heatmap_classes.png),
+  # faceted by class. Lists; ["all"] selects every class or subfamily
+  heatmap:
+    classes: ["LINE", "SINE", "LTR", "DNA"]
+    # ["all"]: the significant subfamilies of these classes. Named subfamilies
+    # (e.g. ["L1MdTf_I", "L1MdA_I", "IAPEz-int"]) are plotted whether
+    # significant or not
+    subfamilies: ["all"]
+    # Most significant subfamilies per class (with subfamilies: ["all"])
+    max_per_class: 25
+  # Profile of Tn5 insertions over the full-length copies of these
+  # subfamilies, scaled to body_length bp with flank bp on each side
+  # (results/te/profile/). Full-length: covers at least
+  # min_consensus_fraction of the RepeatMasker consensus. Empty list: no plot
+  profile:
+    subfamilies: ["L1HS", "L1PA2", "L1PA3", "SVA_D", "LTR12C"]
+    min_consensus_fraction: 0.9
+    flank: 2000
+    body_length: 6000

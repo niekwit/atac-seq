@@ -112,6 +112,13 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | enable                            | run the transposable element module                                        | false          |
 | classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
 | normalisation                     | library size for the DESeq2 comparison of subfamilies: `deseq2` (median-of-ratios over the subfamilies) or `insertions` (all kept insertions of a sample) | deseq2 |
+| heatmap: classes                  | list of classes in the heatmap of each contrast; `["all"]` for every class | ["LINE", "SINE", "LTR", "DNA"] |
+| heatmap: subfamilies              | list of subfamilies in the heatmap; `["all"]` for the significant subfamilies of the selected classes. Named subfamilies are plotted whether significant or not (significant ones marked with *) | ["all"] |
+| heatmap: max_per_class            | most significant subfamilies per class in the heatmap (with `subfamilies: ["all"]`) | 25 |
+| profile: subfamilies              | subfamilies for the profile over their full-length copies (empty: no profile) | [] |
+| profile: min_consensus_fraction   | fraction of the RepeatMasker consensus a copy must cover to count as full-length | 0.9 |
+| profile: flank                    | bp before and after the copies in the profile                              | 2000 |
+| profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |
 
 ### Output
 
@@ -138,3 +145,5 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/te/te_{subfamily,family,class}.tsv`           | Tn5 insertions in repeats (TE module)                           |
 | `results/te/bigwig/{sample,mean/{condition}}.cpm.bigwig` | Tn5 insertion tracks including multimappers, per sample and mean per condition (TE module; signal at single copies of young repeats is not reliable) |
 | `results/te/deseq2/{contrast}/differential_subfamilies.tsv` | differential accessibility of repeat subfamilies (TE module with `deseq2: enable`) |
+| `results/te/deseq2/{contrast}/heatmap_classes.png` | heatmap of repeat subfamilies, faceted by class (TE module with `deseq2: enable`) |
+| `results/te/profile/{conditions,samples}.png` | profile of the TE signal tracks over full-length copies of `te: profile: subfamilies` |

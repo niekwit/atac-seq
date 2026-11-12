@@ -255,6 +255,12 @@ outputs.
    (`te: normalisation: deseq2`), which assumes that most subfamilies do not change. If a
    condition changes the accessibility of many repeat families at once, use
    `te: normalisation: insertions` (all kept insertions of each sample) instead.
+7. With subfamilies in `te: profile: subfamilies`: profile of the signal tracks over the
+   full-length copies of these subfamilies (copies that cover at least 90% of the RepeatMasker
+   consensus), scaled to the same length from 5' to 3' with 2 kb flanks (`deepTools
+   computeMatrix scale-regions` and `plotProfile`), per condition and per sample. The profile
+   is the mean over many copies, so it shows, for example, accessibility at the 5' UTR promoter
+   of young LINE-1s, even though single copies can't be resolved.
 
 Output in `results/te/`:
 
@@ -268,6 +274,8 @@ Output in `results/te/`:
 | `bigwig/mean/{condition}.cpm.bigwig` | mean of the replicates of a condition |
 | `deseq2/{contrast}/differential_subfamilies.tsv` | per subfamily: family, class, copies, `baseMean`, `log2FoldChange` (and shrunken), `pvalue`, `padj`, `change` |
 | `deseq2/{contrast}/{ma,volcano}_plot.png` | MA and volcano plots, most significant subfamilies labelled |
+| `profile/{conditions,samples}.png` | profile over the full-length copies, one panel per subfamily (with its number of copies), one line per condition or sample |
+| `deseq2/{contrast}/heatmap_classes.png` | heatmap faceted by class and condition: row z-scores of variance-stabilised insertions in square cells. By default the significant subfamilies of LINE, SINE, LTR and DNA (at most 25 per class); set with `te: heatmap` |
 
 For each sample the `te_{subfamily,family,class}.tsv` tables have:
 

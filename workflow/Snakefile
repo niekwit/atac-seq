@@ -119,3 +119,8 @@ rule all:
             if te_enabled() and deseq2_enabled()
             else []
         ),
+        (
+            expand("results/te/profile/{level}.png", level=["conditions", "samples"])
+            if te_enabled() and te_profile_config()["subfamilies"]
+            else []
+        ),

@@ -133,6 +133,46 @@ properties:
         type: string
         enum: ["deseq2", "insertions"]
         default: deseq2
+      heatmap:
+        type: object
+        properties:
+          classes:
+            type: array
+            items:
+              type: string
+            minItems: 1
+            default: ["LINE", "SINE", "LTR", "DNA"]
+          subfamilies:
+            type: array
+            items:
+              type: string
+            minItems: 1
+            default: ["all"]
+          max_per_class:
+            type: integer
+            minimum: 1
+            default: 25
+      profile:
+        type: object
+        properties:
+          subfamilies:
+            type: array
+            items:
+              type: string
+            default: []
+          min_consensus_fraction:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1
+            default: 0.9
+          flank:
+            type: integer
+            minimum: 0
+            default: 2000
+          body_length:
+            type: integer
+            minimum: 1
+            default: 6000
 
 required:
   - genome

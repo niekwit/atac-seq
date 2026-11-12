@@ -370,3 +370,36 @@ UCSC_GENOMES = {
 def te_enabled():
     """The transposable element (TE) module is optional (off by default)"""
     return config.get("te", {}).get("enable", False)
+
+
+def te_profile_config():
+    """
+    Returns the settings of the profile plot over full-length copies of
+    repeat subfamilies (no plot when the list of subfamilies is empty)
+    """
+    profile = config.get("te", {}).get("profile", {})
+    subfamilies = profile.get("subfamilies", [])
+    return {
+        "subfamilies": [subfamilies] if isinstance(subfamilies, str) else subfamilies,
+        "min_consensus_fraction": profile.get("min_consensus_fraction", 0.9),
+        "flank": profile.get("flank", 2000),
+        "body_length": profile.get("body_length", 6000),
+    }
+
+
+def te_heatmap_config():
+    """
+    Returns the selection for the TE heatmap of each DESeq2 contrast: lists of
+    classes and subfamilies ("all" selects everything; a single name is
+    accepted too) and the maximum number of subfamilies per class
+    """
+    heatmap = config.get("te", {}).get("heatmap", {})
+
+    def as_list(value):
+        return [value] if isinstance(value, str) else list(value)
+
+    return {
+        "classes": as_list(heatmap.get("classes", ["LINE", "SINE", "LTR", "DNA"])),
+        "subfamilies": as_list(heatmap.get("subfamilies", ["all"])),
+        "max_per_class": heatmap.get("max_per_class", 25),
+    }

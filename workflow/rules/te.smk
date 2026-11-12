@@ -230,6 +230,96 @@ rule te_bigwig_mean:
         "bigwigAverage --binSize 10 -p {threads} -b {input} -o {output} > {log} 2>&1"
 
 
+# Full-length copies of the subfamilies in te: profile: subfamilies (e.g.
+# young LINE-1s), one group of regions per subfamily
+# -----------------------------------------------------
+rule te_full_length_copies:
+    input:
+        rmsk="resources/te/rmsk.txt.gz",
+        chrom_sizes="resources/chrom_sizes.txt",
+    output:
+        bed="resources/te/full_length_copies.bed",
+    params:
+        subfamilies=te_profile_config()["subfamilies"],
+        min_consensus_fraction=te_profile_config()["min_consensus_fraction"],
+        filter_chrs=config["filter"]["filter_chrs"],
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=3000,
+    log:
+        "logs/te/te_full_length_copies.log",
+    conda:
+        "../envs/te.yaml"
+    script:
+        "../scripts/te_full_length_copies.py"
+
+
+# Signal over the full-length copies, scaled to the same length (5' to 3' of
+# each copy), with flanks: per condition (mean of the replicates) or sample.
+# Averaged over many copies, so multimappers at a random copy are no problem
+# -----------------------------------------------------
+rule te_profile_matrix:
+    input:
+        bed="resources/te/full_length_copies.bed",
+        bigwigs=lambda w: (
+            expand(
+                "results/te/bigwig/mean/{condition}.cpm.bigwig", condition=CONDITIONS
+            )
+            if w.level == "conditions"
+            else expand("results/te/bigwig/{sample}.cpm.bigwig", sample=SAMPLES)
+        ),
+    output:
+        "results/te/profile/{level}.matrix.gz",
+    params:
+        labels=lambda w: CONDITIONS if w.level == "conditions" else SAMPLES,
+        flank=te_profile_config()["flank"],
+        body_length=te_profile_config()["body_length"],
+    wildcard_constraints:
+        level="conditions|samples",
+    threads: 4
+    resources:
+        runtime=runtime(60),
+        mem_mb=6000,
+    log:
+        "logs/te/te_profile_matrix_{level}.log",
+    conda:
+        "../envs/qc.yaml"
+    shell:
+        "computeMatrix scale-regions -R {input.bed} -S {input.bigwigs} "
+        "--samplesLabel {params.labels} "
+        "--regionBodyLength {params.body_length} "
+        "--beforeRegionStartLength {params.flank} "
+        "--afterRegionStartLength {params.flank} "
+        "--binSize 50 --missingDataAsZero -p {threads} "
+        "-o {output} > {log} 2>&1"
+
+
+rule te_profile_plot:
+    input:
+        "results/te/profile/{level}.matrix.gz",
+    output:
+        "results/te/profile/{level}.png",
+    params:
+        options=(
+            "--perGroup --numPlotsPerRow 3 --startLabel 5\\' --endLabel 3\\' "
+            "--plotHeight 6 --plotWidth 8 "
+            "--yAxisLabel 'Tn5 insertions per million'"
+        ),
+    wildcard_constraints:
+        level="conditions|samples",
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=3000,
+    log:
+        "logs/te/te_profile_plot_{level}.log",
+    conda:
+        "../envs/qc.yaml"
+    shell:
+        "plotProfile -m {input} -o {output} {params.options} > {log} 2>&1"
+
+
 # Fit the DESeq2 model (~ condition) to the subfamily counts of all samples
 # (with deseq2: enable)
 # -----------------------------------------------------
@@ -266,11 +356,13 @@ rule te_deseq2_contrast:
         table="results/te/deseq2/{contrast}/differential_subfamilies.tsv",
         ma="results/te/deseq2/{contrast}/ma_plot.png",
         volcano="results/te/deseq2/{contrast}/volcano_plot.png",
+        heatmap="results/te/deseq2/{contrast}/heatmap_classes.png",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         fdr=config.get("deseq2", {}).get("fdr", 0.05),
         lfc_threshold=config.get("deseq2", {}).get("lfc_threshold", 0),
+        heatmap=te_heatmap_config(),
     threads: 1
     resources:
         runtime=runtime(30),
