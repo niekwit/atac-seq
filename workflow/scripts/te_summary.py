@@ -2,7 +2,8 @@
 Summarises the Tn5 insertion counts in repeats per subfamily, family and
 class. For each sample:
 
-- count: insertions, multimappers weighted 1/NH (featureCounts -M --fraction)
+- count: insertions of all read pairs, multimappers at one of their best
+  alignments, picked at random by bowtie2 (featureCounts -M)
 - count_unique: insertions of uniquely mapping read pairs only
 - frac_unique: count_unique / count; low values mean that the signal of a
   repeat comes mostly from multimappers, and that it would be largely missed

@@ -62,8 +62,5 @@ deseq2:
 # keeping multimapping reads that the ENCODE filter removes
 te:
   enable: true
-  # Maximum number of alignments per read pair (bowtie2 -k); multimappers are
-  # weighted 1/(number of alignments)
-  max_alignments: 100
   # RepeatMasker classes to count (empty list: all repeats)
   classes: ["LINE", "SINE", "LTR", "DNA", "Retroposon", "RC", "Satellite"]

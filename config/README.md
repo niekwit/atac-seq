@@ -110,7 +110,6 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | lfc_threshold                     | test against this absolute log2 fold change (0: any change)                | 0              |
 | **te**                            |                                                                            |                |
 | enable                            | run the transposable element module                                        | false          |
-| max_alignments                    | maximum number of alignments per read pair (`bowtie2 -k`)                  | 100            |
 | classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
 
 ### Output

@@ -1,9 +1,10 @@
 # Transposable element (TE) module (optional, te: enable)
 # Accessibility of repeat subfamilies, families and classes. Young repeats
 # have many near-identical copies, so their reads are removed by the ENCODE
-# multimapper filter. Here, reads are aligned again keeping up to
-# te:max_alignments alignments, and Tn5 insertions in RepeatMasker repeats are
-# counted with multimappers weighted 1/(number of alignments).
+# multimapper filter. Here, reads are aligned again (bowtie2 default mode:
+# one of the best alignments, picked at random for multimappers), and Tn5
+# insertions in RepeatMasker repeats are counted per subfamily, family and
+# class. See docs/te_alignment_comparison for the comparison with -k 100.
 # The ENCODE outputs are not affected.
 
 
@@ -54,7 +55,8 @@ rule prepare_te_annotation:
         "../scripts/prepare_te_annotation.py"
 
 
-# Alignment keeping multimappers (bowtie2 -k), in read name order
+# Alignment keeping multimappers (bowtie2 default mode, reproducible random
+# choice among equally good alignments), in read name order
 # -----------------------------------------------------
 rule te_align:
     input:
@@ -65,24 +67,23 @@ rule te_align:
         temp("results/te/{sample}.bowtie2.bam"),
     params:
         prefix=lambda w, input: input.idx[0].removesuffix(".1.bt2"),
-        k=config.get("te", {}).get("max_alignments", 100),
         extra=config["bowtie2"]["extra"],
     threads: 8
     resources:
-        runtime=runtime(720),
-        mem_mb=12000,
+        runtime=runtime(360),
+        mem_mb=8000,
     log:
         "logs/te/te_align_{sample}.log",
     conda:
         "../envs/te.yaml"
     shell:
-        "(bowtie2 -k {params.k} {params.extra} --threads {threads} "
+        "(bowtie2 --seed 42 {params.extra} --threads {threads} "
         "-x {params.prefix} -1 {input.r1} -2 {input.r2} | "
         "samtools view -b -@ 2 -o {output} -) 2> {log}"
 
 
 # Keep properly paired alignments, remove duplicates and reads on filter_chrs
-# and add NH tags (number of alignments)
+# and mark multimappers (NH:i:2)
 # -----------------------------------------------------
 rule te_filter:
     input:
@@ -92,7 +93,6 @@ rule te_filter:
         stats="results/te/{sample}.filter_stats.tsv",
     params:
         filter_chrs=config["filter"]["filter_chrs"],
-        max_alignments=config.get("te", {}).get("max_alignments", 100),
     threads: 4
     resources:
         runtime=runtime(240),
@@ -105,8 +105,8 @@ rule te_filter:
         "../scripts/te_filter.py"
 
 
-# Count Tn5 insertions (5' end of each read) in repeats: all reads, with
-# multimappers weighted 1/NH, and uniquely mapping reads only
+# Count Tn5 insertions (5' end of each read) in repeats: all reads (-M) and
+# uniquely mapping read pairs only (NH:i:1)
 # -----------------------------------------------------
 rule te_count:
     input:
@@ -127,7 +127,7 @@ rule te_count:
     conda:
         "../envs/te.yaml"
     shell:
-        "(featureCounts {params.options} -T {threads} -M --fraction "
+        "(featureCounts {params.options} -T {threads} -M "
         "-a {input.saf} -o {output.multi} {input.bams} && "
         "featureCounts {params.options} -T {threads} "
         "-a {input.saf} -o {output.unique} {input.bams}) > {log} 2>&1"

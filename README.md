@@ -238,14 +238,14 @@ of repeats per subfamily, family and class instead of per copy. It does not chan
 outputs.
 
 1. RepeatMasker annotation from UCSC (`rmsk`), with Ensembl chromosome names
-2. A second alignment of the trimmed reads that keeps up to `te: max_alignments` (default 100)
-   alignments per read pair (`bowtie2 -k 100 -X2000 --mm`)
-3. Only the best (highest alignment score) properly paired alignments of each read pair are kept,
-   as `bowtie2 -k` also reports worse alignments; removal of PCR duplicates (read pairs with the
-   same set of alignments) and of reads on `filter_chrs` (MT)
+2. A second alignment of the trimmed reads that keeps multimappers (`bowtie2 --seed 42 -X2000
+   --mm`): bowtie2's default mode reports one of the best alignments of each read pair, picked
+   at random (reproducibly, with the seed) among equally good ones
+3. Properly paired read pairs are kept; PCR duplicates and reads on `filter_chrs` (MT) are
+   removed. Read pairs with an equally good alternative alignment (MAPQ < 2 for either mate)
+   are marked as multimappers.
 4. Counting of Tn5 insertions (5' end of each read) in repeats with `featureCounts`, once with
-   multimappers weighted 1/(number of alignments) (`-M --fraction`) and once with uniquely
-   mapping read pairs only
+   all read pairs (`-M`) and once with uniquely mapping read pairs only
 
 Output in `results/te/`:
 
@@ -260,7 +260,7 @@ For each sample the tables have:
 
 | column                       | meaning                                                                    |
 | ---------------------------- | -------------------------------------------------------------------------- |
-| `{sample}_count`             | insertions, multimappers weighted 1/(number of best alignments)            |
+| `{sample}_count`             | insertions of all read pairs, multimappers at one of their best alignments |
 | `{sample}_count_unique`      | insertions of uniquely mapping read pairs                                  |
 | `{sample}_frac_unique`       | `count_unique / count`: low for young repeats, whose signal comes from multimappers and is missed by the ENCODE outputs |
 | `{sample}_CPM`               | insertions per million insertions of the sample                            |
@@ -268,13 +268,17 @@ For each sample the tables have:
 
 Notes:
 
-- Counts are per repeat subfamily, family or class, not per copy: reads of young repeats cannot
-  be assigned to a single copy. Use the counts (rounded) with e.g. DESeq2 to compare conditions.
-- Read pairs with `max_alignments` alignments may have more; they are counted with weight
-  1/`max_alignments` (see `pairs_at_max_alignments` in `te_library_stats.tsv`).
+- Counts are per repeat subfamily, family or class, not per copy: a multimapper is assigned to
+  a random copy among its best alignments, which is close to the right subfamily total but not a
+  reliable per-copy count. Use the counts with e.g. DESeq2 to compare conditions.
+- Random assignment of multimappers gives the same subfamily counts and differential
+  accessibility as keeping up to 100 alignments per read pair (`bowtie2 -k 100`, multimappers
+  weighted 1/number of alignments), at about 1/6 of the alignment time: see
+  [docs/te_alignment_comparison](docs/te_alignment_comparison/README.md), which reproduces the
+  increased accessibility of young LINE-1s in Morc1 knockout gonocytes (Uneme et al., 2024).
 - Longer reads resolve more copies; with short reads (< 50 bp) more of the signal is in
   multimappers.
-- The TE alignment roughly doubles the alignment time.
+- The TE alignment takes about as long as the ENCODE alignment.
 
 ## Validation against ENCODE
 
