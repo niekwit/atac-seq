@@ -12,8 +12,6 @@ class. For each sample:
 - log2_enrichment: log2 of the fraction of insertions in the repeat divided
   by the fraction of the genome it covers (pseudocount 1); > 0 means more
   accessible than the genome average
-
-Counts are fractional; round them for count based tests (e.g. DESeq2).
 """
 
 import logging

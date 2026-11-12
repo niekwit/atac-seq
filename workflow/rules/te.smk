@@ -160,3 +160,56 @@ rule te_summary:
         "../envs/te.yaml"
     script:
         "../scripts/te_summary.py"
+
+
+# Fit the DESeq2 model (~ condition) to the subfamily counts of all samples
+# (with deseq2: enable)
+# -----------------------------------------------------
+rule te_deseq2_fit:
+    input:
+        counts="results/te/featurecounts_multi.txt",
+        stats="results/te/te_library_stats.tsv",
+    output:
+        dds="results/te/deseq2/dds.rds",
+    params:
+        samples=SAMPLES,
+        conditions=SAMPLE_SHEET["condition"].tolist(),
+        levels=deseq2_levels(),
+        normalisation=config.get("te", {}).get("normalisation", "deseq2"),
+    threads: 2
+    resources:
+        runtime=runtime(30),
+        mem_mb=4000,
+    log:
+        "logs/te/te_deseq2_fit.log",
+    conda:
+        "../envs/deseq2.yaml"
+    script:
+        "../scripts/te_deseq2_fit.R"
+
+
+# Differential accessibility of subfamilies between two conditions
+# -----------------------------------------------------
+rule te_deseq2_contrast:
+    input:
+        dds="results/te/deseq2/dds.rds",
+        subfamilies="resources/te/subfamilies.tsv",
+    output:
+        table="results/te/deseq2/{contrast}/differential_subfamilies.tsv",
+        ma="results/te/deseq2/{contrast}/ma_plot.png",
+        volcano="results/te/deseq2/{contrast}/volcano_plot.png",
+    params:
+        treatment=lambda w: deseq2_contrasts()[w.contrast][0],
+        control=lambda w: deseq2_contrasts()[w.contrast][1],
+        fdr=config.get("deseq2", {}).get("fdr", 0.05),
+        lfc_threshold=config.get("deseq2", {}).get("lfc_threshold", 0),
+    threads: 1
+    resources:
+        runtime=runtime(30),
+        mem_mb=3000,
+    log:
+        "logs/te/te_deseq2_{contrast}.log",
+    conda:
+        "../envs/deseq2.yaml"
+    script:
+        "../scripts/te_deseq2_contrast.R"

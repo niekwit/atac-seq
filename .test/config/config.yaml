@@ -64,3 +64,7 @@ te:
   enable: true
   # RepeatMasker classes to count (empty list: all repeats)
   classes: ["LINE", "SINE", "LTR", "DNA", "Retroposon", "RC", "Satellite"]
+  # Library size for the DESeq2 comparison of subfamilies (with deseq2:
+  # enable): deseq2 (median-of-ratios over the subfamilies) or insertions
+  # (all kept insertions of a sample, for when most repeats change)
+  normalisation: deseq2

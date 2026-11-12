@@ -129,6 +129,10 @@ properties:
         items:
           type: string
         default: []
+      normalisation:
+        type: string
+        enum: ["deseq2", "insertions"]
+        default: deseq2
 
 required:
   - genome

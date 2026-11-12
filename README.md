@@ -246,6 +246,12 @@ outputs.
    are marked as multimappers.
 4. Counting of Tn5 insertions (5' end of each read) in repeats with `featureCounts`, once with
    all read pairs (`-M`) and once with uniquely mapping read pairs only
+5. With `deseq2: enable`: differential accessibility of subfamilies with `DESeq2`, for the same
+   contrasts, `fdr` and `lfc_threshold` as the peaks (Wald test, ashr-shrunken log2 fold
+   changes for plots). Library sizes come from the median-of-ratios over the subfamilies
+   (`te: normalisation: deseq2`), which assumes that most subfamilies do not change. If a
+   condition changes the accessibility of many repeat families at once, use
+   `te: normalisation: insertions` (all kept insertions of each sample) instead.
 
 Output in `results/te/`:
 
@@ -255,8 +261,10 @@ Output in `results/te/`:
 | `te_family.tsv`          | per family (repFamily, e.g. L1, ERVK, Alu)                              |
 | `te_class.tsv`           | per class (repClass, e.g. LINE, LTR, SINE)                              |
 | `te_library_stats.tsv`   | read pairs kept, duplicates, multimappers and fraction of insertions in repeats |
+| `deseq2/{contrast}/differential_subfamilies.tsv` | per subfamily: family, class, copies, `baseMean`, `log2FoldChange` (and shrunken), `pvalue`, `padj`, `change` |
+| `deseq2/{contrast}/{ma,volcano}_plot.png` | MA and volcano plots, most significant subfamilies labelled |
 
-For each sample the tables have:
+For each sample the `te_{subfamily,family,class}.tsv` tables have:
 
 | column                       | meaning                                                                    |
 | ---------------------------- | -------------------------------------------------------------------------- |
@@ -270,7 +278,7 @@ Notes:
 
 - Counts are per repeat subfamily, family or class, not per copy: a multimapper is assigned to
   a random copy among its best alignments, which is close to the right subfamily total but not a
-  reliable per-copy count. Use the counts with e.g. DESeq2 to compare conditions.
+  reliable per-copy count.
 - Random assignment of multimappers gives the same subfamily counts and differential
   accessibility as keeping up to 100 alignments per read pair (`bowtie2 -k 100`, multimappers
   weighted 1/number of alignments), at about 1/6 of the alignment time: see

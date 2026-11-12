@@ -111,6 +111,7 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | **te**                            |                                                                            |                |
 | enable                            | run the transposable element module                                        | false          |
 | classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
+| normalisation                     | library size for the DESeq2 comparison of subfamilies: `deseq2` (median-of-ratios over the subfamilies) or `insertions` (all kept insertions of a sample) | deseq2 |
 
 ### Output
 
@@ -135,3 +136,4 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/deseq2/pca.png`, `sample_correlation.png`     | PCA and correlation of all samples                              |
 | `results/deseq2/{treatment}_vs_{control}/differential_peaks.tsv` | differential accessibility between conditions         |
 | `results/te/te_{subfamily,family,class}.tsv`           | Tn5 insertions in repeats (TE module)                           |
+| `results/te/deseq2/{contrast}/differential_subfamilies.tsv` | differential accessibility of repeat subfamilies (TE module with `deseq2: enable`) |
