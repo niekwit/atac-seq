@@ -284,6 +284,8 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
      with accessible regions in general, not with the whole genome (open chromatin overlaps most
      regulatory data sets anyway). q-values are over all tests of a contrast. The result is
      shown as area-proportional Venn diagrams (eulerr) with the GAT fold enrichment and q-value.
+     The areas count merged regions, as in ChIPpeakAnno (Zhu et al., 2010): overlapping peaks
+     and regions are merged, so a peak that overlaps several regions counts once.
 
 Output in `results/te/`:
 
@@ -306,7 +308,7 @@ Output in `results/te/`:
 | `peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks, with gene annotation, repeat and `frac_unique` |
 | `peaks/deseq2/{contrast}/{more,less}_accessible.bed` | differential TE peaks as BED6 (fold changes in `differential_peaks.tsv`) |
 | `correlation/{contrast}/gat.tsv` | per direction and data set: numbers of peaks and regions and of those overlapping, GAT observed and expected overlap (bp), fold, p- and q-value |
-| `correlation/{contrast}/venn.png` | Venn diagrams of the differential peaks and each data set: peaks without overlap, regions without overlap and peaks overlapping a region, with the GAT result |
+| `correlation/{contrast}/venn.png` | Venn diagrams of the differential peaks and each data set, counted as merged regions (overlapping peaks and regions merged, as in ChIPpeakAnno), with the numbers of peaks and regions and the GAT result |
 | `deseq2/{contrast}/heatmap_classes.png` | heatmap faceted by class and condition: row z-scores of variance-stabilised insertions in square cells. By default the significant subfamilies of LINE, SINE, LTR and DNA (at most 25 per class); set with `te: heatmap` |
 
 For each sample the `te_{subfamily,family,class}.tsv` tables have:
@@ -463,5 +465,7 @@ promoter (49% instead of 40%) and fewer as distal intergenic (15% instead of 25%
 > Köster, J., Mölder, F., Jablonski, K. P., Letcher, B., Hall, M. B., Tomkins-Tinch, C. H., Sochat, V., Forster, J., Lee, S., Twardziok, S. O., Kanitz, A., Wilm, A., Holtgrewe, M., Rahmann, S., & Nahnsen, S. _Sustainable data analysis with Snakemake_. F1000Research, 10:33, 10, 33, **2021**. https://doi.org/10.12688/f1000research.29032.2.
 
 > Heger, A., Webber, C., Goodson, M., Ponting, C. P., & Lunter, G. _GAT: a simulation framework for testing the association of genomic intervals_. Bioinformatics, 29(16), 2046–2048, **2013**. https://doi.org/10.1093/bioinformatics/btt343.
+
+> Zhu, L. J., Gazin, C., Lawson, N. D., Pagès, H., Lin, S. M., Lapointe, D. S., & Green, M. R. _ChIPpeakAnno: a Bioconductor package to annotate ChIP-seq and ChIP-chip data_. BMC Bioinformatics, 11, 237, **2010**. https://doi.org/10.1186/1471-2105-11-237.
 
 > Larsson, J. _eulerr: Area-Proportional Euler and Venn Diagrams with Ellipses_. R package version 7.0.2. https://CRAN.R-project.org/package=eulerr.

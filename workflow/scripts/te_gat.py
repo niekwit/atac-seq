@@ -14,8 +14,12 @@ expected, with GAT (Heger et al., 2013, doi:10.1093/bioinformatics/btt343).
   with the overlap of the random placements. q-values are over all tests
   of the contrast.
 
-Also counts, for the Venn diagrams, the peaks that overlap at least one
-region of a data set and the regions that overlap at least one peak.
+Also counts the peaks that overlap at least one region of a data set and the
+regions that overlap at least one peak, and, for the Venn diagrams, merged
+regions as in ChIPpeakAnno (Zhu et al., 2010, doi:10.1186/1471-2105-11-237):
+peaks and regions that overlap (>= 1 bp) are merged, and the merged regions
+with only peaks, only data set regions, or both are counted. One measure for
+both sets, so a peak overlapping several regions counts once.
 """
 
 import logging
@@ -73,6 +77,26 @@ def count_overlapping(a, b):
     return len(result.stdout.splitlines())
 
 
+def count_merged(peaks, regions):
+    """
+    Merged regions (overlap >= 1 bp) with only peaks, only regions, or both
+    """
+    bed = pd.concat([peaks.assign(set="peak"), regions.assign(set="region")])
+    bed = bed.sort_values(["chr", "start", "end"])
+    bed_file = os.path.join(tmp, "merge.bed")
+    bed.to_csv(bed_file, sep="\t", header=False, index=False)
+    command = ["bedtools", "merge", "-d", "-1", "-c", "4", "-o", "distinct"]
+    result = subprocess.run(
+        command + ["-i", bed_file], check=True, capture_output=True, text=True
+    )
+    sets = pd.Series([line.split("\t")[3] for line in result.stdout.splitlines()])
+    return {
+        "n_merged_peaks_only": int((sets == "peak").sum()),
+        "n_merged_regions_only": int((sets == "region").sum()),
+        "n_merged_both": int((sets == "peak,region").sum()),
+    }
+
+
 # Workspace: the consensus peaks as one track (BED3)
 workspace_file = os.path.join(tmp, "workspace.bed")
 read_bed(workspace).to_csv(workspace_file, sep="\t", header=False, index=False)
@@ -103,6 +127,7 @@ for name, path in datasets.items():
     bed["name"] = name
     annotations.append(bed)
     for track, peaks in TRACKS.items():
+        merged = count_merged(read_bed(peaks), bed[["chr", "start", "end"]])
         counts.append(
             {
                 "track": track,
@@ -111,6 +136,7 @@ for name, path in datasets.items():
                 "n_peaks_overlap": count_overlapping(peaks, region_file),
                 "n_regions": len(bed),
                 "n_regions_overlap": count_overlapping(region_file, peaks),
+                **merged,
             }
         )
 annotations_file = os.path.join(tmp, "annotations.bed")

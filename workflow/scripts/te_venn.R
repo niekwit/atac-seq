@@ -8,9 +8,12 @@ sink(log, type = "message")
 # with the GAT enrichment of the overlap. One row per data set, one column
 # for the peaks more and less accessible in the treatment.
 #
-# Areas: peaks without overlap, regions without overlap, and the peaks that
-# overlap at least one region. GAT tests the overlap in bp, against random
-# placements of the peaks within the TE consensus peaks.
+# Areas: merged regions (ChIPpeakAnno, Zhu et al., 2010,
+# doi:10.1186/1471-2105-11-237; counted by te_gat.py): overlapping peaks and
+# regions are merged, and the merged regions with only peaks, only data set
+# regions, or both are counted, so both sets use one measure. The legend gives
+# the numbers of peaks and regions. GAT tests the overlap in bp, against
+# random placements of the peaks within the TE consensus peaks.
 
 library(eulerr)
 library(grid)
@@ -49,9 +52,9 @@ panel <- function(dataset, direction) {
     body <- textGrob(paste("No", direction, "peaks"), gp = gpar(fontsize = 9))
   } else {
     sizes <- c(
-      A = r$n_peaks - r$n_peaks_overlap,
-      B = r$n_regions - r$n_regions_overlap,
-      "A&B" = r$n_peaks_overlap
+      A = r$n_merged_peaks_only,
+      B = r$n_merged_regions_only,
+      "A&B" = r$n_merged_both
     )
     fit <- euler(sizes)
     # Set names and totals in the legend: labels next to the circles are
@@ -74,8 +77,7 @@ panel <- function(dataset, direction) {
       fills = list(fill = c(colours[[direction]], "grey70"), alpha = 0.6),
       edges = list(col = "grey30"),
       labels = FALSE,
-      # Counts in each area: peaks without overlap, regions without overlap,
-      # peaks overlapping a region
+      # Merged regions in each area
       quantities = list(
         labels = format(sizes, big.mark = ",", trim = TRUE),
         fontsize = 8
