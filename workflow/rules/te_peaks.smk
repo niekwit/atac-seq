@@ -178,7 +178,8 @@ use rule deseq2_contrast as te_peaks_deseq2_contrast with:
         "logs/te/peaks/deseq2_{contrast}.log",
 
 
-# Differential peaks as BED (name: peak_id, score: log2 fold change)
+# Differential peaks as BED6 (name: peak_id, score: 0; the fold changes are in
+# differential_peaks.tsv)
 # -----------------------------------------------------
 rule te_differential_peak_beds:
     input:
@@ -190,7 +191,7 @@ rule te_differential_peak_beds:
         awk=(
             'BEGIN{FS=OFS="\\t"} NR==1{for (i=1; i<=NF; i++) c[$i]=i; next} '
             '$c["change"]==change{print $c["chr"], $c["start"], $c["end"], '
-            '$c["peak_id"], $c["log2FoldChange"], "."}'
+            '$c["peak_id"], 0, "."}'
         ),
     threads: 1
     resources:
@@ -220,8 +221,9 @@ rule te_gat:
     output:
         table="results/te/correlation/{contrast}/gat.tsv",
     params:
-        datasets=te_correlation_config()["datasets"],
-        samples=te_correlation_config()["gat_samples"],
+        # Functions, so the data sets are checked only when GAT runs
+        datasets=lambda w: te_correlation_config()["datasets"],
+        samples=lambda w: te_correlation_config()["gat_samples"],
     threads: 4
     resources:
         runtime=runtime(120),

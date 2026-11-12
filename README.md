@@ -304,7 +304,7 @@ Output in `results/te/`:
 | `peaks/consensus_peaks_repeats.tsv` | per consensus peak: insertions, `frac_unique`, overlapping repeat (subfamily, family, class, bp) |
 | `peaks/consensus_peaks_frac_unique.bed` | consensus peaks as BED6, score: `frac_unique` × 1000 |
 | `peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks, with gene annotation, repeat and `frac_unique` |
-| `peaks/deseq2/{contrast}/{more,less}_accessible.bed` | differential TE peaks (score: log2 fold change) |
+| `peaks/deseq2/{contrast}/{more,less}_accessible.bed` | differential TE peaks as BED6 (fold changes in `differential_peaks.tsv`) |
 | `correlation/{contrast}/gat.tsv` | per direction and data set: numbers of peaks and regions and of those overlapping, GAT observed and expected overlap (bp), fold, p- and q-value |
 | `correlation/{contrast}/venn.png` | Venn diagrams of the differential peaks and each data set: peaks without overlap, regions without overlap and peaks overlapping a region, with the GAT result |
 | `deseq2/{contrast}/heatmap_classes.png` | heatmap faceted by class and condition: row z-scores of variance-stabilised insertions in square cells. By default the significant subfamilies of LINE, SINE, LTR and DNA (at most 25 per class); set with `te: heatmap` |
