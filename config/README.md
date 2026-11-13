@@ -33,6 +33,9 @@ Samples of the same condition are treated as biological replicates of one ENCODE
 15. Comparison of all samples (not part of the ENCODE pipeline): PCA, sample correlation and
     differential accessibility between conditions from Tn5 insertions in the merged optimal peaks
     (`DESeq2`)
+16. Optional (not part of the ENCODE pipeline): accessibility of transposable elements per
+    RepeatMasker subfamily, family and class, keeping multimapping reads
+    (see [Transposable elements](../README.md#transposable-elements))
 
 Not included from the ENCODE pipeline: its optional (off by default) preseq, cross-correlation
 and Roadmap comparison, its HTML/JSON QC report and the bigBed/starch/hammock peak formats.
@@ -105,6 +108,20 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | contrasts                         | [treatment, control] pairs; empty: each condition against the reference    | []             |
 | fdr                               | adjusted p-value below which a peak is differential                        | 0.05           |
 | lfc_threshold                     | test against this absolute log2 fold change (0: any change)                | 0              |
+| **te**                            |                                                                            |                |
+| enable                            | run the transposable element module                                        | false          |
+| only                              | run only the TE module (with the genome, index and read trimming it needs), not the ENCODE peaks, signal tracks, QC and DESeq2 of the peaks | false |
+| classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
+| normalisation                     | library size for the DESeq2 comparison of subfamilies: `deseq2` (median-of-ratios over the subfamilies) or `insertions` (all kept insertions of a sample) | deseq2 |
+| heatmap: classes                  | list of classes in the heatmap of each contrast; `["all"]` for every class | ["LINE", "SINE", "LTR", "DNA"] |
+| heatmap: subfamilies              | list of subfamilies in the heatmap; `["all"]` for the significant subfamilies of the selected classes. Named subfamilies are plotted whether significant or not (significant ones marked with *) | ["all"] |
+| heatmap: max_per_class            | most significant subfamilies per class in the heatmap (with `subfamilies: ["all"]`) | 25 |
+| profile: subfamilies              | subfamilies for the profile over their full-length copies (empty: no profile) | [] |
+| profile: min_consensus_fraction   | fraction of the RepeatMasker consensus a copy must cover to count as full-length | 0.9 |
+| profile: flank                    | bp before and after the copies in the profile                              | 2000 |
+| profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |
+| correlation: datasets             | data sets to compare with the differential TE peaks with GAT, as name: BED file (e.g. EM-seq DMRs; UCSC or Ensembl chromosome names) | {} |
+| correlation: gat_samples          | number of random placements of the peaks in GAT                            | 10000 |
 
 ### Output
 
@@ -128,3 +145,12 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/ataqv_report/index.html`                      | ataqv report                                                    |
 | `results/deseq2/pca.png`, `sample_correlation.png`     | PCA and correlation of all samples                              |
 | `results/deseq2/{treatment}_vs_{control}/differential_peaks.tsv` | differential accessibility between conditions         |
+| `results/te/te_{subfamily,family,class}.tsv`           | Tn5 insertions in repeats (TE module)                           |
+| `results/te/bigwig/{sample,mean/{condition}}.cpm.bigwig` | Tn5 insertion tracks including multimappers, per sample and mean per condition (TE module; signal at single copies of young repeats is not reliable) |
+| `results/te/deseq2/{contrast}/differential_subfamilies.tsv` | differential accessibility of repeat subfamilies (TE module with `deseq2: enable`) |
+| `results/te/deseq2/{contrast}/heatmap_classes.png` | heatmap of repeat subfamilies, faceted by class (TE module with `deseq2: enable`) |
+| `results/te/profile/{conditions,samples}.png` | profile of the TE signal tracks over full-length copies of `te: profile: subfamilies` |
+| `results/te/multiqc/multiqc_report.html`, `results/te/qc/` | QC of the TE alignments (also with `te: only`) |
+| `results/te/peaks/consensus_peaks_repeats.tsv` | TE consensus peaks with their repeat and fraction of uniquely mapping insertions |
+| `results/te/peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks (with `deseq2: enable`) |
+| `results/te/correlation/{contrast}/venn.png` | GAT enrichment and Venn diagrams of the differential TE peaks and `te: correlation: datasets` |

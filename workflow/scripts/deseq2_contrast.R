@@ -62,6 +62,12 @@ annotation <- annotation[, c(
 )]
 output <- merge(peaks, table, by = "peak_id")
 output <- merge(output, annotation, by = "peak_id", all.x = TRUE)
+# Optional further columns per peak (TE peaks: repeat and uniquely mapping
+# fraction)
+if ("extra" %in% names(snakemake@input)) {
+  extra <- read.delim(snakemake@input[["extra"]], check.names = FALSE)
+  output <- merge(output, extra, by = "peak_id", all.x = TRUE)
+}
 output <- output[order(output$padj, output$pvalue, na.last = TRUE), ]
 write.table(
   output,

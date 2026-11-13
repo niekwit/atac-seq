@@ -37,6 +37,13 @@ logging.basicConfig(
     force=True,
 )
 
+# gsize "chrom_sizes": the total length of the chromosomes, for reads that
+# include multimappers (TE module), which can align anywhere in the genome
+if gsize == "chrom_sizes":
+    with open(chrom_sizes_file) as fh:
+        gsize = sum(int(line.split("\t")[1]) for line in fh if line.strip())
+    logging.info(f"Effective genome size: {gsize} (total chromosome length)")
+
 # MACS2 writes {outdir}/{name}_peaks.narrowPeak etc.
 outdir = os.path.dirname(narrowpeak)
 name = os.path.basename(narrowpeak).removesuffix(".narrowPeak")

@@ -118,6 +118,80 @@ properties:
         type: number
         minimum: 0
 
+  te:
+    type: object
+    properties:
+      enable:
+        type: boolean
+        default: false
+      only:
+        type: boolean
+        default: false
+      classes:
+        type: array
+        items:
+          type: string
+        default: []
+      normalisation:
+        type: string
+        enum: ["deseq2", "insertions"]
+        default: deseq2
+      heatmap:
+        type: object
+        properties:
+          classes:
+            type: array
+            items:
+              type: string
+            minItems: 1
+            default: ["LINE", "SINE", "LTR", "DNA"]
+          subfamilies:
+            type: array
+            items:
+              type: string
+            minItems: 1
+            default: ["all"]
+          max_per_class:
+            type: integer
+            minimum: 1
+            default: 25
+      profile:
+        type: object
+        properties:
+          subfamilies:
+            type: array
+            items:
+              type: string
+            default: []
+          min_consensus_fraction:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1
+            default: 0.9
+          # Multiples of the bin size of computeMatrix (50 bp)
+          flank:
+            type: integer
+            minimum: 0
+            multipleOf: 50
+            default: 2000
+          body_length:
+            type: integer
+            minimum: 50
+            multipleOf: 50
+            default: 6000
+      correlation:
+        type: object
+        properties:
+          datasets:
+            type: object
+            additionalProperties:
+              type: string
+            default: {}
+          gat_samples:
+            type: integer
+            minimum: 100
+            default: 10000
+
 required:
   - genome
   - mito_chr_name

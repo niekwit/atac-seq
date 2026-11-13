@@ -354,3 +354,76 @@ class GenomeFiles:
         """Returns file path for unzipped downloaded file"""
 
         return f"resources/{os.path.basename(url).replace('.gz', '')}"
+
+
+# UCSC names of the genomes, for the RepeatMasker annotation of the TE module
+UCSC_GENOMES = {
+    "hg19": "hg19",
+    "hg38": "hg38",
+    "test": "hg38",
+    "mm38": "mm10",
+    "mm39": "mm39",
+    "dm6": "dm6",
+}
+
+
+def te_enabled():
+    """The transposable element (TE) module is optional (off by default)"""
+    return config.get("te", {}).get("enable", False)
+
+
+def te_profile_config():
+    """
+    Returns the settings of the profile plot over full-length copies of
+    repeat subfamilies (no plot when the list of subfamilies is empty)
+    """
+    profile = config.get("te", {}).get("profile", {})
+    subfamilies = profile.get("subfamilies", [])
+    return {
+        "subfamilies": [subfamilies] if isinstance(subfamilies, str) else subfamilies,
+        "min_consensus_fraction": profile.get("min_consensus_fraction", 0.9),
+        "flank": profile.get("flank", 2000),
+        "body_length": profile.get("body_length", 6000),
+    }
+
+
+def te_correlation_config():
+    """
+    Returns the data sets ({name: BED file}) to compare with the differential
+    TE peaks with GAT, and the number of GAT samples
+    """
+    correlation = config.get("te", {}).get("correlation", {})
+    datasets = correlation.get("datasets") or {}
+    for name, path in datasets.items():
+        if not os.path.isfile(path):
+            raise ValueError(f"te: correlation: datasets: {name}: no file {path}")
+    return {
+        "datasets": datasets,
+        "gat_samples": correlation.get("gat_samples", 10000),
+    }
+
+
+def te_only():
+    """
+    With te: only, the workflow runs the TE module only (and the read trimming,
+    genome and index it needs), not the ENCODE peaks, signal tracks and QC
+    """
+    return te_enabled() and config.get("te", {}).get("only", False)
+
+
+def te_heatmap_config():
+    """
+    Returns the selection for the TE heatmap of each DESeq2 contrast: lists of
+    classes and subfamilies ("all" selects everything; a single name is
+    accepted too) and the maximum number of subfamilies per class
+    """
+    heatmap = config.get("te", {}).get("heatmap", {})
+
+    def as_list(value):
+        return [value] if isinstance(value, str) else list(value)
+
+    return {
+        "classes": as_list(heatmap.get("classes", ["LINE", "SINE", "LTR", "DNA"])),
+        "subfamilies": as_list(heatmap.get("subfamilies", ["all"])),
+        "max_per_class": heatmap.get("max_per_class", 25),
+    }

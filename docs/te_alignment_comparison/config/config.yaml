@@ -1,0 +1,84 @@
+genome:
+  ensembl: mm39
+  release: 115
+
+# Parameters below follow the ENCODE ATAC-seq pipeline (v2.2.3) defaults:
+# https://github.com/ENCODE-DCC/atac-seq-pipeline
+
+# Name of the mitochondrial chromosome (Ensembl naming)
+mito_chr_name: MT
+
+cutadapt:
+  # Nextera (Tn5) adapter for read 1 and read 2
+  adapter_r1: CTGTCTCTTATA
+  adapter_r2: CTGTCTCTTATA
+  extra: "-e 0.1 -m 5"
+
+bowtie2:
+  # Reads with more than this many alignments are discarded; the others keep
+  # one randomly assigned alignment. Set to 0 to instead keep only reads with
+  # MAPQ >= filter:mapq_thresh.
+  multimapping: 4
+  extra: "-X2000 --mm"
+
+filter:
+  # Only used when bowtie2:multimapping is 0
+  mapq_thresh: 30
+  # Reads on these chromosomes are removed after deduplication
+  filter_chrs: ["MT"]
+
+# Number of reads to subsample each tagAlign to (0: no subsampling)
+subsample_reads: 0
+
+macs2:
+  # Effective genome size (hs, mm or a number)
+  gsize: mm
+  pval_thresh: 0.01
+  smooth_win: 150
+  cap_num_peak: 300000
+
+peaks:
+  # Peaks on chromosomes not matching this regex are removed (ENCODE uses
+  # chr[\dXY]+ for UCSC names)
+  keep_chr_regex: "[0-9]+|X|Y"
+  # Peaks reproducible in at least this fraction of the replicates of a
+  # condition (rounded up, at least 2; not part of the ENCODE pipeline):
+  # results/{idr,overlap}/{condition}/replicated_peak.narrowPeak
+  min_replicate_fraction: 1
+
+idr:
+  enable: true
+  threshold: 0.05
+
+# Random seed for pseudoreplication (0: use the tagAlign file size, as ENCODE)
+pseudoreplication_random_seed: 0
+
+# Comparison of all samples with DESeq2 (not part of the ENCODE pipeline):
+# PCA, sample correlation and differential accessibility from Tn5 insertions
+# in the consensus peaks
+deseq2:
+  enable: true
+  # Optimal peak sets that are merged into the consensus peaks: overlap or idr
+  peak_method: overlap
+  # Number of most variable peaks used for the PCA
+  pca_ntop: 500
+  # Differential accessibility: [treatment, control] pairs of conditions; empty:
+  # each condition with at least 2 replicates against the reference condition
+  # (reference column of the sample sheet)
+  contrasts: []
+  # Adjusted p-value below which a peak is called differential
+  fdr: 0.05
+  # Test against this absolute log2 fold change (0: any change)
+  lfc_threshold: 0
+
+# Transposable element (TE) module (not part of the ENCODE pipeline): counts
+# Tn5 insertions in RepeatMasker repeats per subfamily, family and class,
+# keeping multimapping reads that the ENCODE filter removes
+te:
+  enable: true
+  # RepeatMasker classes to count (empty list: all repeats)
+  classes: ["LINE", "SINE", "LTR", "DNA", "Retroposon", "RC", "Satellite"]
+  # Library size for the DESeq2 comparison of subfamilies (with deseq2:
+  # enable): deseq2 (median-of-ratios over the subfamilies) or insertions
+  # (all kept insertions of a sample, for when most repeats change)
+  normalisation: deseq2

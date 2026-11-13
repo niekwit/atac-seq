@@ -23,7 +23,13 @@ counts <- read.delim(
   check.names = FALSE
 )
 counts <- as.matrix(counts[, -(1:5), drop = FALSE])
-colnames(counts) <- sub(".nodup.bam$", "", basename(colnames(counts)))
+# BAM files: results/filtered/{sample}.nodup.bam or, for the TE peaks,
+# results/te/{sample}.filtered.bam
+colnames(counts) <- sub(
+  "\\.(nodup|filtered)\\.bam$",
+  "",
+  basename(colnames(counts))
+)
 counts <- counts[, samples, drop = FALSE]
 
 sample_info <- data.frame(

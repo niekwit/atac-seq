@@ -1,0 +1,9 @@
+# Area-proportional Venn (Euler) diagrams
+name: eulerr
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - conda-forge::r-base=4.4
+  - conda-forge::r-eulerr=7.0.2
+  - conda-forge::r-gridextra=2.3
