@@ -43,10 +43,11 @@ rule prepare_te_annotation:
     params:
         classes=config.get("te", {}).get("classes", []),
         filter_chrs=config["filter"]["filter_chrs"],
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/te/prepare_te_annotation.log",
     conda:
@@ -318,6 +319,22 @@ rule te_profile_plot:
         "../envs/qc.yaml"
     shell:
         "plotProfile -m {input} -o {output} {params.options} > {log} 2>&1"
+
+
+# PCA and sample correlation from the subfamily counts (vst, blind to the
+# conditions), as for the ENCODE consensus peaks
+# -----------------------------------------------------
+use rule deseq2_qc as te_deseq2_qc with:
+    input:
+        counts="results/te/featurecounts_multi.txt",
+    output:
+        vst="results/te/deseq2/vst_counts.tsv",
+        pca="results/te/deseq2/pca.png",
+        pca_data="results/te/deseq2/pca.tsv",
+        correlation="results/te/deseq2/sample_correlation.png",
+        correlation_data="results/te/deseq2/sample_correlation.tsv",
+    log:
+        "logs/te/deseq2/deseq2_qc.log",
 
 
 # Fit the DESeq2 model (~ condition) to the subfamily counts of all samples

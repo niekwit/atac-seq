@@ -90,10 +90,11 @@ rule fraglen_stat:
         plot="results/qc/{sample}.fraglen_dist.png",
     params:
         java_heap="3g",
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/fraglen_stat/{sample}.log",
     conda:
@@ -117,10 +118,11 @@ rule gc_bias:
     retries: 2
     params:
         java_heap="8g",
-    threads: 3
+    threads: 1
     resources:
         runtime=runtime(180),
         mem_mb=10000,
+        cpus_per_task=cpus_for_memory(10000),
     log:
         "logs/gc_bias/{sample}.log",
     conda:
@@ -138,10 +140,11 @@ rule annot_enrich:
         blacklist="resources/blacklist.bed",
     output:
         "results/qc/{sample}.annot_enrich.qc",
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(60),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/annot_enrich/{sample}.log",
     conda:

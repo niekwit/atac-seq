@@ -41,10 +41,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Conda environments of the rules, reused until an env file changes.
+      # Caches saved on main can be restored by all pull requests.
+      - name: Cache conda environments
+        uses: actions/cache@v4
+        with:
+          path: .test/.snakemake/conda
+          key: conda-envs-${{ runner.os }}-${{ hashFiles('workflow/envs/*.yaml') }}
+
+      # Pull requests run the full test. A push to main (a merged pull
+      # request, already tested) only builds the conda environments, so
+      # their cache is available to new pull requests.
       - name: Test workflow
         uses: snakemake/snakemake-github-action@v2
         with:
           directory: .test/
           snakefile: workflow/Snakefile
           snakemake-version: "8.25.5"
-          args: "--sdm conda --show-failed-logs --cores 2 --conda-cleanup-pkgs cache --all-temp"
+          args: >-
+            ${{ github.event_name == 'pull_request'
+            && '--sdm conda --show-failed-logs --cores 4 --conda-cleanup-pkgs cache --all-temp'
+            || '--sdm conda --cores 4 --conda-create-envs-only' }}

@@ -100,10 +100,11 @@ rule macs2_callpeak:
         pval_thresh=config["macs2"]["pval_thresh"],
         smooth_win=config["macs2"]["smooth_win"],
         cap_num_peak=config["macs2"]["cap_num_peak"],
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(60),
         mem_mb=6000,
+        cpus_per_task=cpus_for_memory(6000),
     log:
         "logs/macs2/{prefix}.log",
     conda:
@@ -125,10 +126,11 @@ rule idr:
         idr_log="results/idr/{condition}/{pair}.idr.log",
     params:
         threshold=config["idr"]["threshold"],
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/idr/{condition}/{pair}.log",
     conda:
@@ -354,10 +356,11 @@ rule annotate_peaks:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     output:
         txt="results/{method}/{condition}/optimal_peak_annotated.txt",
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/annotate_peaks/{method}/{condition}.log",
     conda:

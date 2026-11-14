@@ -10,10 +10,11 @@ rule macs2_signal_track:
     output:
         fc="results/bigwig/{prefix}.fc.signal.bigwig",
         pval="results/bigwig/{prefix}.pval.signal.bigwig",
-    threads: 3
+    threads: 1
     resources:
         runtime=runtime(180),
         mem_mb=10000,
+        cpus_per_task=cpus_for_memory(10000),
     log:
         "logs/macs2_signal_track/{prefix}.log",
     conda:

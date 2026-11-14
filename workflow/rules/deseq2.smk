@@ -70,10 +70,11 @@ rule deseq2_qc:
         conditions=SAMPLE_SHEET["condition"].tolist(),
         levels=deseq2_levels(),
         ntop=config.get("deseq2", {}).get("pca_ntop", 500),
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(60),
         mem_mb=6000,
+        cpus_per_task=cpus_for_memory(6000),
     log:
         "logs/deseq2/deseq2_qc.log",
     conda:
@@ -91,10 +92,11 @@ rule annotate_consensus_peaks:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     output:
         txt="results/deseq2/consensus_peaks_annotated.txt",
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/deseq2/annotate_consensus_peaks.log",
     conda:
@@ -142,10 +144,11 @@ rule deseq2_contrast:
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         fdr=config.get("deseq2", {}).get("fdr", 0.05),
         lfc_threshold=config.get("deseq2", {}).get("lfc_threshold", 0),
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(60),
         mem_mb=6000,
+        cpus_per_task=cpus_for_memory(6000),
     log:
         "logs/deseq2/{contrast}.log",
     conda:

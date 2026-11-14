@@ -113,8 +113,11 @@ that run out of time are resubmitted with more time when the workflow is run wit
 (e.g. `--retries 2`). For much deeper data, or to change a limit, override it in a profile or on
 the command line, e.g. `--set-resources bowtie2_align:runtime=1440`. The memory limits
 (`mem_mb`) are passed on as well, for clusters that schedule by memory. For clusters that
-assign memory per CPU, each rule requests enough threads to cover its `mem_mb` at 3,370 MiB per
-CPU; on clusters with less memory per CPU, raise the threads with `--set-threads`.
+assign memory per CPU, each rule requests enough CPUs to cover its `mem_mb` at 3,370 MiB per
+CPU: multithreaded rules through their threads, and single-threaded rules with more memory
+through the `cpus_per_task` resource (SLURM's `--cpus-per-task`), so that locally they take
+one core. On clusters with less memory per CPU, raise the CPUs with `--set-threads` (rules
+without `cpus_per_task`) or `--set-resources rule:cpus_per_task=N`.
 
 ## QC summary
 
@@ -299,12 +302,14 @@ Output in `results/te/`:
 | `multiqc/multiqc_report.html` | MultiQC report of the TE alignments, with the QC summary in the general statistics |
 | `bigwig/{sample}.cpm.bigwig` | Tn5 insertions per million insertions, including multimappers (see the caveat below) |
 | `bigwig/mean/{condition}.cpm.bigwig` | mean of the replicates of a condition |
+| `deseq2/pca.png`, `deseq2/sample_correlation.png` | PCA (samples coloured by condition) and Pearson correlation of all samples from the variance-stabilised subfamily counts, as for the ENCODE peaks; data in `pca.tsv` and `sample_correlation.tsv` |
 | `deseq2/{contrast}/differential_subfamilies.tsv` | per subfamily: family, class, copies, `baseMean`, `log2FoldChange` (and shrunken), `pvalue`, `padj`, `change` |
 | `deseq2/{contrast}/{ma,volcano}_plot.png` | MA and volcano plots, most significant subfamilies labelled |
 | `profile/{conditions,samples}.png` | profile over the full-length copies, one panel per subfamily (with its number of copies), one line per condition or sample |
 | `peaks/overlap/{condition}/replicated_peak.narrowPeak` | TE peaks of a condition, replicated in `min_replicate_fraction` of its replicates |
 | `peaks/consensus_peaks_repeats.tsv` | per consensus peak: insertions, `frac_unique`, overlapping repeat (subfamily, family, class, bp) |
 | `peaks/consensus_peaks_frac_unique.bed` | consensus peaks as BED6, score: `frac_unique` × 1000 |
+| `peaks/deseq2/pca.png`, `peaks/deseq2/sample_correlation.png` | PCA and sample correlation from the TE consensus peak counts |
 | `peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks, with gene annotation, repeat and `frac_unique` |
 | `peaks/deseq2/{contrast}/{more,less}_accessible.bed` | differential TE peaks as BED6 (fold changes in `differential_peaks.tsv`) |
 | `correlation/{contrast}/gat.tsv` | per direction and data set: numbers of peaks and regions and of those overlapping, GAT observed and expected overlap (bp), fold, p- and q-value |

@@ -1,4 +1,5 @@
 # import basic packages
+import math
 import os
 import re
 import pandas as pd
@@ -157,6 +158,16 @@ def ataqv_organism():
         return "mouse"
     else:
         raise ValueError(f"Unsupported genome: {genome}")
+
+
+def cpus_for_memory(mem_mb, mem_mb_per_cpu=3370):
+    """
+    CPUs to request (cpus_per_task, e.g. SLURM's --cpus-per-task) for rules
+    with fewer threads than CPUs needed for their memory on clusters that
+    assign memory per CPU. The rule itself runs with its threads, so these
+    jobs do not block cores in local runs.
+    """
+    return math.ceil(mem_mb / mem_mb_per_cpu)
 
 
 def runtime(minutes):
