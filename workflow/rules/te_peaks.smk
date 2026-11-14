@@ -153,6 +153,21 @@ use rule annotate_consensus_peaks as te_annotate_consensus_peaks with:
         "logs/te/peaks/annotate_consensus_peaks.log",
 
 
+# PCA and sample correlation from the TE consensus peak counts
+# -----------------------------------------------------
+use rule deseq2_qc as te_peaks_deseq2_qc with:
+    input:
+        counts="results/te/peaks/consensus_peak_counts.txt",
+    output:
+        vst="results/te/peaks/deseq2/vst_counts.tsv",
+        pca="results/te/peaks/deseq2/pca.png",
+        pca_data="results/te/peaks/deseq2/pca.tsv",
+        correlation="results/te/peaks/deseq2/sample_correlation.png",
+        correlation_data="results/te/peaks/deseq2/sample_correlation.tsv",
+    log:
+        "logs/te/peaks/deseq2_qc.log",
+
+
 # Differential accessibility of the TE peaks (with deseq2: enable)
 # -----------------------------------------------------
 use rule deseq2_fit as te_peaks_deseq2_fit with:

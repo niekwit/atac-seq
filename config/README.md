@@ -147,10 +147,12 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | `results/deseq2/{treatment}_vs_{control}/differential_peaks.tsv` | differential accessibility between conditions         |
 | `results/te/te_{subfamily,family,class}.tsv`           | Tn5 insertions in repeats (TE module)                           |
 | `results/te/bigwig/{sample,mean/{condition}}.cpm.bigwig` | Tn5 insertion tracks including multimappers, per sample and mean per condition (TE module; signal at single copies of young repeats is not reliable) |
+| `results/te/deseq2/pca.png`, `results/te/deseq2/sample_correlation.png` | PCA and sample correlation from the repeat subfamily counts (TE module with `deseq2: enable`) |
 | `results/te/deseq2/{contrast}/differential_subfamilies.tsv` | differential accessibility of repeat subfamilies (TE module with `deseq2: enable`) |
 | `results/te/deseq2/{contrast}/heatmap_classes.png` | heatmap of repeat subfamilies, faceted by class (TE module with `deseq2: enable`) |
 | `results/te/profile/{conditions,samples}.png` | profile of the TE signal tracks over full-length copies of `te: profile: subfamilies` |
 | `results/te/multiqc/multiqc_report.html`, `results/te/qc/` | QC of the TE alignments (also with `te: only`) |
 | `results/te/peaks/consensus_peaks_repeats.tsv` | TE consensus peaks with their repeat and fraction of uniquely mapping insertions |
+| `results/te/peaks/deseq2/pca.png`, `results/te/peaks/deseq2/sample_correlation.png` | PCA and sample correlation from the TE peak counts (with `deseq2: enable`) |
 | `results/te/peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks (with `deseq2: enable`) |
 | `results/te/correlation/{contrast}/venn.png` | GAT enrichment and Venn diagrams of the differential TE peaks and `te: correlation: datasets` |

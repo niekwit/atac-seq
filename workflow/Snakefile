@@ -111,6 +111,12 @@ if te_enabled():
     ]
     if deseq2_enabled():
         TE_TARGETS += [
+            # PCA and sample correlation of the subfamilies and the TE peaks
+            *expand(
+                "results/te/{level}/{file}",
+                level=["deseq2", "peaks/deseq2"],
+                file=["pca.png", "sample_correlation.png"],
+            ),
             *expand(
                 "results/te/deseq2/{contrast}/differential_subfamilies.tsv",
                 contrast=deseq2_contrasts(),
