@@ -19,3 +19,6 @@ workflow/notebooks/.ipynb_checkpoints/**
 
 # Claude Code config
 .claude/
+
+# Sphinx build output
+docs/_build/

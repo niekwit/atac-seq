@@ -1,53 +1,11 @@
-## Workflow overview
+# Configuration
 
-This workflow analyses paired-end ATAC-seq data following the
-[ENCODE ATAC-seq pipeline](https://github.com/ENCODE-DCC/atac-seq-pipeline) (v2.2.3)
-and checks the results against the [ENCODE ATAC-seq data standards](https://www.encodeproject.org/atac-seq/).
-Samples of the same condition are treated as biological replicates of one ENCODE experiment.
+The full documentation, including the workflow steps and output files, is at
+<https://atac-seq.readthedocs.io>.
 
-1. Download genome sequence and annotation from Ensembl, and the ENCODE exclusion list
-   (blacklist), TSS file and annotated regions (GRCh38, mm10; mm39: ENCODE mm10 exclusion list
-   and TSS file lifted to mm39; other genomes: blacklist from AnnotationHub)
-2. Quality control of reads (`FastQC`)
-3. Adapter trimming (`cutadapt -e 0.1 -m 5`, Nextera adapter)
-4. Alignment (`bowtie2 -k 5 -X2000 --mm`)
-5. Removal of unmapped, unpaired and multimapping (> 4 alignments) reads (`samtools`, `pysam`)
-6. Duplicate marking (`Picard MarkDuplicates`) and removal of duplicates and mitochondrial reads
-7. Conversion to Tn5 shifted (+4/-5 bp) tagAlign files of both mates
-8. Pseudoreplication of each replicate, and pooling of the replicates and of the pseudoreplicates per condition
-9. Peak calling (`MACS2 callpeak -p 0.01 --shift -75 --extsize 150 --nomodel --keep-dup all --call-summits`),
-   keeping the top 300,000 peaks
-10. Removal of peaks in blacklisted regions and on non-standard chromosomes
-11. Reproducibility: IDR (threshold 0.05) and naive overlap of all pairs of replicates,
-    of the pseudoreplicates of each replicate and of the pooled pseudoreplicates,
-    giving the optimal and conservative peak set of each condition
-    and, not part of the ENCODE pipeline, the peaks reproducible in several replicates
-12. Fold enrichment and p-value signal tracks (`MACS2 bdgcmp`) of each replicate and condition
-13. QC: library complexity (NRF, PBC1, PBC2), fraction of mitochondrial reads, FRiP,
-    TSS enrichment (calculated as by ENCODE), fragment length distribution and nucleosomal
-    pattern (`Picard CollectInsertSizeMetrics`), GC bias (`Picard CollectGcBiasMetrics`),
-    fingerprint and Jensen-Shannon distance (`deepTools plotFingerprint`), fraction of reads in
-    DHS, promoters, enhancers and blacklisted regions, rescue and self-consistency ratios,
-    `ataqv`, `MultiQC`
-14. Annotation of the optimal peak set (`ChIPseeker`)
-15. Comparison of all samples (not part of the ENCODE pipeline): PCA, sample correlation and
-    differential accessibility between conditions from Tn5 insertions in the merged optimal peaks
-    (`DESeq2`)
-16. Optional (not part of the ENCODE pipeline): accessibility of transposable elements per
-    RepeatMasker subfamily, family and class, keeping multimapping reads
-    (see [Transposable elements](../README.md#transposable-elements))
+<!-- docs-include-start -->
 
-Not included from the ENCODE pipeline: its optional (off by default) preseq, cross-correlation
-and Roadmap comparison, its HTML/JSON QC report and the bigBed/starch/hammock peak formats.
-The fraction of reads in DHS, promoters and enhancers is only calculated for GRCh38 and mm10
-(`mm38`), for which ENCODE provides these regions.
-TSS enrichment uses ENCODE's TSS files (one TSS per protein coding gene; GRCh38, mm10, and for
-mm39 the mm10 file lifted to mm39), so that scores can be compared with the ENCODE thresholds.
-For other genomes it uses the 5' end of each Ensembl protein coding gene.
-
-## Running the workflow
-
-### Input data
+## Sample sheet
 
 Paired-end reads go in `reads/{sample}_R1_001.fastq.gz` and `reads/{sample}_R2_001.fastq.gz`.
 The sample sheet `config/samples.csv` has the following layout:
@@ -69,9 +27,11 @@ more accessible than in the reference); the reference condition then also needs 
 replicates. The column is needed for the DESeq2 analysis of more than one condition, unless all
 comparisons are listed in `deseq2: contrasts`.
 
-### Parameters
+## Parameters
 
-The defaults in `config/config.yaml` are those of the ENCODE pipeline.
+`config/config.yaml` sets the parameters below. Set at least the genome (`genome: ensembl` and
+`release`) and the effective genome size (`macs2: gsize`); the other defaults are those of the
+ENCODE pipeline.
 
 | parameter                         | details                                                                    | default        |
 | --------------------------------- | -------------------------------------------------------------------------- | -------------- |
@@ -122,37 +82,3 @@ The defaults in `config/config.yaml` are those of the ENCODE pipeline.
 | profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |
 | correlation: datasets             | data sets to compare with the differential TE peaks with GAT, as name: BED file (e.g. EM-seq DMRs; UCSC or Ensembl chromosome names) | {} |
 | correlation: gat_samples          | number of random placements of the peaks in GAT                            | 10000 |
-
-### Output
-
-| file                                                   | content                                                         |
-| ------------------------------------------------------ | --------------------------------------------------------------- |
-| `results/filtered/{sample}.nodup.bam`                  | filtered, deduplicated alignments without mitochondrial reads   |
-| `results/tagalign/{sample}.tagAlign.gz`                | Tn5 shifted reads                                               |
-| `results/macs2/{sample}.bfilt.narrowPeak`              | blacklist-filtered peaks of each replicate                      |
-| `results/{idr,overlap}/{condition}/optimal_peak.narrowPeak` | optimal reproducible peak set (ENCODE's main output)       |
-| `results/{idr,overlap}/{condition}/conservative_peak.narrowPeak` | conservative reproducible peak set                    |
-| `results/{idr,overlap}/{condition}/replicated_peak.narrowPeak` | peaks reproducible in at least `min_replicate_fraction` of the replicates (conditions with replicates) |
-| `results/{idr,overlap}/{condition}/optimal_peak_annotated.txt` | annotated optimal peak set                              |
-| `results/bigwig/{sample,pooled/condition}.{fc,pval}.signal.bigwig` | fold enrichment and -log10(p-value) signal tracks   |
-| `results/qc/encode_qc_summary.tsv`                     | QC metrics of each sample, graded against the ENCODE standards  |
-| `results/qc/encode_reproducibility_summary.tsv`        | reproducibility of each condition, graded against the standards |
-| `results/multiqc/multiqc_report.html`                  | FastQC, cutadapt, bowtie2, Picard, deepTools and samtools stats report |
-| `results/qc/{sample}.fraglen_dist.png`, `.nucleosomal.qc` | fragment length distribution and nucleosomal QC             |
-| `results/qc/{sample}.tss_enrich.png`                   | TSS enrichment profile                                          |
-| `results/qc/{sample}.gc_plot.png`                      | GC bias                                                         |
-| `results/qc/{condition}.jsd_plot.png`                  | fingerprint plot of the replicates                              |
-| `results/ataqv_report/index.html`                      | ataqv report                                                    |
-| `results/deseq2/pca.png`, `sample_correlation.png`     | PCA and correlation of all samples                              |
-| `results/deseq2/{treatment}_vs_{control}/differential_peaks.tsv` | differential accessibility between conditions         |
-| `results/te/te_{subfamily,family,class}.tsv`           | Tn5 insertions in repeats (TE module)                           |
-| `results/te/bigwig/{sample,mean/{condition}}.cpm.bigwig` | Tn5 insertion tracks including multimappers, per sample and mean per condition (TE module; signal at single copies of young repeats is not reliable) |
-| `results/te/deseq2/pca.png`, `results/te/deseq2/sample_correlation.png` | PCA and sample correlation from the repeat subfamily counts (TE module with `deseq2: enable`) |
-| `results/te/deseq2/{contrast}/differential_subfamilies.tsv` | differential accessibility of repeat subfamilies (TE module with `deseq2: enable`) |
-| `results/te/deseq2/{contrast}/heatmap_classes.png` | heatmap of repeat subfamilies, faceted by class (TE module with `deseq2: enable`) |
-| `results/te/profile/{conditions,samples}.png` | profile of the TE signal tracks over full-length copies of `te: profile: subfamilies` |
-| `results/te/multiqc/multiqc_report.html`, `results/te/qc/` | QC of the TE alignments (also with `te: only`) |
-| `results/te/peaks/consensus_peaks_repeats.tsv` | TE consensus peaks with their repeat and fraction of uniquely mapping insertions |
-| `results/te/peaks/deseq2/pca.png`, `results/te/peaks/deseq2/sample_correlation.png` | PCA and sample correlation from the TE peak counts (with `deseq2: enable`) |
-| `results/te/peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks (with `deseq2: enable`) |
-| `results/te/correlation/{contrast}/venn.png` | GAT enrichment and Venn diagrams of the differential TE peaks and `te: correlation: datasets` |
