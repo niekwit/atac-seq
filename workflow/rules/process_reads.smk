@@ -77,9 +77,10 @@ rule create_annotation_file:
     resources:
         runtime=runtime(60),
         mem_mb=10000,
+        cpus_per_task=cpus_for_memory(10000),
     log:
         "logs/resources/create_annotation_file.log",
-    threads: 3
+    threads: 1
     conda:
         "../envs/r.yaml"
     script:
@@ -452,10 +453,11 @@ rule markduplicates:
     params:
         extra="--REMOVE_DUPLICATES false --VALIDATION_STRINGENCY LENIENT",
         java_heap="3g",
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(120),
         mem_mb=4096,
+        cpus_per_task=cpus_for_memory(4096),
     conda:
         "../envs/qc.yaml"
     shell:

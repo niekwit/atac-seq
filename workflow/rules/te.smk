@@ -43,10 +43,11 @@ rule prepare_te_annotation:
     params:
         classes=config.get("te", {}).get("classes", []),
         filter_chrs=config["filter"]["filter_chrs"],
-    threads: 2
+    threads: 1
     resources:
         runtime=runtime(30),
         mem_mb=4000,
+        cpus_per_task=cpus_for_memory(4000),
     log:
         "logs/te/prepare_te_annotation.log",
     conda:

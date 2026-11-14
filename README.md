@@ -113,8 +113,11 @@ that run out of time are resubmitted with more time when the workflow is run wit
 (e.g. `--retries 2`). For much deeper data, or to change a limit, override it in a profile or on
 the command line, e.g. `--set-resources bowtie2_align:runtime=1440`. The memory limits
 (`mem_mb`) are passed on as well, for clusters that schedule by memory. For clusters that
-assign memory per CPU, each rule requests enough threads to cover its `mem_mb` at 3,370 MiB per
-CPU; on clusters with less memory per CPU, raise the threads with `--set-threads`.
+assign memory per CPU, each rule requests enough CPUs to cover its `mem_mb` at 3,370 MiB per
+CPU: multithreaded rules through their threads, and single-threaded rules with more memory
+through the `cpus_per_task` resource (SLURM's `--cpus-per-task`), so that locally they take
+one core. On clusters with less memory per CPU, raise the CPUs with `--set-threads` (rules
+without `cpus_per_task`) or `--set-resources rule:cpus_per_task=N`.
 
 ## QC summary
 
