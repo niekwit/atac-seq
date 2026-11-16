@@ -8,12 +8,12 @@ sink(log, type = "message")
 # with the GAT enrichment of the overlap. One row per data set, one column
 # for the peaks more and less accessible in the treatment.
 #
-# Circles: the peaks and the regions of the data set, each merged within its
-# own set (overlapping intervals only), labelled with their totals; overlap:
-# the intersections (overlapping peak-region pairs; counted by te_gat.py).
-# All panels share one scale, so a data set has the same size in each panel.
-# GAT tests the overlap in bp, against random placements of the peaks within
-# the TE consensus peaks.
+# Areas (counted by te_gat.py, with the peaks and the regions of the data set
+# each merged within its own set): peaks that overlap no region, regions that
+# overlap no peak, and the intersections (overlapping peak-region pairs). The
+# totals of peaks and regions are in the legend. All panels share one scale.
+# GAT tests the overlap in bp, against random placements of the peaks in the
+# whole genome.
 
 library(eulerr)
 library(grid)
@@ -42,13 +42,16 @@ gat_label <- function(r) {
   )
 }
 
-# Euler fit per panel: areas of peaks only, regions only and intersections.
-# Intersections are pairs, so they can exceed the smaller set (one peak
-# overlapping many regions): then capped at the smaller set for the drawing.
-fit_panel <- function(r) {
-  both <- min(r$n_intersections, r$n_peaks, r$n_regions)
-  euler(c(A = r$n_peaks - both, B = r$n_regions - both, "A&B" = both))
+# Areas of a panel: peaks only, regions only and intersections
+areas <- function(r) {
+  c(
+    A = r$n_peaks - r$n_peaks_overlap,
+    B = r$n_regions - r$n_regions_overlap,
+    "A&B" = r$n_intersections
+  )
 }
+
+fit_panel <- function(r) euler(areas(r))
 
 # Width or height of a fitted diagram, whichever is larger: plot.euler scales
 # this to the viewport, so viewports scaled by it share one scale
@@ -86,10 +89,9 @@ panel <- function(i) {
     body <- textGrob(paste("No", direction, "peaks"), gp = gpar(fontsize = 9))
   } else {
     fit <- fits[[i]]
-    # Totals in the circles, intersections in the overlap (quantities are
-    # placed in the areas A only, B only and A&B)
+    # Quantities are placed in the areas A only, B only and A&B
     labels <- format(
-      c(r$n_peaks, r$n_regions, r$n_intersections),
+      areas(r),
       big.mark = ",",
       trim = TRUE
     )

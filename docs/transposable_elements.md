@@ -94,11 +94,11 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    The result is shown as area-proportional Venn diagrams
    ([eulerr](https://CRAN.R-project.org/package=eulerr)) with the GAT fold enrichment and
    q-value. The peaks and the regions of the data set are each merged within their own set
-   (intervals that overlap; adjacent intervals, such as 1 kb DMR tiles, are kept apart). Each
-   circle is labelled with its number of peaks or regions, and the overlap with the number of
+   (intervals that overlap; adjacent intervals, such as 1 kb DMR tiles, are kept apart). The
+   areas show the peaks that overlap no region, the regions that overlap no peak, and the
    intersections: the overlapping peak-region pairs, so a peak that overlaps three regions
-   counts three times. All diagrams of a contrast share one scale, so a data set has the same
-   size in each of them.
+   counts three times. The legend gives the total numbers of peaks and regions and how many of
+   them overlap. All diagrams of a contrast share one scale.
 
 ## Output
 
