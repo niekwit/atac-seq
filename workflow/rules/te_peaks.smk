@@ -240,7 +240,7 @@ rule te_gat:
         # Functions, so the data sets are checked only when GAT runs
         datasets=lambda w: te_correlation_config()["datasets"],
         samples=lambda w: te_correlation_config()["gat_samples"],
-    threads: 4
+    threads: 20
     resources:
         runtime=runtime(120),
         mem_mb=12000,
