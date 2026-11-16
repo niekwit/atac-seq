@@ -48,8 +48,15 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
 
    An entry that is not a subfamily name is a group: all subfamilies whose name starts with it
    followed by `_` are plotted together in one panel, e.g. `L1MdTf` for `L1MdTf_I`,
-   `L1MdTf_II` and `L1MdTf_III`. Subfamilies and groups can be mixed, and the log
+   `L1MdTf_II` and `L1MdTf_III`. `family:<name>` and `class:<name>` plot all subfamilies of
+   a RepeatMasker family (repFamily, e.g. `family:L1` for all LINE-1s) or class (repClass,
+   e.g. `class:LINE`) together. Subfamilies and groups can be mixed, and the log
    (`logs/te/te_full_length_copies.log`) lists the subfamilies of each group.
+
+   A copy counts as full-length relative to its own subfamily's consensus. Families and
+   classes mix elements of different lengths and ages, and for LTR retrotransposons
+   RepeatMasker annotates the LTRs and the internal part (`-int`) as separate subfamilies, so
+   `class:LTR` mostly contains solo LTRs.
 
 ### Differential accessibility of subfamilies
 

@@ -5,7 +5,9 @@ computeMatrix, with one group of regions per entry of te: profile:
 subfamilies. An entry is a subfamily (repName, e.g. L1MdTf_I) or, if no
 subfamily has that name, the prefix of a group of subfamilies (e.g. L1MdTf for
 L1MdTf_I, L1MdTf_II and L1MdTf_III: all repNames that start with the entry
-followed by "_"), whose copies are then plotted together.
+followed by "_"), whose copies are then plotted together. "family:<name>" and
+"class:<name>" select all subfamilies of a RepeatMasker family (repFamily,
+e.g. family:L1) or class (repClass, e.g. class:LINE).
 
 A copy is full-length if its alignment covers at least min_consensus_fraction
 of the subfamily's consensus sequence (repStart, repEnd and repLeft of the
@@ -48,6 +50,8 @@ RMSK_COLUMNS = {
     7: "end",
     9: "strand",
     10: "subfamily",  # repName
+    11: "class",  # repClass
+    12: "family",  # repFamily
     13: "rep_start",
     14: "rep_end",
     15: "rep_left",
@@ -58,24 +62,31 @@ df = pd.read_csv(
     sep="\t",
     header=None,
     usecols=list(RMSK_COLUMNS),
-    dtype={5: str, 10: str},
+    dtype={5: str, 10: str, 11: str, 12: str},
 ).rename(columns=RMSK_COLUMNS)
 
 
-def members(entry, names):
-    """Subfamilies of an entry: the subfamily itself, or entry_* if absent"""
+def members(entry):
+    """
+    Subfamilies of an entry: family:<name> or class:<name>, the subfamily
+    itself, or the subfamilies entry_* if there is no subfamily entry
+    """
+    for level in ("family", "class"):
+        if entry.startswith(f"{level}:"):
+            name = entry.removeprefix(f"{level}:")
+            return sorted(set(df.loc[df[level] == name, "subfamily"]))
+    names = set(df["subfamily"])
     if entry in names:
         return [entry]
     return sorted(name for name in names if name.startswith(f"{entry}_"))
 
 
-names = set(df["subfamily"])
-groups = {entry: members(entry, names) for entry in subfamilies}
+groups = {entry: members(entry) for entry in subfamilies}
 for entry, group in groups.items():
     if not group:
-        logging.warning(f"{entry}: no subfamily with this name or prefix")
+        logging.warning(f"{entry}: no matching subfamilies")
     elif group != [entry]:
-        logging.info(f"{entry}: subfamilies {', '.join(group)}")
+        logging.info(f"{entry}: {len(group)} subfamilies: {', '.join(group)}")
 df = df[df["subfamily"].isin({name for group in groups.values() for name in group})]
 
 # Ensembl chromosome names

@@ -100,7 +100,8 @@ te:
   # (results/te/profile/). Full-length: covers at least
   # min_consensus_fraction of the RepeatMasker consensus. A name that is not a
   # subfamily is a group: e.g. L1MdTf plots L1MdTf_I, _II and _III together
-  # (all subfamilies named L1MdTf_*). Empty list: no plot
+  # (all subfamilies named L1MdTf_*); family:L1 or class:LINE plots all
+  # subfamilies of a RepeatMasker family or class together. Empty list: no plot
   profile:
     subfamilies: ["L1MdTf_I", "L1MdTf_II", "L1MdTf_III", "L1MdA_I", "L1MdA_II", "L1MdGf_I", "IAPEz-int"]
     min_consensus_fraction: 0.9
