@@ -84,15 +84,17 @@ te:
   # Profile of Tn5 insertions over the full-length copies of these
   # subfamilies, scaled to body_length bp with flank bp on each side
   # (results/te/profile/). Full-length: covers at least
-  # min_consensus_fraction of the RepeatMasker consensus. Empty list: no plot
+  # min_consensus_fraction of the RepeatMasker consensus. A name that is not a
+  # subfamily is a group: e.g. L1MdTf plots L1MdTf_I, _II and _III together
+  # (all subfamilies named L1MdTf_*). Empty list: no plot
   profile:
     subfamilies: ["L1HS", "L1PA2", "L1PA3", "SVA_D", "LTR12C"]
     min_consensus_fraction: 0.9
     flank: 2000
     body_length: 6000
   # Comparison of the differential TE peaks of each contrast (with deseq2:
-  # enable) with other data sets, e.g. EM-seq DMRs: GAT enrichment within the
-  # TE consensus peaks and area-proportional Venn diagrams
+  # enable) with other data sets, e.g. EM-seq DMRs: GAT enrichment against the
+  # whole genome and area-proportional Venn diagrams
   # (results/te/correlation/). Name: BED file; empty: no comparison
   correlation:
     datasets:

@@ -76,7 +76,7 @@ ENCODE pipeline.
 | heatmap: classes                  | list of classes in the heatmap of each contrast; `["all"]` for every class | ["LINE", "SINE", "LTR", "DNA"] |
 | heatmap: subfamilies              | list of subfamilies in the heatmap; `["all"]` for the significant subfamilies of the selected classes. Named subfamilies are plotted whether significant or not (significant ones marked with *) | ["all"] |
 | heatmap: max_per_class            | most significant subfamilies per class in the heatmap (with `subfamilies: ["all"]`) | 25 |
-| profile: subfamilies              | subfamilies for the profile over their full-length copies (empty: no profile) | [] |
+| profile: subfamilies              | subfamilies for the profile over their full-length copies, or groups of subfamilies by prefix (e.g. `L1MdTf` for `L1MdTf_I`–`_III`) (empty: no profile) | [] |
 | profile: min_consensus_fraction   | fraction of the RepeatMasker consensus a copy must cover to count as full-length | 0.9 |
 | profile: flank                    | bp before and after the copies in the profile                              | 2000 |
 | profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |

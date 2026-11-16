@@ -46,6 +46,11 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    is the mean over many copies, so it shows, for example, accessibility at the 5' UTR promoter
    of young LINE-1s, even though single copies can't be resolved.
 
+   An entry that is not a subfamily name is a group: all subfamilies whose name starts with it
+   followed by `_` are plotted together in one panel, e.g. `L1MdTf` for `L1MdTf_I`,
+   `L1MdTf_II` and `L1MdTf_III`. Subfamilies and groups can be mixed, and the log
+   (`logs/te/te_full_length_copies.log`) lists the subfamilies of each group.
+
 ### Differential accessibility of subfamilies
 
 7. With `deseq2: enable`: differential accessibility of subfamilies with `DESeq2`, for the same
