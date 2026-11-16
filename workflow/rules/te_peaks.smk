@@ -160,9 +160,9 @@ use rule deseq2_qc as te_peaks_deseq2_qc with:
         counts="results/te/peaks/consensus_peak_counts.txt",
     output:
         vst="results/te/peaks/deseq2/vst_counts.tsv",
-        pca="results/te/peaks/deseq2/pca.png",
+        pca="results/te/peaks/deseq2/pca.pdf",
         pca_data="results/te/peaks/deseq2/pca.tsv",
-        correlation="results/te/peaks/deseq2/sample_correlation.png",
+        correlation="results/te/peaks/deseq2/sample_correlation.pdf",
         correlation_data="results/te/peaks/deseq2/sample_correlation.tsv",
     log:
         "logs/te/peaks/deseq2_qc.log",
@@ -187,8 +187,8 @@ use rule deseq2_contrast as te_peaks_deseq2_contrast with:
         extra="results/te/peaks/consensus_peaks_repeats.tsv",
     output:
         table="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
-        ma="results/te/peaks/deseq2/{contrast}/ma_plot.png",
-        volcano="results/te/peaks/deseq2/{contrast}/volcano_plot.png",
+        ma="results/te/peaks/deseq2/{contrast}/ma_plot.pdf",
+        volcano="results/te/peaks/deseq2/{contrast}/volcano_plot.pdf",
     log:
         "logs/te/peaks/deseq2_{contrast}.log",
 
@@ -224,18 +224,19 @@ rule te_differential_peak_beds:
 
 
 # GAT enrichment of the differential peaks in the regions of other data sets
-# (te: correlation: datasets), within the TE consensus peaks
+# (te: correlation: datasets), with the whole genome as workspace
 # -----------------------------------------------------
 rule te_gat:
     input:
         more="results/te/peaks/deseq2/{contrast}/more_accessible.bed",
         less="results/te/peaks/deseq2/{contrast}/less_accessible.bed",
-        workspace="results/te/peaks/consensus_peaks.bed",
         chrom_sizes="resources/chrom_sizes.txt",
+        blacklist="resources/blacklist.bed",
         datasets=lambda w: list(te_correlation_config()["datasets"].values()),
     output:
         table="results/te/correlation/{contrast}/gat.tsv",
     params:
+        filter_chrs=config["filter"]["filter_chrs"],
         # Functions, so the data sets are checked only when GAT runs
         datasets=lambda w: te_correlation_config()["datasets"],
         samples=lambda w: te_correlation_config()["gat_samples"],
@@ -258,7 +259,7 @@ rule te_venn:
     input:
         table="results/te/correlation/{contrast}/gat.tsv",
     output:
-        venn="results/te/correlation/{contrast}/venn.png",
+        venn="results/te/correlation/{contrast}/venn.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],

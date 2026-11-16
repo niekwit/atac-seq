@@ -20,7 +20,7 @@ bams = list(snakemake.input["bams"])
 blacklist = snakemake.input["blacklist"]
 samples = snakemake.params["samples"]
 mapq = snakemake.params["mapq"]
-plot_png = snakemake.output["plot"]
+plot_file = snakemake.output["plot"]
 metrics = snakemake.output["metrics"]
 threads = str(snakemake.threads)
 log = snakemake.log[0]
@@ -69,7 +69,7 @@ try:
             "--minMappingQuality", str(mapq),
             "-T", "Fingerprints of different samples",
             "--numberOfProcessors", threads,
-            "--plotFile", plot_png,
+            "--plotFile", plot_file,
         ]  # fmt: skip
     )
 finally:

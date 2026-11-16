@@ -61,9 +61,9 @@ rule deseq2_qc:
         counts="results/deseq2/consensus_peak_counts.txt",
     output:
         vst="results/deseq2/vst_counts.tsv",
-        pca="results/deseq2/pca.png",
+        pca="results/deseq2/pca.pdf",
         pca_data="results/deseq2/pca.tsv",
-        correlation="results/deseq2/sample_correlation.png",
+        correlation="results/deseq2/sample_correlation.pdf",
         correlation_data="results/deseq2/sample_correlation.tsv",
     params:
         samples=SAMPLES,
@@ -137,8 +137,8 @@ rule deseq2_contrast:
         peaks="results/deseq2/consensus_peaks.bed",
     output:
         table="results/deseq2/{contrast}/differential_peaks.tsv",
-        ma="results/deseq2/{contrast}/ma_plot.png",
-        volcano="results/deseq2/{contrast}/volcano_plot.png",
+        ma="results/deseq2/{contrast}/ma_plot.pdf",
+        volcano="results/deseq2/{contrast}/volcano_plot.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],

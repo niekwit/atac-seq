@@ -80,16 +80,20 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    [GAT](https://doi.org/10.1093/bioinformatics/btt343) tests per contrast whether the more and
    the less accessible TE peaks overlap the regions of each data set more than expected.
 
-   GAT places the differential peaks at random within the TE consensus peaks (`gat_samples`
-   times), so they are compared with accessible regions in general, not with the whole genome
-   (open chromatin overlaps most regulatory data sets anyway). q-values are over all tests of a
-   contrast.
+   GAT places the differential peaks at random in the whole genome (`gat_samples` times),
+   except on `filter_chrs` (e.g. MT) and in the blacklist, where no peaks are called. q-values
+   are over all tests of a contrast. Open chromatin in general overlaps most regulatory data
+   sets more than the genome does, so compare the more and the less accessible peaks: an
+   enrichment of only the more accessible peaks is specific to the change in accessibility.
 
    The result is shown as area-proportional Venn diagrams
    ([eulerr](https://CRAN.R-project.org/package=eulerr)) with the GAT fold enrichment and
-   q-value. The areas count merged regions, as in
-   [ChIPpeakAnno](https://doi.org/10.1186/1471-2105-11-237): overlapping peaks and regions are
-   merged, so a peak that overlaps several regions counts once.
+   q-value. The peaks and the regions of the data set are each merged within their own set
+   (intervals that overlap; adjacent intervals, such as 1 kb DMR tiles, are kept apart). Each
+   circle is labelled with its number of peaks or regions, and the overlap with the number of
+   intersections: the overlapping peak-region pairs, so a peak that overlaps three regions
+   counts three times. All diagrams of a contrast share one scale, so a data set has the same
+   size in each of them.
 
 ## Output
 
@@ -105,19 +109,19 @@ In `results/te/`:
 | `multiqc/multiqc_report.html` | MultiQC report of the TE alignments, with the QC summary in the general statistics |
 | `bigwig/{sample}.cpm.bigwig` | Tn5 insertions per million insertions, including multimappers (see the caveats below) |
 | `bigwig/mean/{condition}.cpm.bigwig` | mean of the replicates of a condition |
-| `deseq2/pca.png`, `deseq2/sample_correlation.png` | PCA (samples coloured by condition) and Pearson correlation of all samples from the variance-stabilised subfamily counts, as for the ENCODE peaks; data in `pca.tsv` and `sample_correlation.tsv` |
+| `deseq2/pca.pdf`, `deseq2/sample_correlation.pdf` | PCA (samples coloured by condition) and Pearson correlation of all samples from the variance-stabilised subfamily counts, as for the ENCODE peaks; data in `pca.tsv` and `sample_correlation.tsv` |
 | `deseq2/{contrast}/differential_subfamilies.tsv` | per subfamily: family, class, copies, `baseMean`, `log2FoldChange` (and shrunken), `pvalue`, `padj`, `change` |
-| `deseq2/{contrast}/{ma,volcano}_plot.png` | MA and volcano plots, most significant subfamilies labelled |
-| `deseq2/{contrast}/heatmap_classes.png` | heatmap faceted by class and condition: row z-scores of variance-stabilised insertions in square cells. By default the significant subfamilies of LINE, SINE, LTR and DNA (at most 25 per class); set with `te: heatmap` |
-| `profile/{conditions,samples}.png` | profile over the full-length copies, one panel per subfamily (with its number of copies), one line per condition or sample |
+| `deseq2/{contrast}/{ma,volcano}_plot.pdf` | MA and volcano plots, most significant subfamilies labelled |
+| `deseq2/{contrast}/heatmap_classes.pdf` | heatmap faceted by class and condition: row z-scores of variance-stabilised insertions in square cells. By default the significant subfamilies of LINE, SINE, LTR and DNA (at most 25 per class); set with `te: heatmap` |
+| `profile/{conditions,samples}.pdf` | profile over the full-length copies, one panel per subfamily (with its number of copies), one line per condition or sample |
 | `peaks/overlap/{condition}/replicated_peak.narrowPeak` | TE peaks of a condition, replicated in `min_replicate_fraction` of its replicates |
 | `peaks/consensus_peaks_repeats.tsv` | per consensus peak: insertions, `frac_unique`, overlapping repeat (subfamily, family, class, bp) |
 | `peaks/consensus_peaks_frac_unique.bed` | consensus peaks as BED6, score: `frac_unique` × 1000 |
-| `peaks/deseq2/pca.png`, `peaks/deseq2/sample_correlation.png` | PCA and sample correlation from the TE consensus peak counts |
+| `peaks/deseq2/pca.pdf`, `peaks/deseq2/sample_correlation.pdf` | PCA and sample correlation from the TE consensus peak counts |
 | `peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks, with gene annotation, repeat and `frac_unique` |
 | `peaks/deseq2/{contrast}/{more,less}_accessible.bed` | differential TE peaks as BED6 (fold changes in `differential_peaks.tsv`) |
-| `correlation/{contrast}/gat.tsv` | per direction and data set: numbers of peaks and regions and of those overlapping, GAT observed and expected overlap (bp), fold, p- and q-value |
-| `correlation/{contrast}/venn.png` | Venn diagrams of the differential peaks and each data set, counted as merged regions (overlapping peaks and regions merged, as in ChIPpeakAnno), with the numbers of peaks and regions and the GAT result |
+| `correlation/{contrast}/gat.tsv` | per direction and data set: numbers of peaks and regions (each merged within its set), intersections (overlapping pairs), peaks that overlap a region and regions that overlap a peak, GAT observed and expected overlap (bp), fold, p- and q-value |
+| `correlation/{contrast}/venn.pdf` | Venn diagrams of the differential peaks and each data set: numbers of peaks and regions, intersections, and the GAT result |
 
 For each sample the `te_{subfamily,family,class}.tsv` tables have:
 
