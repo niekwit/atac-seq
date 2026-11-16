@@ -95,13 +95,25 @@ te:
     subfamilies: ["all"]
     # Most significant subfamilies per class (with subfamilies: ["all"])
     max_per_class: 25
-  # Profile of Tn5 insertions over the full-length copies of these
-  # subfamilies, scaled to body_length bp with flank bp on each side
-  # (results/te/profile/). Full-length: covers at least
-  # min_consensus_fraction of the RepeatMasker consensus. A name that is not a
-  # subfamily is a group: e.g. L1MdTf plots L1MdTf_I, _II and _III together
-  # (all subfamilies named L1MdTf_*); family:L1 or class:LINE plots all
-  # subfamilies of a RepeatMasker family or class together. Empty list: no plot
+  # Profile of Tn5 insertions over the full-length copies of repeats, scaled
+  # to body_length bp with flank bp on each side (results/te/profile/), one
+  # panel per entry of subfamilies. Full-length: a copy covers at least
+  # min_consensus_fraction of its subfamily's RepeatMasker consensus.
+  # An entry of subfamilies can be:
+  #   - a subfamily (repName), e.g. "L1MdTf_I" or "IAPEz-int"
+  #   - a prefix: all subfamilies named <prefix>_*, plotted together,
+  #     e.g. "L1MdTf" for L1MdTf_I, L1MdTf_II and L1MdTf_III (only used if no
+  #     subfamily has that exact name)
+  #   - "family:<repFamily>": all subfamilies of a RepeatMasker family,
+  #     e.g. "family:L1" for all LINE-1s, "family:ERVK"
+  #   - "class:<repClass>": all subfamilies of a RepeatMasker class,
+  #     e.g. "class:LINE", "class:LTR"
+  # Use family: or class: for whole families, not a bare name: "L1" would be
+  # read as a prefix and select only subfamilies named L1_* (e.g. L1_Mus1).
+  # Families and classes mix old and young elements of different lengths, and
+  # RepeatMasker annotates LTRs and internal parts (-int) separately, so
+  # class:LTR is mostly solo LTRs. logs/te/te_full_length_copies.log lists the
+  # subfamilies and copies of each entry. Empty list: no plot
   profile:
     subfamilies: ["L1MdTf_I", "L1MdTf_II", "L1MdTf_III", "L1MdA_I", "L1MdA_II", "L1MdGf_I", "IAPEz-int"]
     min_consensus_fraction: 0.9
