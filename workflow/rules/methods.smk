@@ -22,9 +22,9 @@ from snakemake import __version__ as SNAKEMAKE_VERSION
 # Methods template and database overrides of the workflow, as text (read
 # while parsing). Text, not paths: source_path() gives a new runtime-cache path
 # at every invocation, and a path in params would rerun the methods every time
-with open(workflow.source_path("../methods/methods.md.j2")) as fh:
+with open(workflow.source_path("../methods/methods.md.j2"), encoding="utf-8") as fh:
     METHODS_TEMPLATE = fh.read()
-with open(workflow.source_path("../methods/tools.yaml")) as fh:
+with open(workflow.source_path("../methods/tools.yaml"), encoding="utf-8") as fh:
     METHODS_OVERRIDES = fh.read()
 
 # Package names of the environment files (read while parsing)
