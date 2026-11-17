@@ -82,8 +82,8 @@ if not te_only():
     ]
     if deseq2_enabled():
         ENCODE_TARGETS += [
-            "results/deseq2/pca.png",
-            "results/deseq2/sample_correlation.png",
+            "results/deseq2/pca.pdf",
+            "results/deseq2/sample_correlation.pdf",
             *expand(
                 "results/deseq2/{contrast}/differential_peaks.tsv",
                 contrast=deseq2_contrasts(),
@@ -115,7 +115,7 @@ if te_enabled():
             *expand(
                 "results/te/{level}/{file}",
                 level=["deseq2", "peaks/deseq2"],
-                file=["pca.png", "sample_correlation.png"],
+                file=["pca.pdf", "sample_correlation.pdf"],
             ),
             *expand(
                 "results/te/deseq2/{contrast}/differential_subfamilies.tsv",
@@ -133,12 +133,12 @@ if te_enabled():
         ]
         if te_correlation_config()["datasets"]:
             TE_TARGETS += expand(
-                "results/te/correlation/{contrast}/venn.png",
+                "results/te/correlation/{contrast}/venn.pdf",
                 contrast=deseq2_contrasts(),
             )
     if te_profile_config()["subfamilies"]:
         TE_TARGETS += expand(
-            "results/te/profile/{level}.png", level=["conditions", "samples"]
+            "results/te/profile/{level}.pdf", level=["conditions", "samples"]
         )
 
 

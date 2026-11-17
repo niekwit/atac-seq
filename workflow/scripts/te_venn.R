@@ -8,12 +8,12 @@ sink(log, type = "message")
 # with the GAT enrichment of the overlap. One row per data set, one column
 # for the peaks more and less accessible in the treatment.
 #
-# Areas: merged regions (ChIPpeakAnno, Zhu et al., 2010,
-# doi:10.1186/1471-2105-11-237; counted by te_gat.py): overlapping peaks and
-# regions are merged, and the merged regions with only peaks, only data set
-# regions, or both are counted, so both sets use one measure. The legend gives
-# the numbers of peaks and regions. GAT tests the overlap in bp, against
-# random placements of the peaks within the TE consensus peaks.
+# Areas (counted by te_gat.py, with the peaks and the regions of the data set
+# each merged within its own set): peaks that overlap no region, regions that
+# overlap no peak, and the intersections (overlapping peak-region pairs). The
+# totals of peaks and regions are in the legend. All panels share one scale.
+# GAT tests the overlap in bp, against random placements of the peaks in the
+# whole genome.
 
 library(eulerr)
 library(grid)
@@ -42,7 +42,44 @@ gat_label <- function(r) {
   )
 }
 
-panel <- function(dataset, direction) {
+# Areas of a panel: peaks only, regions only and intersections
+areas <- function(r) {
+  c(
+    A = r$n_peaks - r$n_peaks_overlap,
+    B = r$n_regions - r$n_regions_overlap,
+    "A&B" = r$n_intersections
+  )
+}
+
+fit_panel <- function(r) euler(areas(r))
+
+# Width or height of a fitted diagram, whichever is larger: plot.euler scales
+# this to the viewport, so viewports scaled by it share one scale
+extent <- function(fit) {
+  e <- fit$ellipses
+  max(
+    diff(range(c(e$h - e$a, e$h + e$a))),
+    diff(range(c(e$k - e$b, e$k + e$b)))
+  )
+}
+
+rows <- expand.grid(
+  direction = directions,
+  dataset = datasets,
+  stringsAsFactors = FALSE
+)
+fits <- lapply(seq_len(nrow(rows)), function(i) {
+  r <- results[
+    results$dataset == rows$dataset[i] & results$peaks == rows$direction[i],
+  ]
+  if (r$n_peaks == 0) NULL else fit_panel(r)
+})
+extents <- vapply(fits, function(f) if (is.null(f)) 0 else extent(f), 0)
+max_extent <- max(extents)
+
+panel <- function(i) {
+  dataset <- rows$dataset[i]
+  direction <- rows$direction[i]
   r <- results[results$dataset == dataset & results$peaks == direction, ]
   heading <- textGrob(
     paste0(dataset, "\n", direction, " peaks"),
@@ -51,39 +88,51 @@ panel <- function(dataset, direction) {
   if (r$n_peaks == 0) {
     body <- textGrob(paste("No", direction, "peaks"), gp = gpar(fontsize = 9))
   } else {
-    sizes <- c(
-      A = r$n_merged_peaks_only,
-      B = r$n_merged_regions_only,
-      "A&B" = r$n_merged_both
+    fit <- fits[[i]]
+    # Quantities are placed in the areas A only, B only and A&B
+    labels <- format(
+      areas(r),
+      big.mark = ",",
+      trim = TRUE
     )
-    fit <- euler(sizes)
-    # Set names and totals in the legend: labels next to the circles are
-    # clipped when one set is much smaller than the other
-    legend_labels <- c(
-      sprintf(
-        "%s peaks: %s (%s overlap a region)",
-        direction,
-        format(r$n_peaks, big.mark = ","),
-        format(r$n_peaks_overlap, big.mark = ",")
-      ),
-      sprintf(
-        "Regions: %s (%s overlap a peak)",
-        format(r$n_regions, big.mark = ","),
-        format(r$n_regions_overlap, big.mark = ",")
-      )
-    )
-    body <- plot(
+    diagram <- plot(
       fit,
       fills = list(fill = c(colours[[direction]], "grey70"), alpha = 0.6),
       edges = list(col = "grey30"),
       labels = FALSE,
-      # Merged regions in each area
-      quantities = list(
-        labels = format(sizes, big.mark = ",", trim = TRUE),
-        fontsize = 8
-      ),
-      legend = list(labels = legend_labels, side = "bottom", fontsize = 8)
+      quantities = list(labels = labels, fontsize = 8)
     )
+    size <- extents[i] / max_extent
+    diagram <- grobTree(
+      diagram,
+      vp = viewport(width = unit(size, "snpc"), height = unit(size, "snpc"))
+    )
+    legend <- legendGrob(
+      c(
+        sprintf(
+          "%s peaks: %s (%s overlap a region)",
+          direction,
+          format(r$n_peaks, big.mark = ","),
+          format(r$n_peaks_overlap, big.mark = ",")
+        ),
+        sprintf(
+          "Regions: %s (%s overlap a peak)",
+          format(r$n_regions, big.mark = ","),
+          format(r$n_regions_overlap, big.mark = ",")
+        ),
+        sprintf(
+          "Intersections (overlapping pairs): %s",
+          format(r$n_intersections, big.mark = ",")
+        )
+      ),
+      pch = c(21, 21, NA),
+      gp = gpar(
+        fill = c(colours[[direction]], "grey70", NA),
+        col = "grey30",
+        fontsize = 8
+      )
+    )
+    body <- arrangeGrob(diagram, legend, heights = unit(c(2.9, 0.7), "in"))
   }
   arrangeGrob(
     heading,
@@ -93,12 +142,7 @@ panel <- function(dataset, direction) {
   )
 }
 
-panels <- list()
-for (dataset in datasets) {
-  for (direction in directions) {
-    panels[[length(panels) + 1]] <- panel(dataset, direction)
-  }
-}
+panels <- lapply(seq_len(nrow(rows)), panel)
 figure <- arrangeGrob(
   grobs = panels,
   ncol = length(directions),
@@ -106,12 +150,10 @@ figure <- arrangeGrob(
   padding = unit(0.3, "in")
 )
 
-png(
+pdf(
   snakemake@output[["venn"]],
   width = 4 * length(directions),
-  height = 0.5 + 4.65 * length(datasets),
-  units = "in",
-  res = 300
+  height = 0.5 + 4.65 * length(datasets)
 )
 grid.draw(figure)
 invisible(dev.off())

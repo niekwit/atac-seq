@@ -21,7 +21,7 @@ fasta = snakemake.input["fasta"]
 metrics = snakemake.output["metrics"]
 summary = snakemake.output["summary"]
 chart_pdf = snakemake.output["chart_pdf"]
-plot_png = snakemake.output["plot"]
+plot_file = snakemake.output["plot"]
 java_heap = snakemake.params["java_heap"]
 log = snakemake.log[0]
 
@@ -103,5 +103,5 @@ ax3.get_yaxis().set_visible(False)
 
 ax.legend(lines, [line.get_label() for line in lines], loc="best")
 fig.tight_layout()
-fig.savefig(plot_png)
+fig.savefig(plot_file)
 logging.info("Done!")

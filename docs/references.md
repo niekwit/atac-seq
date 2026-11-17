@@ -24,10 +24,6 @@ Heger, A., Webber, C., Goodson, M., Ponting, C. P., & Lunter, G. *GAT: a simulat
 for testing the association of genomic intervals*. Bioinformatics, 29(16), 2046–2048, **2013**.
 <https://doi.org/10.1093/bioinformatics/btt343>
 
-Zhu, L. J., Gazin, C., Lawson, N. D., Pagès, H., Lin, S. M., Lapointe, D. S., & Green, M. R.
-*ChIPpeakAnno: a Bioconductor package to annotate ChIP-seq and ChIP-chip data*. BMC
-Bioinformatics, 11, 237, **2010**. <https://doi.org/10.1186/1471-2105-11-237>
-
 Larsson, J. *eulerr: Area-Proportional Euler and Venn Diagrams with Ellipses*. R package
 version 7.0.2. <https://CRAN.R-project.org/package=eulerr>
 

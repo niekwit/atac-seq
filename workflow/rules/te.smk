@@ -300,7 +300,7 @@ rule te_profile_plot:
     input:
         "results/te/profile/{level}.matrix.gz",
     output:
-        "results/te/profile/{level}.png",
+        "results/te/profile/{level}.pdf",
     params:
         options=(
             "--perGroup --numPlotsPerRow 3 --startLabel 5\\' --endLabel 3\\' "
@@ -329,9 +329,9 @@ use rule deseq2_qc as te_deseq2_qc with:
         counts="results/te/featurecounts_multi.txt",
     output:
         vst="results/te/deseq2/vst_counts.tsv",
-        pca="results/te/deseq2/pca.png",
+        pca="results/te/deseq2/pca.pdf",
         pca_data="results/te/deseq2/pca.tsv",
-        correlation="results/te/deseq2/sample_correlation.png",
+        correlation="results/te/deseq2/sample_correlation.pdf",
         correlation_data="results/te/deseq2/sample_correlation.tsv",
     log:
         "logs/te/deseq2/deseq2_qc.log",
@@ -371,9 +371,9 @@ rule te_deseq2_contrast:
         subfamilies="resources/te/subfamilies.tsv",
     output:
         table="results/te/deseq2/{contrast}/differential_subfamilies.tsv",
-        ma="results/te/deseq2/{contrast}/ma_plot.png",
-        volcano="results/te/deseq2/{contrast}/volcano_plot.png",
-        heatmap="results/te/deseq2/{contrast}/heatmap_classes.png",
+        ma="results/te/deseq2/{contrast}/ma_plot.pdf",
+        volcano="results/te/deseq2/{contrast}/volcano_plot.pdf",
+        heatmap="results/te/deseq2/{contrast}/heatmap_classes.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],

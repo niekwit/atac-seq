@@ -65,7 +65,7 @@ rule tss_enrichment:
     output:
         score="results/qc/{sample}.tss_enrich.qc",
         profile="results/qc/{sample}.tss_enrich_profile.tsv",
-        plot="results/qc/{sample}.tss_enrich.png",
+        plot="results/qc/{sample}.tss_enrich.pdf",
     threads: 1
     resources:
         runtime=runtime(30),
@@ -87,7 +87,7 @@ rule fraglen_stat:
         metrics="results/qc/{sample}.insert_size_metrics.txt",
         histogram_pdf="results/qc/{sample}.insert_size_histogram.pdf",
         qc="results/qc/{sample}.nucleosomal.qc",
-        plot="results/qc/{sample}.fraglen_dist.png",
+        plot="results/qc/{sample}.fraglen_dist.pdf",
     params:
         java_heap="3g",
     threads: 1
@@ -113,7 +113,7 @@ rule gc_bias:
         metrics="results/qc/{sample}.gc_bias_metrics.txt",
         summary="results/qc/{sample}.gc_bias_summary.txt",
         chart_pdf="results/qc/{sample}.gc_bias.pdf",
-        plot="results/qc/{sample}.gc_plot.png",
+        plot="results/qc/{sample}.gc_plot.pdf",
     # Picard can fail to start Rscript on a compute node
     retries: 2
     params:
@@ -165,7 +165,7 @@ rule jsd:
         ),
         blacklist="resources/blacklist.bed",
     output:
-        plot="results/qc/{condition}.jsd_plot.png",
+        plot="results/qc/{condition}.jsd_plot.pdf",
         metrics="results/qc/{condition}.jsd.qc",
     params:
         samples=lambda w: replicates(w.condition),

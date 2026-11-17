@@ -13,7 +13,7 @@ use rule tss_enrichment as te_tss_enrichment with:
     output:
         score="results/te/qc/{sample}.tss_enrich.qc",
         profile="results/te/qc/{sample}.tss_enrich_profile.tsv",
-        plot="results/te/qc/{sample}.tss_enrich.png",
+        plot="results/te/qc/{sample}.tss_enrich.pdf",
     log:
         "logs/te/qc/tss_enrichment_{sample}.log",
 
@@ -25,7 +25,7 @@ use rule fraglen_stat as te_fraglen_stat with:
         metrics="results/te/qc/{sample}.insert_size_metrics.txt",
         histogram_pdf="results/te/qc/{sample}.insert_size_histogram.pdf",
         qc="results/te/qc/{sample}.nucleosomal.qc",
-        plot="results/te/qc/{sample}.fraglen_dist.png",
+        plot="results/te/qc/{sample}.fraglen_dist.pdf",
     log:
         "logs/te/qc/fraglen_stat_{sample}.log",
 
@@ -38,7 +38,7 @@ use rule gc_bias as te_gc_bias with:
         metrics="results/te/qc/{sample}.gc_bias_metrics.txt",
         summary="results/te/qc/{sample}.gc_bias_summary.txt",
         chart_pdf="results/te/qc/{sample}.gc_bias.pdf",
-        plot="results/te/qc/{sample}.gc_plot.png",
+        plot="results/te/qc/{sample}.gc_plot.pdf",
     log:
         "logs/te/qc/gc_bias_{sample}.log",
 

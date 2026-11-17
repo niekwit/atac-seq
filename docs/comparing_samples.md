@@ -27,12 +27,12 @@ In `results/deseq2/`:
 | `consensus_peaks.bed`                                 | consensus peaks                                             |
 | `consensus_peak_counts.txt`                           | Tn5 insertions per peak and sample                          |
 | `vst_counts.tsv`                                      | variance stabilised counts                                  |
-| `pca.png`, `pca.tsv`                                  | PCA of the most variable peaks (`deseq2: pca_ntop`), samples coloured by condition |
-| `sample_correlation.png`, `sample_correlation.tsv`    | Pearson correlation of the samples over all peaks           |
+| `pca.pdf`, `pca.tsv`                                  | PCA of the most variable peaks (`deseq2: pca_ntop`), samples coloured by condition |
+| `sample_correlation.pdf`, `sample_correlation.tsv`    | Pearson correlation of the samples over all peaks           |
 | `consensus_peaks_annotated.txt`                       | consensus peaks annotated with `ChIPseeker`                 |
 | `dds.rds`                                             | fitted DESeq2 object                                        |
 | `{treatment}_vs_{control}/differential_peaks.tsv`     | peak coordinates, annotation and test results, by p-value   |
-| `{treatment}_vs_{control}/ma_plot.png`, `volcano_plot.png` | plots of the shrunken log2 fold changes                |
+| `{treatment}_vs_{control}/ma_plot.pdf`, `volcano_plot.pdf` | plots of the shrunken log2 fold changes                |
 
 In `differential_peaks.tsv`, `change` is `more accessible` or `less accessible` in the treatment
 if `padj` is below `deseq2: fdr`. The p-values come from the unshrunken `log2FoldChange` (against

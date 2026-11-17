@@ -8,18 +8,18 @@ expected, with GAT (Heger et al., 2013, doi:10.1093/bioinformatics/btt343).
 - Annotations: the regions of each data set, named after the data set.
   Chromosome names are converted to Ensembl names (chr1 -> 1, chrM -> MT),
   and regions on chromosomes that are not in the genome are removed.
-- Workspace: all TE consensus peaks, so the differential peaks are compared
-  with accessible regions in general. GAT places the differential peaks at
-  random within the consensus peaks and compares the observed overlap (bp)
-  with the overlap of the random placements. q-values are over all tests
-  of the contrast.
+- Workspace: the whole genome (all chromosomes of the genome), without
+  filter_chrs (e.g. MT) and the blacklist, where no peaks can be called. GAT
+  places the differential peaks at random within the workspace and compares
+  the observed overlap (bp) with the overlap of the random placements.
+  q-values are over all tests of the contrast.
 
-Also counts the peaks that overlap at least one region of a data set and the
-regions that overlap at least one peak, and, for the Venn diagrams, merged
-regions as in ChIPpeakAnno (Zhu et al., 2010, doi:10.1186/1471-2105-11-237):
-peaks and regions that overlap (>= 1 bp) are merged, and the merged regions
-with only peaks, only data set regions, or both are counted. One measure for
-both sets, so a peak overlapping several regions counts once.
+For the Venn diagrams, the peaks and the regions of each data set are first
+merged within each set (only intervals that overlap by >= 1 bp, so adjacent
+tiles, e.g. 1 kb DMR tiles, stay separate). Counted are the merged peaks, the
+merged regions, the intersections (overlapping peak-region pairs, as
+bedtools intersect reports them), the peaks that overlap at least one region
+and the regions that overlap at least one peak.
 """
 
 import logging
@@ -32,8 +32,9 @@ import pandas as pd
 # Load Snakemake variables
 more_bed = snakemake.input["more"]
 less_bed = snakemake.input["less"]
-workspace = snakemake.input["workspace"]
 chrom_sizes = snakemake.input["chrom_sizes"]
+blacklist = snakemake.input["blacklist"]
+filter_chrs = set(snakemake.params["filter_chrs"])
 datasets = snakemake.params["datasets"]
 n_samples = snakemake.params["samples"]
 output = snakemake.output["table"]
@@ -70,36 +71,65 @@ def read_bed(path):
     return bed[bed["chr"].isin(chroms)].astype({"start": int, "end": int})
 
 
-def count_overlapping(a, b):
-    """Number of intervals in BED file a that overlap an interval in b"""
-    command = ["bedtools", "intersect", "-u", "-a", a, "-b", b]
+def merge_within(bed, name):
+    """Merges the intervals of one set that overlap (>= 1 bp); writes a BED3"""
+    path = os.path.join(tmp, f"{name}.bed")
+    bed.sort_values(["chr", "start", "end"]).to_csv(
+        path, sep="\t", header=False, index=False
+    )
+    command = ["bedtools", "merge", "-d", "-1", "-i", path]
+    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    merged_path = os.path.join(tmp, f"{name}.merged.bed")
+    with open(merged_path, "w") as fh:
+        fh.write(result.stdout)
+    return merged_path, len(result.stdout.splitlines())
+
+
+def count_lines(command):
+    """Number of output lines of a bedtools command"""
     result = subprocess.run(command, check=True, capture_output=True, text=True)
     return len(result.stdout.splitlines())
 
 
-def count_merged(peaks, regions):
+def count_overlaps(peaks, regions):
     """
-    Merged regions (overlap >= 1 bp) with only peaks, only regions, or both
+    Venn counts of two merged BED files: intersections (overlapping pairs),
+    peaks that overlap a region and regions that overlap a peak
     """
-    bed = pd.concat([peaks.assign(set="peak"), regions.assign(set="region")])
-    bed = bed.sort_values(["chr", "start", "end"])
-    bed_file = os.path.join(tmp, "merge.bed")
-    bed.to_csv(bed_file, sep="\t", header=False, index=False)
-    command = ["bedtools", "merge", "-d", "-1", "-c", "4", "-o", "distinct"]
-    result = subprocess.run(
-        command + ["-i", bed_file], check=True, capture_output=True, text=True
-    )
-    sets = pd.Series([line.split("\t")[3] for line in result.stdout.splitlines()])
+    intersect = ["bedtools", "intersect"]
     return {
-        "n_merged_peaks_only": int((sets == "peak").sum()),
-        "n_merged_regions_only": int((sets == "region").sum()),
-        "n_merged_both": int((sets == "peak,region").sum()),
+        "n_intersections": count_lines(intersect + ["-a", peaks, "-b", regions]),
+        "n_peaks_overlap": count_lines(intersect + ["-u", "-a", peaks, "-b", regions]),
+        "n_regions_overlap": count_lines(
+            intersect + ["-u", "-a", regions, "-b", peaks]
+        ),
     }
 
 
-# Workspace: the consensus peaks as one track (BED3)
+# Workspace: the whole genome without filter_chrs and the blacklist (BED3)
+genome = pd.read_csv(
+    chrom_sizes, sep="\t", header=None, usecols=[0, 1], names=["chr", "end"]
+).astype({"chr": str})
+genome = genome[~genome["chr"].isin(filter_chrs)].assign(start=0)
+genome_file = os.path.join(tmp, "genome.bed")
+genome.sort_values("chr")[["chr", "start", "end"]].to_csv(
+    genome_file, sep="\t", header=False, index=False
+)
 workspace_file = os.path.join(tmp, "workspace.bed")
-read_bed(workspace).to_csv(workspace_file, sep="\t", header=False, index=False)
+if os.path.getsize(blacklist) > 0:
+    blacklist_file, _ = merge_within(read_bed(blacklist), "blacklist")
+    with open(workspace_file, "w") as fh:
+        subprocess.run(
+            ["bedtools", "subtract", "-a", genome_file, "-b", blacklist_file],
+            check=True,
+            stdout=fh,
+        )
+else:
+    os.replace(genome_file, workspace_file)
+logging.info(
+    f"Workspace: {len(genome)} chromosomes without filter_chrs "
+    f"({', '.join(sorted(filter_chrs))}) and the blacklist"
+)
 
 # Segments: one track per direction
 segments = []
@@ -122,21 +152,22 @@ for name, path in datasets.items():
         raise ValueError(
             f"No regions of {name} ({path}) on the chromosomes of the genome"
         )
-    region_file = os.path.join(tmp, f"dataset_{len(annotations)}.bed")
-    bed.to_csv(region_file, sep="\t", header=False, index=False)
+    region_file, n_regions = merge_within(
+        bed[["chr", "start", "end"]], f"dataset_{len(annotations)}"
+    )
     bed["name"] = name
     annotations.append(bed)
     for track, peaks in TRACKS.items():
-        merged = count_merged(read_bed(peaks), bed[["chr", "start", "end"]])
+        peak_file, n_peaks = merge_within(
+            read_bed(peaks), track.replace(" ", "_") + "_peaks"
+        )
         counts.append(
             {
                 "track": track,
                 "annotation": name,
-                "n_peaks": sum(1 for line in open(peaks) if line.strip()),
-                "n_peaks_overlap": count_overlapping(peaks, region_file),
-                "n_regions": len(bed),
-                "n_regions_overlap": count_overlapping(region_file, peaks),
-                **merged,
+                "n_peaks": n_peaks,
+                "n_regions": n_regions,
+                **count_overlaps(peak_file, region_file),
             }
         )
 annotations_file = os.path.join(tmp, "annotations.bed")

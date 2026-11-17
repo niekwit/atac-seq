@@ -27,7 +27,7 @@ bam = snakemake.input["bam"]
 metrics = snakemake.output["metrics"]
 histogram_pdf = snakemake.output["histogram_pdf"]
 qc_out = snakemake.output["qc"]
-plot_png = snakemake.output["plot"]
+plot_file = snakemake.output["plot"]
 java_heap = snakemake.params["java_heap"]
 log = snakemake.log[0]
 
@@ -115,5 +115,5 @@ ax.set_xlim(0, 1000)
 ax.set_xlabel("Fragment length (bp)")
 ax.set_ylabel("Fragments")
 fig.tight_layout()
-fig.savefig(plot_png)
+fig.savefig(plot_file)
 logging.info("Done!")
