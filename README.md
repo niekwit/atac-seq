@@ -22,6 +22,8 @@ results against the [ENCODE ATAC-seq standards](https://www.encodeproject.org/at
 - Optional module for transposable elements, including young repeats whose reads align to many
   places: counts and differential accessibility per subfamily, signal tracks, profiles, TE
   peaks and comparison with other data sets (e.g. DMRs)
+- Integration with RNA-seq DESeq2 results: are upregulated genes and TE subfamilies more
+  accessible, and downregulated ones less?
 
 ## Quick start
 

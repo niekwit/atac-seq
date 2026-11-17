@@ -209,6 +209,54 @@ properties:
             minimum: 100
             default: 10000
 
+  rnaseq:
+    type: object
+    properties:
+      tables:
+        type: [object, "null"]
+        additionalProperties:
+          type: string
+        default: {}
+      columns:
+        type: object
+        properties:
+          gene_id:
+            type: [string, "null"]
+            default: ""
+          log2fc:
+            type: string
+            default: log2FoldChange
+          padj:
+            type: string
+            default: padj
+          base_mean:
+            type: string
+            default: baseMean
+      id_type:
+        type: string
+        enum: ["auto", "ensembl", "symbol"]
+        default: auto
+      te_separator:
+        type: string
+        default: ":"
+      fdr:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+        default: 0.05
+      lfc_threshold:
+        type: number
+        minimum: 0
+        default: 0
+      distance_bins:
+        type: array
+        items:
+          type: integer
+          minimum: 1
+        minItems: 1
+        uniqueItems: true
+        default: [1000, 10000, 50000, 100000]
+
   extra:
     type: object
     properties:

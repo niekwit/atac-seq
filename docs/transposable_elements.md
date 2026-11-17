@@ -109,6 +109,13 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    counts three times. The legend gives the total numbers of peaks and regions and how many of
    them overlap. All diagrams of a contrast share one scale.
 
+### Integration with RNA-seq
+
+10. With an RNA-seq DESeq2 table of the contrast in `rnaseq: tables` that has genes and TE
+    subfamilies (e.g. from TEtranscripts), gene expression is compared with the TE peaks and
+    subfamily expression with the subfamily counts and TE peaks, in
+    `results/te/integration/{contrast}/` (see [Integration with RNA-seq](rnaseq_integration.md)).
+
 ## Output
 
 In `results/te/`:

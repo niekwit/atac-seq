@@ -52,6 +52,17 @@ All files are listed in [Comparing samples](comparing_samples.md#output).
 
 All files are listed in [Transposable elements](transposable_elements.md#output).
 
+## Integration with RNA-seq (`rnaseq: tables`)
+
+| file                                                   | content                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------- |
+| `integration/{contrast}/genes.tsv`                     | per gene: RNA-seq results and the differential peaks assigned to it |
+| `integration/{contrast}/{cdf,enrichment,scatter}.pdf`  | RNA-seq fold changes by peak accessibility, enrichment of differential peaks at up- and downregulated genes, correlation |
+| `te/integration/{contrast}/peaks/`                     | the same for the TE peaks (with `te: enable`)                   |
+| `te/integration/{contrast}/subfamilies/`               | TE subfamily expression against subfamily accessibility (with `te: enable`) |
+
+All files are listed in [Integration with RNA-seq](rnaseq_integration.md#output).
+
 ## Methods
 
 `methods/methods.md` (in the analysis directory, not `results/`) is a methods section of the

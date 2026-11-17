@@ -13,7 +13,9 @@ On top of the ENCODE steps, the workflow can:
 - give the peaks reproducible in several replicates of a condition
   ([QC and reproducibility](qc.md#peaks-reproducible-in-several-replicates));
 - measure the accessibility of transposable elements, including young repeats whose reads
-  align to many places ([Transposable elements](transposable_elements.md)).
+  align to many places ([Transposable elements](transposable_elements.md));
+- compare differential accessibility with RNA-seq differential expression of genes and TE
+  subfamilies ([Integration with RNA-seq](rnaseq_integration.md)).
 
 The peaks, signal tracks and QC metrics match ENCODE's own processing of the same data
 ([Validation](validation.md)).
@@ -52,6 +54,7 @@ workflow
 qc
 comparing_samples
 transposable_elements
+rnaseq_integration
 ```
 
 ```{toctree}

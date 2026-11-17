@@ -3,7 +3,7 @@ Methods section of the run (snakemake-methods). The prose is in
 workflow/methods/methods.md.j2; this script derives the values of the
 configuration that the template needs. Only the steps enabled in the
 configuration are described (ENCODE peaks and QC unless te: only, IDR,
-DESeq2, TE module, TE profile and TE correlation).
+DESeq2, TE module, TE profile, TE correlation and RNA-seq integration).
 """
 
 from snakemake_methods.snakemake import run
@@ -116,6 +116,18 @@ context = {
         "seeded with the tagAlign file size" if seed == 0 else f"random seed {seed}"
     ),
     "extras": extras,
+    "rnaseq": params["rnaseq"],
+    "rnaseq_bins": join(
+        f"{b / 1000:g} kb" if b >= 1000 else f"{b} bp"
+        for b in params["rnaseq_config"]["distance_bins"]
+    ),
+    "rnaseq_max": f"{max(params['rnaseq_config']['distance_bins']) / 1000:g} kb",
+    "rnaseq_fdr": params["rnaseq_config"]["fdr"],
+    "rnaseq_lfc_text": (
+        f"|log2 fold change| > {params['rnaseq_config']['lfc_threshold']}"
+        if params["rnaseq_config"]["lfc_threshold"]
+        else "log2 fold change ≠ 0"
+    ),
     "annotation": annotation,
     "r_used": annotation or reference["blacklist"]["source"] == "annotationhub",
 }

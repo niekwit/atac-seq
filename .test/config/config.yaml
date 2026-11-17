@@ -128,6 +128,41 @@ te:
       Random regions: config/correlation/random_chr11.bed
     gat_samples: 10000
 
+# Integration with RNA-seq (not part of the ENCODE pipeline; needs deseq2:
+# enable): the differential accessibility of a contrast is compared with an
+# RNA-seq DESeq2 results table of the same contrast (same treatment and
+# control). Genes are compared with the consensus peaks
+# (results/integration/{contrast}/) and, with the TE module, with the TE peaks
+# (results/te/integration/{contrast}/peaks/); repeat subfamilies (TE rows of
+# the table, e.g. from TEtranscripts) with the subfamily counts and TE peaks
+# (results/te/integration/{contrast}/subfamilies/)
+rnaseq:
+  # DESeq2 contrast name ({treatment}_vs_{control}): RNA-seq DESeq2 results
+  # table (tab-separated, or .csv); empty: no integration
+  tables:
+    ko_vs_wt: config/rnaseq/ko_vs_wt_deseq2.csv
+  # Columns of the tables; gene_id "": the first column (e.g. the row names
+  # written by write.csv(as.data.frame(res)))
+  columns:
+    gene_id: ""
+    log2fc: log2FoldChange
+    padj: padj
+    base_mean: baseMean
+  # Gene identifiers: ensembl (gene IDs, a version suffix is removed), symbol
+  # (gene names) or auto (whichever matches more rows to the genome annotation)
+  id_type: auto
+  # TE module: rows whose ID, up to the first te_separator, is a RepeatMasker
+  # subfamily are TEs, e.g. "L1MdTf_I:L1:LINE" (TEtranscripts) or "L1MdTf_I"
+  te_separator: ":"
+  # Genes (and subfamilies) with padj below fdr and |log2 fold change| above
+  # lfc_threshold are up- or downregulated
+  fdr: 0.05
+  lfc_threshold: 0
+  # Peaks are assigned to the gene of their nearest TSS, if it is within the
+  # largest distance (bp); the enrichment and correlation are given per
+  # distance bin (0-1 kb, 1-10 kb, ...) and for all distances
+  distance_bins: [1000, 10000, 50000, 100000]
+
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
 # workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;

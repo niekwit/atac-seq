@@ -273,6 +273,37 @@ and SAMtools stats) was done as above and combined with MultiQC.
 {% endif %}
 {% endif %}
 
+{% if rnaseq %}
+## Integration with RNA-seq
+
+Differential accessibility was compared with RNA-seq DESeq2 results of the same
+contrast ({{ rnaseq | join_and }}). Genes were matched to the genome annotation
+by gene ID or name, and genes with adjusted p < {{ rnaseq_fdr }} and
+{{ rnaseq_lfc_text }} were called up- or downregulated; genes without adjusted
+p-value were left out.
+{% if not te_only %}
+Consensus peaks
+{% if te %}
+and TE peaks
+{% endif %}
+{% else %}
+TE peaks
+{% endif %}
+were assigned to the gene of their nearest TSS (ChIPseeker) within
+{{ rnaseq_max }}. RNA-seq log2 fold changes of genes with more accessible, less
+accessible, both or only unchanged peaks were compared (Wilcoxon rank-sum test
+against genes with only unchanged peaks), enrichment of differential peaks at
+up- and downregulated genes was tested with Fisher's exact test (all tested
+genes as background; per distance bin, with bins ending at {{ rnaseq_bins }},
+and Benjamini-Hochberg adjustment), and peak and gene log2 fold changes were
+correlated (Spearman).
+{% if te %}
+Repeat subfamilies in the RNA-seq results (e.g. TEtranscripts) were compared
+in the same way with the differential accessibility of their insertions and
+of the TE peaks overlapping them.
+{% endif %}
+{% endif %}
+
 {% set r_packages = [] %}
 {% if annotation %}{% set _ = r_packages.append(tool("tidyverse")) %}{% endif %}
 {% if deseq2 %}

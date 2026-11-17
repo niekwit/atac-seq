@@ -191,6 +191,9 @@ rule methods:
             if te_enabled() and deseq2_enabled()
             else []
         ),
+        # Contrasts integrated with RNA-seq, and its settings
+        rnaseq=lambda w: list(rnaseq_contrasts()),
+        rnaseq_config=rnaseq_config(),
         # From the config, so the data set files are not checked without TE
         gat_samples=config.get("te", {})
         .get("correlation", {})
