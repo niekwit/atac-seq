@@ -357,6 +357,8 @@ rule annotate_peaks:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     output:
         txt="results/{method}/{condition}/optimal_peak_annotated.txt",
+    params:
+        tss_region=config["peaks"].get("tss_region", 3000),
     threads: 1
     resources:
         runtime=runtime(30),

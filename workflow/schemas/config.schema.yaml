@@ -81,6 +81,10 @@ properties:
         exclusiveMinimum: 0
         maximum: 1
         default: 0.5
+      tss_region:
+        type: integer
+        minimum: 1
+        default: 3000
     required: ["keep_chr_regex"]
 
   idr:
@@ -122,6 +126,10 @@ properties:
       lfc_threshold:
         type: number
         minimum: 0
+      min_count:
+        type: integer
+        minimum: 0
+        default: 10
 
   te:
     type: object
@@ -141,6 +149,10 @@ properties:
         type: string
         enum: ["deseq2", "insertions"]
         default: deseq2
+      bigwig_bin_size:
+        type: integer
+        minimum: 1
+        default: 10
       heatmap:
         type: object
         properties:

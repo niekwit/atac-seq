@@ -422,6 +422,10 @@ min_overlap = f"{config['peaks'].get('min_overlap', 0.5) * 100:g}%"
 fdr = config.get("deseq2", {}).get("fdr", 0.05)
 lfc_threshold = config.get("deseq2", {}).get("lfc_threshold", 0)
 count_options = "-p -F SAF --read2pos 5 --largestOverlap -s 0"
+tss_region = config["peaks"].get("tss_region", 3000)
+min_count = config.get("deseq2", {}).get("min_count", 10)
+bin_size = config.get("te", {}).get("bigwig_bin_size", 10)
+mapq_thresh = config["filter"]["mapq_thresh"]
 blacklist = reference["blacklist"]
 tss = reference["tss"]
 
@@ -539,7 +543,7 @@ def blacklist_text():
 
 def chipseeker_text():
     return (
-        f"{tool('ChIPseeker', 'TSS region ± 3 kb')}, using a TxDb built from the "
+        f"{tool('ChIPseeker', f'TSS region ± {number(tss_region)} bp')}, using a TxDb built from the "
         f"Ensembl GTF with {tool('txdbmaker')} and {tool('rtracklayer')}"
     )
 
@@ -626,7 +630,7 @@ if not te_only:
         "CollectInsertSizeMetrics and CollectGcBiasMetrics), fraction of reads "
         f"in {regions_text}, fraction of reads in peaks, and fingerprints and "
         "Jensen–Shannon distances of the replicates with "
-        f"{tool('deepTools', 'plotFingerprint, MAPQ ≥ 30')}. Further QC was done "
+        f"{tool('deepTools', f'plotFingerprint, MAPQ ≥ {mapq_thresh}')}. Further QC was done "
         f"with {tool('ataqv')}, "
         f"and reports were combined with {tool('MultiQC')}."
     )
@@ -649,7 +653,7 @@ def deseq2_sentences(features):
     )
     if contrasts:
         text += (
-            f" {features[0].upper() + features[1:]} with < 10 insertions in all "
+            f" {features[0].upper() + features[1:]} with < {min_count} insertions in all "
             "samples together were removed, and differential accessibility "
             f"({contrast_text}) was tested (design {code('~ condition')}; "
             f"Wald test of {lfc_text}; Benjamini–Hochberg adjusted p < {fdr}, "
@@ -705,7 +709,7 @@ if te:
         "were made with "
         + tool(
             "deepTools",
-            f"bamCoverage {code('--binSize 10 --normalizeUsing CPM --Offset 1')}",
+            f"bamCoverage {code(f'--binSize {bin_size} --normalizeUsing CPM --Offset 1')}",
         )
         + " and averaged per condition (bigwigAverage)."
     )

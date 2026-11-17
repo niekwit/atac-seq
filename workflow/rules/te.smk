@@ -196,7 +196,8 @@ rule te_bigwig:
     output:
         "results/te/bigwig/{sample}.cpm.bigwig",
     params:
-        options="--binSize 10 --normalizeUsing CPM --Offset 1",
+        bin_size=config.get("te", {}).get("bigwig_bin_size", 10),
+        options="--normalizeUsing CPM --Offset 1",
     threads: 4
     resources:
         runtime=runtime(60),
@@ -206,8 +207,8 @@ rule te_bigwig:
     conda:
         "../envs/qc.yaml"
     shell:
-        "bamCoverage {params.options} -p {threads} -b {input.bam} -o {output} "
-        "> {log} 2>&1"
+        "bamCoverage --binSize {params.bin_size} {params.options} -p {threads} "
+        "-b {input.bam} -o {output} > {log} 2>&1"
 
 
 # Mean signal of the replicates of a condition
@@ -351,6 +352,7 @@ rule te_deseq2_fit:
         conditions=SAMPLE_SHEET["condition"].tolist(),
         levels=deseq2_levels(),
         normalisation=config.get("te", {}).get("normalisation", "deseq2"),
+        min_count=config.get("deseq2", {}).get("min_count", 10),
     threads: 2
     resources:
         runtime=runtime(30),

@@ -169,7 +169,7 @@ rule jsd:
         metrics="results/qc/{condition}.jsd.qc",
     params:
         samples=lambda w: replicates(w.condition),
-        mapq=30,
+        mapq=config["filter"]["mapq_thresh"],
     threads: 8
     resources:
         runtime=runtime(180),

@@ -70,6 +70,7 @@ rule deseq2_qc:
         conditions=SAMPLE_SHEET["condition"].tolist(),
         levels=deseq2_levels(),
         ntop=config.get("deseq2", {}).get("pca_ntop", 500),
+        min_count=config.get("deseq2", {}).get("min_count", 10),
     threads: 1
     resources:
         runtime=runtime(60),
@@ -92,6 +93,8 @@ rule annotate_consensus_peaks:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     output:
         txt="results/deseq2/consensus_peaks_annotated.txt",
+    params:
+        tss_region=config["peaks"].get("tss_region", 3000),
     threads: 1
     resources:
         runtime=runtime(30),
@@ -116,6 +119,7 @@ rule deseq2_fit:
         samples=SAMPLES,
         conditions=SAMPLE_SHEET["condition"].tolist(),
         levels=deseq2_levels(),
+        min_count=config.get("deseq2", {}).get("min_count", 10),
     threads: 4
     resources:
         runtime=runtime(120),

@@ -36,7 +36,7 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
 
 ### Signal tracks and profiles
 
-5. Signal tracks of Tn5 insertions (5' end of each read, 10 bp bins, per million insertions;
+5. Signal tracks of Tn5 insertions (5' end of each read, `te: bigwig_bin_size` bp bins (default 10), per million insertions;
    `deepTools bamCoverage`) per sample, and the mean of the replicates of each condition
    (`deepTools bigwigAverage`). Unlike the ENCODE signal tracks, they include multimappers.
 6. With subfamilies in `te: profile: subfamilies`: profile of the signal tracks over the
