@@ -1,0 +1,17 @@
+# Workflow overrides of the snakemake-methods database.
+#
+# Versions of these tools are taken only from the environments that run them
+# in this workflow (their packages are also in other environments, e.g.
+# Python in all Python environments).
+tools:
+  samtools: {envs: [encode, te]}
+  bedtools: {envs: [encode, gat]}
+  python: {envs: [encode, qc, tss, te, gat]}
+  numpy: {envs: [qc, tss, te]}
+  scipy: {envs: [qc]}
+  matplotlib: {envs: [qc, tss]}
+  r: {envs: [r, deseq2, eulerr]}
+references:
+  # The workflow follows this version of the ENCODE ATAC-seq pipeline
+  encode2020:
+    note: "ENCODE ATAC-seq pipeline v2.2.3: https://github.com/ENCODE-DCC/atac-seq-pipeline"

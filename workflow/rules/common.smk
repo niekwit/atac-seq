@@ -481,6 +481,26 @@ def methods_envs():
     return envs
 
 
+def methods_wrappers():
+    """{name: (wrapper, [packages])} of the Snakemake wrappers used (none)"""
+    return {}
+
+
+def methods_git():
+    """{name: clone directory} of tools cloned at run time (none)"""
+    return {}
+
+
+def methods_string_db():
+    """Output files of STRING queries (none)"""
+    return []
+
+
+def methods_targets():
+    """All other targets: the methods describe the finished analysis"""
+    return ENCODE_TARGETS + TE_TARGETS
+
+
 def reference_files():
     """
     Returns the sources of the genome, blacklist and TSS files of the genome,
