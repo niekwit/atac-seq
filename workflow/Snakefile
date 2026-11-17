@@ -22,6 +22,7 @@ logger.info(f"Running workflow version {VERSION}")
 # Set container image
 containerized: f"docker://niekwit/atac-seq:{VERSION}"
 
+
 # URLs and file names of the genome fasta and GTF files
 resources = GenomeFiles(config["genome"]["ensembl"], config["genome"]["release"])
 SAMPLES = samples()

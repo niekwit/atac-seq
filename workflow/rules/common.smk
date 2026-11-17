@@ -2,7 +2,6 @@
 import math
 import os
 import re
-import subprocess
 import pandas as pd
 from snakemake.utils import validate
 
@@ -473,27 +472,6 @@ def methods_envs():
     return envs
 
 
-def workflow_version():
-    """Version (git tag or commit) of the workflow, if it is a git repository"""
-    try:
-        return subprocess.run(
-            [
-                "git",
-                "-C",
-                workflow.basedir,
-                "describe",
-                "--tags",
-                "--always",
-                "--dirty",
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError):
-        return None
-
-
 def reference_files():
     """
     Returns the sources of the genome, blacklist and TSS files of the genome,
@@ -527,3 +505,20 @@ def reference_files():
         "tss": tss,
         "annotation_regions": bool(annotation_regions()),
     }
+
+
+def env_packages(env):
+    """
+    Package names in the dependency lines of workflow/envs/{env}.yaml
+    (bioconda::macs2=2.2.9.1=py310h7c593f9_1 -> macs2). Read while the
+    workflow is parsed: workflow.source_path() gives a local copy of the file,
+    also when the workflow is used as a module (e.g. deployed with
+    snakedeploy), where workflow.basedir is the deployment directory
+    """
+    names = []
+    with open(workflow.source_path(f"../envs/{env}.yaml")) as fh:
+        for line in fh:
+            match = re.match(r"\s*-\s+(?:[^:\s]+::)?([^=<>!\s#]+)", line)
+            if match:
+                names.append(match.group(1))
+    return names

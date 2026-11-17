@@ -1,6 +1,10 @@
 from snakemake import __version__ as SNAKEMAKE_VERSION
 
 
+# Package names of the environment files (read while parsing)
+ENV_PACKAGES = {env: env_packages(env) for env in methods_envs()}
+
+
 # Versions (name, version) of the packages listed in an environment file of
 # the workflow, as installed in its conda environment (conda-meta records:
 # name-version-build.json), without their dependencies. The Python and R
@@ -14,15 +18,11 @@ rule software_versions:
     wildcard_constraints:
         env="|".join(methods_envs()),
     params:
-        env_file=lambda w: os.path.join(workflow.basedir, "envs", f"{w.env}.yaml"),
-        # Package names from the dependency lines of the environment file
-        # (bioconda::macs2=2.2.9.1=py310h7c593f9_1 -> macs2), then the
-        # installed packages with these names
+        packages=lambda w: " ".join(ENV_PACKAGES[w.env]),
+        # The installed packages with these names
         awk=(
-            "NR == FNR { if ($0 ~ /^[[:space:]]*-[[:space:]]/) { "
-            's = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", s); '
-            'sub(/^[^:]*::/, "", s); sub(/[=<>! #].*/, "", s); keep[s] = 1 } '
-            "next } "
+            'BEGIN { n = split(packages, a, " "); for (i = 1; i <= n; i++) '
+            "keep[a[i]] = 1 } "
             '($1 in keep) || $1 == "python" || $1 == "r-base"'
         ),
     threads: 1
@@ -36,7 +36,8 @@ rule software_versions:
     shell:
         '(ls "$CONDA_PREFIX/conda-meta" | '
         "sed -nE 's/^(.+)-([^-]+)-([^-]+)\\.json$/\\1\\t\\2/p' | "
-        "awk -F '\\t' '{params.awk}' {params.env_file} - | sort > {output}) "
+        "awk -F '\\t' -v packages='{params.packages}' '{params.awk}' | "
+        "sort > {output}) "
         "2> {log}"
 
 
@@ -55,7 +56,7 @@ rule methods:
         versions="methods/software_versions.tsv",
     params:
         snakemake_version=SNAKEMAKE_VERSION,
-        workflow_version=workflow_version(),
+        workflow_version=VERSION,
         replicates={c: len(replicates(c)) for c in CONDITIONS},
         reference=reference_files(),
         te_only=te_only(),
