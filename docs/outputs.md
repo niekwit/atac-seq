@@ -55,8 +55,14 @@ All files are listed in [Transposable elements](transposable_elements.md#output)
 ## Methods
 
 `methods/methods.md` (in the analysis directory, not `results/`) is a methods section of the
-steps that were run, written after all other outputs. It gives the configuration values, the
-versions of the tools and references for all of them, and ends with the configuration of the
-run. The versions are those installed in the conda environments of the run. They are
-listed in `methods/software_versions.tsv` (columns environment, package, version) for the
-packages named in each environment file and the Python and R interpreters.
+steps that were run, written after all other outputs. It gives the configuration values and
+cites each tool where it is first mentioned, with its version and its reference (PubMed ID,
+else DOI, else URL). The cited references follow, then the configuration of the run
+(including command line overrides). The versions are those installed in the conda
+environments of the run. They are listed in `methods/software_versions.tsv` (columns
+environment, package, version, source, cited) for the packages named in each environment
+file and the Python and R interpreters; `cited` marks the packages cited in the text.
+`methods/references.bib` has the cited references as BibTeX (e.g. for Zotero).
+
+The methods are generated with [snakemake-methods](https://github.com/niekwit/snakemake-methods);
+the text is in `workflow/methods/methods.md.j2`.

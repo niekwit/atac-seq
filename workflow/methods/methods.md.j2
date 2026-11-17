@@ -1,0 +1,295 @@
+{#
+  Methods of the atac-seq workflow (snakemake-methods). Only the steps of this
+  configuration are described; every value comes from config, the params of
+  the methods rule (workflow/rules/methods.smk) or workflow/scripts/methods.py.
+  tool() cites a tool with its version at its first mention, in render order
+  (macros count where they are called; call them with | trim). Prose lines
+  of a paragraph are joined; keep {% if %} blocks on their own lines, and
+  don't start a line with "|", "- " or "1. " (they would be kept as table rows
+  or list items).
+#}
+{% set blacklist = reference["blacklist"] %}
+{% set tss = reference["tss"] %}
+{% set macs2 = config["macs2"] %}
+{% set tagalign_text = "Tn5-shifted tagAlign files (+4 bp on the plus strand, −5 bp on the minus strand)" %}
+{% macro blacklist_text() %}
+{% if blacklist["source"] == "encode" %}
+the ENCODE blacklist {{ blacklist["accession"] }} {{ cite("amemiya2019") }}
+{% if "lifted_from" in blacklist %}
+, lifted over from {{ blacklist["lifted_from"] }} with
+{{ tool("liftover", code("-minMatch=0.5")) }},
+{% endif %}
+{% else %}
+the blacklist {{ cite("amemiya2019") }} from {{ tool("annotationhub") }}
+{% endif %}
+{% endmacro %}
+{% macro chipseeker_text() %}
+{{ tool("chipseeker", "TSS region ± " ~ number(tss_region) ~ " bp") }}, using a
+TxDb built from the Ensembl GTF with {{ tool("txdbmaker") }} and
+{{ tool("rtracklayer") }}
+{% endmacro %}
+{% macro macs2_text(gsize) %}
+Peaks were called with
+{{ tool("macs2", code(macs2_options) ~ ", effective genome size " ~ gsize) }},
+keeping the {{ number(macs2["cap_num_peak"]) }} peaks with the lowest
+p-values. Peaks overlapping {{ blacklist_text() | trim }} or on chromosomes not
+matching {{ code(keep_chr) }} were removed with {{ tool("bedtools") }}.
+{% endmacro %}
+{% macro tss_text() %}
+{% if tss["source"] == "encode" %}
+TSSs of ENCODE file {{ tss["accession"] }}
+{% if "lifted_from" in tss %}
+, lifted over from {{ tss["lifted_from"] }} with {{ tool("liftover") }}
+{% endif %}
+{% else %}
+5' ends of protein-coding genes of the Ensembl GTF
+{% endif %}
+{% endmacro %}
+{% macro deseq2_sentences(features) %}
+With {{ tool("deseq2") }}, sample PCA (the {{ number(pca_ntop) }} most variable
+{{ features }}) and Pearson correlations used variance-stabilised counts (blind
+to the conditions).
+{% if contrasts %}
+{{ features | capitalize }} with < {{ min_count }} insertions in all samples
+together were removed, and differential accessibility ({{ contrast_text }}) was
+tested (design {{ code("~ condition") }}; Wald test of {{ lfc_text }};
+Benjamini–Hochberg adjusted p < {{ fdr }}, {{ citation("benjamini1995") }});
+log2 fold changes were shrunken with {{ tool("ashr") }} for ranking and plots.
+{% endif %}
+{% endmacro %}
+Paired-end ATAC-seq data of {{ n_samples }} samples ({{ samples_text }}) were
+analysed with the atac-seq workflow {{ workflow_version }}
+(https://github.com/niekwit/atac-seq) in {{ tool("snakemake") }}
+{% if not te_only %}
+, following the ENCODE ATAC-seq pipeline v2.2.3 {{ cite("encode2020") }} unless
+stated otherwise
+{% endif %}
+. The {{ genome_name }} and gene annotation were from Ensembl release
+{{ reference["release"] }} {{ cite("dyer2025") }}.
+
+## Read processing{{ "" if te_only else " and alignment" }}
+
+Read quality was assessed with {{ tool("fastqc") }}. Adapters were trimmed with
+{{ tool("cutadapt", code(cutadapt_options)) }}.
+{% if not te_only %}
+Read pairs were aligned with {{ tool("bowtie2", code(bowtie2_options)) }}.
+{% if multimapping %}
+Reads with more than {{ multimapping }} alignments were removed and the others
+were assigned one of their alignments at random (ENCODE assign_multimappers);
+{% else %}
+Reads with a mapping quality below {{ mapq_thresh }} were removed;
+{% endif %}
+only properly paired primary alignments were kept, with {{ tool("samtools") }}
+via {{ tool("pysam") }}. Duplicates were marked with {{ tool("picard") }}
+MarkDuplicates and removed, together with alignments on
+{{ filter_chrs | join_and }} ({{ code("samtools view -F 1804 -f 2") }}).
+{% endif %}
+
+{% if not te_only %}
+## Peak calling
+
+Alignments were converted to {{ tagalign_text }}
+{% if config["subsample_reads"] %}
+and subsampled to {{ number(config["subsample_reads"]) }} reads
+{% endif %}
+. Each replicate was split into two pseudoreplicates ({{ seed_text }}), and the
+replicates and pseudoreplicates of each condition were pooled.
+{{ macs2_text(code(macs2["gsize"])) | trim }}
+Reproducible peaks of each condition were selected by naive overlap (pooled
+peaks overlapping a peak of both replicates or pseudoreplicates by ≥ 50%)
+{% if idr %}
+and by
+{{ tool("idr", "IDR < " ~ config["idr"]["threshold"] ~ ", peaks ranked by p-value") }}
+{% endif %}
+, and optimal and conservative peak sets were chosen from the comparisons of
+true replicates and pseudoreplicates as in ENCODE.
+{% if replicated %}
+In addition, pooled peaks reproducible in
+{% if all_replicates %}
+all the replicates of a condition
+{% else %}
+at least {{ min_fraction }} of the replicates of a condition (rounded up, at
+least 2)
+{% endif %}
+were reported (overlap ≥ {{ min_overlap }}
+{% if idr %}
+, or IDR below the threshold for all pairs
+{% endif %}
+).
+{% endif %}
+Fold-enrichment and p-value signal tracks were generated with MACS2 bdgcmp and
+{{ tool("ucsc_bigwig") }}. Optimal peaks were annotated with
+{{ chipseeker_text() | trim }}.
+
+{% set regions_text = "ENCODE DNase I hypersensitive sites, promoters, enhancers and the blacklist"
+  if reference["annotation_regions"] else "the blacklist" %}
+## Quality control
+
+QC metrics were calculated as in ENCODE: library complexity (NRF, PBC1 and
+PBC2, without mitochondrial reads), fraction of mitochondrial reads
+({{ config["mito_chr_name"] }}), TSS enrichment ({{ tss_text() | trim }}), fragment
+length distribution and GC bias (Picard CollectInsertSizeMetrics and
+CollectGcBiasMetrics), fraction of reads in {{ regions_text }}, fraction of
+reads in peaks, and fingerprints and Jensen–Shannon distances of the
+replicates with
+{{ tool("deeptools", "plotFingerprint, MAPQ ≥ " ~ mapq_thresh) }}. Further QC
+was done with {{ tool("ataqv") }}, and reports were combined with
+{{ tool("multiqc") }}.
+{% endif %}
+
+{% if deseq2 and not te_only %}
+## Differential accessibility
+
+The optimal peak sets ({{ peak_method }}) of all conditions were merged into
+consensus peaks (BEDTools merge). Tn5 insertions (5' read ends) per peak were
+counted with {{ tool("featurecounts", code(count_options)) }}.
+{{ deseq2_sentences("peaks") | trim }}
+Consensus peaks were annotated with ChIPseeker as above.
+{% endif %}
+
+{% if te %}
+{% set te_config = config.get("te", {}) %}
+{% set classes = te_config.get("classes") or [] %}
+## Transposable elements
+
+Trimmed read pairs were aligned again with
+{{ tool("bowtie2", code("--seed 42 " ~ config["bowtie2"]["extra"])) }} in
+default mode, which reports one of the best alignments of multimapping reads at
+random. Properly paired alignments were kept, and duplicates (same fragment
+coordinates and strand) and alignments on {{ filter_chrs | join_and }} were
+removed with {{ tool("pysam") }} and {{ tool("samtools") }}. Read pairs were
+classed as multimapping when a mate had an equally good alternative alignment
+(XS ≥ AS) and MAPQ < 2. The RepeatMasker annotation {{ cite("smit2015") }} of
+{{ reference["ucsc_genome"] }} was downloaded from the UCSC Genome Browser
+{{ cite("kent2002") }}, and
+{% if classes %}
+repeats of the classes {{ classes | join_and }}
+{% else %}
+all repeats
+{% endif %}
+were used. Tn5 insertions in repeats were counted with
+{{ tool("featurecounts", code(count_options) ~ "; with " ~ code("-M")
+  ~ " for all read pairs, without for uniquely mapping read pairs") }}
+and summed per subfamily, family and class, with counts per million insertions
+and log2 enrichment (fraction of insertions over fraction of the genome
+covered, pseudocount 1). CPM-normalised insertion tracks were made with
+{{ tool("deeptools", "bamCoverage " ~ code("--binSize " ~ bin_size
+  ~ " --normalizeUsing CPM --Offset 1")) }}
+and averaged per condition (bigwigAverage).
+{% if profile["subfamilies"] %}
+Insertion profiles over full-length copies (covering ≥
+{{ percent(profile["min_consensus_fraction"]) }} of the consensus) of selected
+subfamilies were calculated with computeMatrix scale-regions (body
+{{ number(profile["body_length"]) }} bp, flanks {{ number(profile["flank"]) }}
+bp, 50 bp bins) and plotted with plotProfile.
+{% endif %}
+
+{% if deseq2 %}
+{% set normalisation_text = "median-of-ratios size factors over the subfamilies"
+  if te_config.get("normalisation", "deseq2") == "deseq2"
+  else "size factors proportional to all kept insertions of a sample" %}
+{% if te_only %}
+Subfamily counts (all read pairs) were normalised with
+{{ normalisation_text }}. {{ deseq2_sentences("subfamilies") | trim }}
+{% else %}
+Subfamily counts (all read pairs; {{ normalisation_text }}) were analysed with
+DESeq2 as the consensus peaks.
+{% endif %}
+{% if contrasts %}
+Heatmaps show row z-scores of variance-stabilised counts of
+{% if "all" in heatmap["subfamilies"] %}
+the significant subfamilies (at most {{ heatmap["max_per_class"] }} per class)
+{% else %}
+selected subfamilies
+{% endif %}
+of
+{% if "all" in heatmap["classes"] %}
+all classes
+{% else %}
+the classes {{ heatmap["classes"] | join_and }}
+{% endif %}
+.
+{% endif %}
+{% endif %}
+
+{% set gsize_text = "the total chromosome length" %}
+{% if te_only %}
+For peak calling, these alignments were converted to {{ tagalign_text }} and
+pooled per condition. {{ macs2_text(gsize_text) | trim }}
+{% else %}
+Peaks were called from these alignments as above (MACS2 with
+{{ gsize_text }} as effective genome size, blacklist filtering).
+{% endif %}
+{% if all_replicates %}
+Consensus TE peaks were the pooled peaks overlapping a peak of all the
+replicates (≥ {{ min_overlap }} overlap), merged over the conditions (BEDTools
+merge).
+{% else %}
+Pooled peaks overlapping a peak of at least {{ min_fraction }} of the
+replicates (rounded up, at least 2
+{% if replicated | length < replicates | length %}
+, or the only replicate of a condition with one
+{% endif %}
+) by ≥ {{ min_overlap }} were merged into consensus TE peaks (BEDTools merge).
+{% endif %}
+Insertions per peak were counted with featureCounts ({{ code("-M") }} for all
+read pairs, and uniquely mapping read pairs only), and each peak was annotated
+with the repeat of largest overlap and the fraction of insertions from uniquely
+mapping read pairs.
+{% if deseq2 %}
+{# The TE peaks always use DESeq2's median-of-ratios size factors #}
+TE peaks were analysed with DESeq2 as the
+{% if te_only %}
+subfamilies, but with median-of-ratios size factors over the peaks,
+{% else %}
+consensus peaks
+{% endif %}
+and annotated with
+{% if te_only %}
+{{ chipseeker_text() | trim }}
+{% else %}
+ChIPseeker
+{% endif %}
+.
+{% endif %}
+
+{% if deseq2 and contrasts and datasets %}
+Enrichment of the more and less accessible TE peaks of each contrast in
+{{ datasets | join_and }} was tested with
+{{ tool("gat", number(gat_samples) ~ " samples, random seed 42") }}, with the
+genome without {{ filter_chrs | join_and }} and the blacklist as workspace and
+q-values over all tests of a contrast. Overlaps were shown as area-proportional
+Euler diagrams with {{ tool("eulerr") }}.
+{% endif %}
+
+{% if te_only %}
+QC of the TE alignments: TSS enrichment as in ENCODE ({{ tss_text() | trim }}),
+fragment length distribution and GC bias with
+{{ tool("picard", "CollectInsertSizeMetrics and CollectGcBiasMetrics") }} and
+SAMtools stats, combined with {{ tool("multiqc") }}.
+{% else %}
+QC of the TE alignments (TSS enrichment, fragment length distribution, GC bias
+and SAMtools stats) was done as above and combined with MultiQC.
+{% endif %}
+{% endif %}
+
+{% set r_packages = [] %}
+{% if annotation %}{% set _ = r_packages.append(tool("tidyverse")) %}{% endif %}
+{% if deseq2 %}
+{% set _ = r_packages.append(tool("ggplot2")) %}
+{% set _ = r_packages.append(tool("ggrepel")) %}
+{% set _ = r_packages.append(tool("pheatmap")) %}
+{% endif %}
+Custom scripts used {{ tool("python") }} with {{ tool("numpy") }},
+{{ tool("pandas") }}, {{ tool("scipy") }} and {{ tool("matplotlib") }}
+{% if r_used %}
+, and {{ tool("r") }}
+{% if r_packages %}
+with {{ r_packages | join_and }}
+{% endif %}
+{% endif %}
+.
+
+{% if extras %}
+Additional command-line arguments were passed to {{ extras | join_and }}.
+{% endif %}
