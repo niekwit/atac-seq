@@ -740,9 +740,15 @@ if te:
             "Peaks were called from these alignments as above (MACS2 with "
             f"{gsize_text} as effective genome size, blacklist filtering)."
         )
+    # replicated_peaks.py: k = min(n, max(2, ceil(fraction * n)))
+    single = (
+        ", or the only replicate of a condition with one"
+        if len(replicated) < len(replicates)
+        else ""
+    )
     text += (
         f" Pooled peaks overlapping a peak of at least {min_fraction} of the "
-        "replicates (rounded up, at least 2) by ≥ 50% were merged into "
+        f"replicates (rounded up, at least 2{single}) by ≥ 50% were merged into "
         "consensus TE peaks (BEDTools merge). Insertions per peak were counted "
         f"with featureCounts ({code('-M')} for all read pairs, and uniquely "
         "mapping read pairs only), and each peak was annotated with the repeat "
@@ -750,9 +756,16 @@ if te:
         "read pairs."
     )
     if deseq2:
+        # The TE peaks always use DESeq2's median-of-ratios size factors
+        # (deseq2_fit.R), whatever te: normalisation is
         text += (
             " TE peaks were analysed with DESeq2 as the "
-            f"{'subfamilies' if te_only else 'consensus peaks'} and annotated with "
+            + (
+                "subfamilies, but with median-of-ratios size factors over the " "peaks,"
+                if te_only
+                else "consensus peaks"
+            )
+            + " and annotated with "
             + (chipseeker_text() if te_only else "ChIPseeker")
             + "."
         )

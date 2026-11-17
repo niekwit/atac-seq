@@ -51,7 +51,10 @@ rule methods:
             if te_enabled() and deseq2_enabled()
             else []
         ),
-        gat_samples=lambda w: te_correlation_config()["gat_samples"],
+        # From the config, so the data set files are not checked without TE
+        gat_samples=config.get("te", {})
+        .get("correlation", {})
+        .get("gat_samples", 10000),
     threads: 1
     resources:
         runtime=runtime(10),
