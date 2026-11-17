@@ -1,14 +1,29 @@
 from snakemake import __version__ as SNAKEMAKE_VERSION
 
 
-# Packages installed in a conda environment of the workflow (name, version),
-# from the conda-meta records (name-version-build.json) of the environment
+# Versions (name, version) of the packages listed in an environment file of
+# the workflow, as installed in its conda environment (conda-meta records:
+# name-version-build.json), without their dependencies. The Python and R
+# interpreters are kept even when the file does not list them, as the
+# workflow's scripts run on them.
 # -----------------------------------------------------
 rule software_versions:
     output:
         "methods/software_versions/{env}.tsv",
     wildcard_constraints:
         env="|".join(methods_envs()),
+    params:
+        env_file=lambda w: os.path.join(workflow.basedir, "envs", f"{w.env}.yaml"),
+        # Package names from the dependency lines of the environment file
+        # (bioconda::macs2=2.2.9.1=py310h7c593f9_1 -> macs2), then the
+        # installed packages with these names
+        awk=(
+            "NR == FNR { if ($0 ~ /^[[:space:]]*-[[:space:]]/) { "
+            's = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", s); '
+            'sub(/^[^:]*::/, "", s); sub(/[=<>! #].*/, "", s); keep[s] = 1 } '
+            "next } "
+            '($1 in keep) || $1 == "python" || $1 == "r-base"'
+        ),
     threads: 1
     resources:
         runtime=runtime(10),
@@ -19,7 +34,8 @@ rule software_versions:
         "../envs/{env}.yaml"
     shell:
         '(ls "$CONDA_PREFIX/conda-meta" | '
-        "sed -nE 's/^(.+)-([^-]+)-([^-]+)\\.json$/\\1\\t\\2/p' | sort > {output}) "
+        "sed -nE 's/^(.+)-([^-]+)-([^-]+)\\.json$/\\1\\t\\2/p' | "
+        "awk -F '\\t' '{params.awk}' {params.env_file} - | sort > {output}) "
         "2> {log}"
 
 
