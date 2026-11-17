@@ -119,6 +119,7 @@ rule te_count:
     params:
         # -p without --countReadPairs: each read (Tn5 insertion) is counted
         options="-p -F SAF --read2pos 5 --largestOverlap -s 0",
+        extra=extra("featurecounts"),
     threads: 8
     resources:
         runtime=runtime(120),
@@ -128,9 +129,9 @@ rule te_count:
     conda:
         "../envs/te.yaml"
     shell:
-        "(featureCounts {params.options} -T {threads} -M "
+        "(featureCounts {params.options} {params.extra} -T {threads} -M "
         "-a {input.saf} -o {output.multi} {input.bams} && "
-        "featureCounts {params.options} -T {threads} "
+        "featureCounts {params.options} {params.extra} -T {threads} "
         "-a {input.saf} -o {output.unique} {input.bams}) > {log} 2>&1"
 
 
@@ -198,6 +199,7 @@ rule te_bigwig:
     params:
         bin_size=config.get("te", {}).get("bigwig_bin_size", 10),
         options="--normalizeUsing CPM --Offset 1",
+        extra=extra("bamcoverage"),
     threads: 4
     resources:
         runtime=runtime(60),
@@ -207,7 +209,8 @@ rule te_bigwig:
     conda:
         "../envs/qc.yaml"
     shell:
-        "bamCoverage --binSize {params.bin_size} {params.options} -p {threads} "
+        "bamCoverage --binSize {params.bin_size} {params.options} {params.extra} "
+        "-p {threads} "
         "-b {input.bam} -o {output} > {log} 2>&1"
 
 
@@ -220,6 +223,9 @@ rule te_bigwig_mean:
         ),
     output:
         "results/te/bigwig/mean/{condition}.cpm.bigwig",
+    params:
+        bin_size=config.get("te", {}).get("bigwig_bin_size", 10),
+        extra=extra("bigwigaverage"),
     threads: 4
     resources:
         runtime=runtime(60),
@@ -229,7 +235,8 @@ rule te_bigwig_mean:
     conda:
         "../envs/qc.yaml"
     shell:
-        "bigwigAverage --binSize 10 -p {threads} -b {input} -o {output} > {log} 2>&1"
+        "bigwigAverage --binSize {params.bin_size} {params.extra} -p {threads} "
+        "-b {input} -o {output} > {log} 2>&1"
 
 
 # Full-length copies of the subfamilies in te: profile: subfamilies (e.g.
@@ -277,6 +284,7 @@ rule te_profile_matrix:
         labels=lambda w: CONDITIONS if w.level == "conditions" else SAMPLES,
         flank=te_profile_config()["flank"],
         body_length=te_profile_config()["body_length"],
+        extra=extra("computematrix"),
     wildcard_constraints:
         level="conditions|samples",
     threads: 4
@@ -293,7 +301,7 @@ rule te_profile_matrix:
         "--regionBodyLength {params.body_length} "
         "--beforeRegionStartLength {params.flank} "
         "--afterRegionStartLength {params.flank} "
-        "--binSize 50 --missingDataAsZero -p {threads} "
+        "--binSize 50 --missingDataAsZero {params.extra} -p {threads} "
         "-o {output} > {log} 2>&1"
 
 
@@ -308,6 +316,7 @@ rule te_profile_plot:
             "--plotHeight 6 --plotWidth 8 "
             "--yAxisLabel 'Tn5 insertions per million'"
         ),
+        extra=extra("plotprofile"),
     wildcard_constraints:
         level="conditions|samples",
     threads: 1
@@ -319,7 +328,7 @@ rule te_profile_plot:
     conda:
         "../envs/qc.yaml"
     shell:
-        "plotProfile -m {input} -o {output} {params.options} > {log} 2>&1"
+        "plotProfile -m {input} -o {output} {params.options} {params.extra} > {log} 2>&1"
 
 
 # PCA and sample correlation from the subfamily counts (vst, blind to the

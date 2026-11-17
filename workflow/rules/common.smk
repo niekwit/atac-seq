@@ -150,6 +150,15 @@ def reproducibility_methods():
     return ["overlap", "idr"] if config["idr"]["enable"] else ["overlap"]
 
 
+def extra(tool):
+    """
+    Extra command-line arguments of a tool run directly as a command, from
+    extra: in the config (empty: none). They come after the workflow's own
+    options, so for most tools they override them.
+    """
+    return config.get("extra", {}).get(tool) or ""
+
+
 def ataqv_organism():
     genome = config["genome"]["ensembl"]
     if re.match("hg", genome) or genome == "test":

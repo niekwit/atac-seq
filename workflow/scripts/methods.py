@@ -861,6 +861,30 @@ if r_used:
     text += f", and {tool('R')}" + (f" with {join(r_packages)}" if r_packages else "")
 sections.append(text + ".")
 
+# Extra command-line arguments (extra: in the config)
+# -----------------------------------------------------
+EXTRA_NAMES = {
+    "bowtie2_build": "bowtie2-build",
+    "fastqc": "FastQC",
+    "markduplicates": "Picard MarkDuplicates",
+    "ataqv": "ataqv",
+    "featurecounts": "featureCounts",
+    "multiqc": "MultiQC",
+    "bamcoverage": "bamCoverage",
+    "bigwigaverage": "bigwigAverage",
+    "computematrix": "computeMatrix",
+    "plotprofile": "plotProfile",
+}
+extras = [
+    f"{EXTRA_NAMES.get(key, key)} {code(value)}"
+    for key, value in (config.get("extra") or {}).items()
+    if value
+]
+if extras:
+    sections.append(
+        "Additional command-line arguments were passed to " + join(extras) + "."
+    )
+
 # References and configuration
 # -----------------------------------------------------
 references = sorted(

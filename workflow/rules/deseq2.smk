@@ -41,6 +41,7 @@ rule count_peak_insertions:
     params:
         # -p without --countReadPairs: each read (Tn5 insertion) is counted
         options="-p -F SAF --read2pos 5 --largestOverlap -s 0",
+        extra=extra("featurecounts"),
     threads: 4
     resources:
         runtime=runtime(60),
@@ -50,7 +51,7 @@ rule count_peak_insertions:
     conda:
         "../envs/deseq2.yaml"
     shell:
-        "featureCounts {params.options} -T {threads} -a {input.saf} "
+        "featureCounts {params.options} {params.extra} -T {threads} -a {input.saf} "
         "-o {output.counts} {input.bams} > {log} 2>&1"
 
 

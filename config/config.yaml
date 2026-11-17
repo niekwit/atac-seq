@@ -143,3 +143,19 @@ te:
     #   EM-seq hypomethylated DMRs: /path/to/hypo_dmrs.bed
     #   EM-seq hypermethylated DMRs: /path/to/hyper_dmrs.bed
     gat_samples: 10000
+
+# Extra command-line arguments of tools that are run directly as a command,
+# appended to the workflow's own options ("": none). Tools run from the
+# workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;
+# cutadapt and bowtie2 take theirs from cutadapt: extra and bowtie2: extra
+extra:
+  bowtie2_build: ""
+  fastqc: ""
+  markduplicates: ""
+  ataqv: ""
+  featurecounts: ""
+  multiqc: ""
+  bamcoverage: ""
+  bigwigaverage: ""
+  computematrix: ""
+  plotprofile: ""

@@ -209,6 +209,41 @@ properties:
             minimum: 100
             default: 10000
 
+  extra:
+    type: object
+    properties:
+      bowtie2_build:
+        type: [string, "null"]
+        default: ""
+      fastqc:
+        type: [string, "null"]
+        default: ""
+      markduplicates:
+        type: [string, "null"]
+        default: ""
+      ataqv:
+        type: [string, "null"]
+        default: ""
+      featurecounts:
+        type: [string, "null"]
+        default: ""
+      multiqc:
+        type: [string, "null"]
+        default: ""
+      bamcoverage:
+        type: [string, "null"]
+        default: ""
+      bigwigaverage:
+        type: [string, "null"]
+        default: ""
+      computematrix:
+        type: [string, "null"]
+        default: ""
+      plotprofile:
+        type: [string, "null"]
+        default: ""
+    additionalProperties: false
+
 required:
   - genome
   - mito_chr_name

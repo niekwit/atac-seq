@@ -102,10 +102,11 @@ rule te_multiqc:
         report="results/te/multiqc/multiqc_report.html",
     params:
         # te_align_{sample}.log: sample name without te_align_
-        extra=(
+        options=(
             "--verbose --no-data-dir "
             "--cl-config \"extra_fn_clean_trim: ['te_align_']\""
         ),
+        extra=extra("multiqc"),
         # MultiQC searches the directories of the input files; logs/te/ also
         # has other logs, which MultiQC ignores
         dirs=lambda w, input: sorted({os.path.dirname(f) for f in input}),
@@ -118,5 +119,5 @@ rule te_multiqc:
     conda:
         "../envs/reports.yaml"
     shell:
-        "multiqc {params.extra} --force --outdir results/te/multiqc "
+        "multiqc {params.options} {params.extra} --force --outdir results/te/multiqc "
         "--filename multiqc_report {params.dirs} > {log} 2>&1"

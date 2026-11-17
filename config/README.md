@@ -86,3 +86,14 @@ ENCODE pipeline.
 | profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |
 | correlation: datasets             | data sets to compare with the differential TE peaks with GAT, as name: BED file (e.g. EM-seq DMRs; UCSC or Ensembl chromosome names) | {} |
 | correlation: gat_samples          | number of random placements of the peaks in GAT                            | 10000 |
+| **extra**                         | extra command-line arguments of tools run directly as a command, appended to the workflow's own options (cutadapt and bowtie2: `extra` in their sections) | |
+| bowtie2_build                     | bowtie2-build (genome index)                                               | ""             |
+| fastqc                            | FastQC                                                                     | ""             |
+| markduplicates                    | Picard MarkDuplicates                                                      | ""             |
+| ataqv                             | ataqv                                                                      | ""             |
+| featurecounts                     | featureCounts (consensus peaks, TE subfamilies and TE peaks)               | ""             |
+| multiqc                           | MultiQC (both reports)                                                     | ""             |
+| bamcoverage                       | deepTools bamCoverage (TE signal tracks)                                   | ""             |
+| bigwigaverage                     | deepTools bigwigAverage (TE mean signal tracks)                            | ""             |
+| computematrix                     | deepTools computeMatrix (TE profiles)                                      | ""             |
+| plotprofile                       | deepTools plotProfile (TE profiles)                                        | ""             |

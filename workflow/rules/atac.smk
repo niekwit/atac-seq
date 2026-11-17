@@ -304,7 +304,7 @@ rule ataqv:
     params:
         organism=ataqv_organism(),
         mito=config["mito_chr_name"],
-        extra="",
+        extra=extra("ataqv"),
     resources:
         runtime=runtime(180),
         mem_mb=2000,
@@ -335,7 +335,6 @@ rule ataqv_report:
         html="results/ataqv_report/index.html",
     params:
         dir=lambda w, output: os.path.dirname(output["html"]),
-        extra="",
     resources:
         runtime=runtime(30),
         mem_mb=1000,
