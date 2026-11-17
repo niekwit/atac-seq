@@ -875,10 +875,21 @@ EXTRA_NAMES = {
     "computematrix": "computeMatrix",
     "plotprofile": "plotProfile",
 }
+# Only tools that run with these settings
+profiles = bool(params["profile"]["subfamilies"])
+EXTRA_RUNS = {
+    "markduplicates": not te_only,
+    "ataqv": not te_only,
+    "featurecounts": (deseq2 and not te_only) or te,
+    "bamcoverage": te,
+    "bigwigaverage": te,
+    "computematrix": te and profiles,
+    "plotprofile": te and profiles,
+}
 extras = [
     f"{EXTRA_NAMES.get(key, key)} {code(value)}"
     for key, value in (config.get("extra") or {}).items()
-    if value
+    if value and EXTRA_RUNS.get(key, True)
 ]
 if extras:
     sections.append(
