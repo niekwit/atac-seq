@@ -48,6 +48,7 @@ include: "rules/deseq2.smk"
 include: "rules/te.smk"
 include: "rules/te_peaks.smk"
 include: "rules/te_qc.smk"
+include: "rules/methods.smk"
 
 
 onstart:
@@ -153,9 +154,13 @@ if te_enabled():
 
 localrules:
     all,
+    software_versions,
+    methods,
 
 
 rule all:
     input:
         ENCODE_TARGETS,
         TE_TARGETS,
+        # Methods section of the steps that were run (after all other targets)
+        "methods/methods.md",
