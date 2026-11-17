@@ -417,7 +417,8 @@ filter_chrs = config["filter"]["filter_chrs"]
 min_replicate_fraction = config["peaks"].get("min_replicate_fraction", 1)
 all_replicates = min_replicate_fraction >= 1
 min_fraction = f"{min_replicate_fraction:.0%}"
-min_overlap = f"{config['peaks'].get('min_overlap', 0.5):.0%}"
+# :g keeps small thresholds (0.004 -> 0.4%) and drops float noise (0.3 -> 30%)
+min_overlap = f"{config['peaks'].get('min_overlap', 0.5) * 100:g}%"
 fdr = config.get("deseq2", {}).get("fdr", 0.05)
 lfc_threshold = config.get("deseq2", {}).get("lfc_threshold", 0)
 count_options = "-p -F SAF --read2pos 5 --largestOverlap -s 0"

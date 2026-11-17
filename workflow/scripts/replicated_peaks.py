@@ -17,7 +17,8 @@ chromosome, start, end and summit:
   IDR) of these pairs.
 
 With k = n (default), a peak is in the peak sets of all pairs of replicates;
-with two replicates, this is the conservative peak set.
+with two replicates, this is the conservative peak set (for overlap only with
+min_overlap 0.5, the default, as the ENCODE naive overlap always uses 50%).
 """
 
 import logging

@@ -71,7 +71,8 @@ at least 2 (default 1: all replicates):
   the IDR threshold for the peak; its score (column 5) is the lowest scaled IDR of these pairs.
 
 With two replicates, or with *k* = *n*, the peaks are in the peak sets of all pairs of
-replicates; with two replicates this is the conservative peak set.
+replicates; with two replicates this is the conservative peak set (for naive overlap only with
+the default `peaks: min_overlap` of 0.5, as the ENCODE naive overlap always uses 50%).
 
 Requiring all replicates makes the set smaller with every replicate added, and a single weaker
 replicate limits it: the log (`logs/replicated_peaks/`) lists the peaks of each replicate
