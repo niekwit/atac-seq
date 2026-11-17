@@ -382,7 +382,8 @@ def tool(name, detail=None):
     found = version(name)
     if not found:
         logging.warning(f"No version found for {name}")
-    text = f"{name} v{'/'.join(found)}" if found else name
+    # Tools in several conda environments: the latest version only
+    text = f"{name} v{found[-1]}" if found else name
     inside = "; ".join(x for x in [detail, citation(*TOOLS[name][0])] if x)
     return f"{text} ({inside})"
 
@@ -413,7 +414,9 @@ replicates = params["replicates"]
 replicated = [c for c, n in replicates.items() if n > 1]
 contrasts = params["contrasts"]
 filter_chrs = config["filter"]["filter_chrs"]
-min_fraction = f"{config['peaks'].get('min_replicate_fraction', 1):.0%}"
+min_replicate_fraction = config["peaks"].get("min_replicate_fraction", 1)
+all_replicates = min_replicate_fraction >= 1
+min_fraction = f"{min_replicate_fraction:.0%}"
 fdr = config.get("deseq2", {}).get("fdr", 0.05)
 lfc_threshold = config.get("deseq2", {}).get("lfc_threshold", 0)
 count_options = "-p -F SAF --read2pos 5 --largestOverlap -s 0"
@@ -424,6 +427,22 @@ sections = []
 
 # Overview
 # -----------------------------------------------------
+COMMON_NAMES = {
+    "Homo_sapiens": "human",
+    "Mus_musculus": "mouse",
+    "Drosophila_melanogaster": "Drosophila melanogaster",
+}
+
+
+def genome_name():
+    """'mouse genome GRCm39', from the Ensembl FASTA file name"""
+    parts = reference["fasta"].split(".")
+    if len(parts) < 3:
+        return "genome"
+    species = COMMON_NAMES.get(parts[0], parts[0].replace("_", " "))
+    return f"{species} genome {parts[1]}"
+
+
 version_text = f" {params['workflow_version']}" if params["workflow_version"] else ""
 samples_text = join(f"{c} (n = {n})" for c, n in replicates.items())
 encode_text = (
@@ -439,10 +458,9 @@ sections.append(
     f"{sum(replicates.values())} samples ({samples_text}) were analysed with "
     f"the atac-seq workflow{version_text} "
     "(https://github.com/niekwit/atac-seq) in "
-    f"{tool('Snakemake')}{encode_text}. The genome "
-    f"({reference['fasta']}) and gene annotation ({reference['gtf']}) were "
-    f"from Ensembl release {reference['release']} {cite('dyer2025')}; "
-    "non-nucleotide characters in the genome sequence were replaced by N."
+    f"{tool('Snakemake')}{encode_text}. The {genome_name()} and gene "
+    f"annotation were from Ensembl release {reference['release']} "
+    f"{cite('dyer2025')}."
 )
 
 # Read processing and alignment
@@ -450,10 +468,16 @@ sections.append(
 cutadapt = config["cutadapt"]
 text = (
     f"## Read processing{'' if te_only else ' and alignment'}\n\n"
-    f"Read quality was assessed with {tool('FastQC')}. Adapters "
-    f"(read 1: {code(cutadapt['adapter_r1'])}, read 2: "
-    f"{code(cutadapt['adapter_r2'])}) were trimmed with "
-    f"{tool('cutadapt', code(cutadapt['extra']))}."
+    f"Read quality was assessed with {tool('FastQC')}. Adapters were trimmed "
+    "with "
+    + tool(
+        "cutadapt",
+        code(
+            f"{cutadapt['extra']} -a {cutadapt['adapter_r1']} "
+            f"-A {cutadapt['adapter_r2']}"
+        ),
+    )
+    + "."
 )
 if not te_only:
     multimapping = config["bowtie2"]["multimapping"]
@@ -554,9 +578,14 @@ if not te_only:
     )
     if replicated:
         text += (
-            " In addition, pooled peaks reproducible in at least "
-            f"{min_fraction} of the replicates of a condition (rounded up, at "
-            "least 2) were reported (overlap ≥ 50%"
+            " In addition, pooled peaks reproducible in "
+            + (
+                "all the replicates of a condition"
+                if all_replicates
+                else f"at least {min_fraction} of the replicates of a condition "
+                "(rounded up, at least 2)"
+            )
+            + " were reported (overlap ≥ 50%"
             + (", or IDR below the threshold for all pairs" if idr else "")
             + ")."
         )
@@ -683,7 +712,7 @@ if te:
         text += (
             " Insertion profiles over full-length copies (covering ≥ "
             f"{profile['min_consensus_fraction']:.0%} of the consensus) of "
-            f"{join(code(s) for s in profile['subfamilies'])} were calculated "
+            "selected subfamilies were calculated "
             "with computeMatrix scale-regions (body "
             f"{number(profile['body_length'])} bp, flanks "
             f"{number(profile['flank'])} bp, 50 bp bins) and plotted with "
@@ -715,7 +744,7 @@ if te:
                 "the significant subfamilies (at most "
                 f"{heatmap['max_per_class']} per class)"
                 if "all" in heatmap["subfamilies"]
-                else join(code(s) for s in heatmap["subfamilies"])
+                else "selected subfamilies"
             )
             heatmap_classes = (
                 "all classes"
@@ -746,10 +775,20 @@ if te:
         if len(replicated) < len(replicates)
         else ""
     )
+    if all_replicates:
+        text += (
+            " Consensus TE peaks were the pooled peaks overlapping a peak of all "
+            "the replicates (≥ 50% overlap), merged over the conditions "
+            "(BEDTools merge)."
+        )
+    else:
+        text += (
+            f" Pooled peaks overlapping a peak of at least {min_fraction} of the "
+            f"replicates (rounded up, at least 2{single}) by ≥ 50% were merged "
+            "into consensus TE peaks (BEDTools merge)."
+        )
     text += (
-        f" Pooled peaks overlapping a peak of at least {min_fraction} of the "
-        f"replicates (rounded up, at least 2{single}) by ≥ 50% were merged into "
-        "consensus TE peaks (BEDTools merge). Insertions per peak were counted "
+        " Insertions per peak were counted "
         f"with featureCounts ({code('-M')} for all read pairs, and uniquely "
         "mapping read pairs only), and each peak was annotated with the repeat "
         "of largest overlap and the fraction of insertions from uniquely mapping "
