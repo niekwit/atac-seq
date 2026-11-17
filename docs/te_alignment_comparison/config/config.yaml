@@ -45,6 +45,11 @@ peaks:
   # condition (rounded up, at least 2; not part of the ENCODE pipeline):
   # results/{idr,overlap}/{condition}/replicated_peak.narrowPeak
   min_replicate_fraction: 1
+  # A pooled peak is reproducible in a replicate if it overlaps a peak of the
+  # replicate by at least this fraction (of either peak; ENCODE naive overlap:
+  # 0.5). Used for results/overlap/{condition}/replicated_peak.narrowPeak and
+  # the TE peaks
+  min_overlap: 0.5
 
 idr:
   enable: true

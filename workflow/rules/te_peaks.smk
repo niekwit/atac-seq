@@ -54,7 +54,7 @@ use rule blacklist_filter as te_blacklist_filter with:
 
 
 # Peaks of the pooled replicates that overlap a peak of at least
-# min_replicate_fraction of the replicates by >= 50%
+# min_replicate_fraction of the replicates by >= min_overlap
 # -----------------------------------------------------
 use rule replicated_peaks as te_replicated_peaks with:
     input:
@@ -68,6 +68,7 @@ use rule replicated_peaks as te_replicated_peaks with:
     params:
         pairs=[],
         min_fraction=config["peaks"].get("min_replicate_fraction", 1),
+        min_overlap=config["peaks"].get("min_overlap", 0.5),
     wildcard_constraints:
         method="overlap",
     log:

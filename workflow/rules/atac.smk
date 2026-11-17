@@ -276,6 +276,7 @@ rule replicated_peaks:
     params:
         pairs=lambda w: true_replicate_pairs(w.condition),
         min_fraction=config["peaks"].get("min_replicate_fraction", 1),
+        min_overlap=config["peaks"].get("min_overlap", 0.5),
     threads: 1
     resources:
         runtime=runtime(30),

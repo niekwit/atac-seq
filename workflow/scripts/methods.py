@@ -417,6 +417,7 @@ filter_chrs = config["filter"]["filter_chrs"]
 min_replicate_fraction = config["peaks"].get("min_replicate_fraction", 1)
 all_replicates = min_replicate_fraction >= 1
 min_fraction = f"{min_replicate_fraction:.0%}"
+min_overlap = f"{config['peaks'].get('min_overlap', 0.5):.0%}"
 fdr = config.get("deseq2", {}).get("fdr", 0.05)
 lfc_threshold = config.get("deseq2", {}).get("lfc_threshold", 0)
 count_options = "-p -F SAF --read2pos 5 --largestOverlap -s 0"
@@ -585,7 +586,7 @@ if not te_only:
                 else f"at least {min_fraction} of the replicates of a condition "
                 "(rounded up, at least 2)"
             )
-            + " were reported (overlap ≥ 50%"
+            + f" were reported (overlap ≥ {min_overlap}"
             + (", or IDR below the threshold for all pairs" if idr else "")
             + ")."
         )
@@ -778,13 +779,13 @@ if te:
     if all_replicates:
         text += (
             " Consensus TE peaks were the pooled peaks overlapping a peak of all "
-            "the replicates (≥ 50% overlap), merged over the conditions "
+            f"the replicates (≥ {min_overlap} overlap), merged over the conditions "
             "(BEDTools merge)."
         )
     else:
         text += (
             f" Pooled peaks overlapping a peak of at least {min_fraction} of the "
-            f"replicates (rounded up, at least 2{single}) by ≥ 50% were merged "
+            f"replicates (rounded up, at least 2{single}) by ≥ {min_overlap} were merged "
             "into consensus TE peaks (BEDTools merge)."
         )
     text += (

@@ -64,8 +64,9 @@ ENCODE pipeline) has the peaks of the pooled sample that are reproducible in at 
 *n* replicates of a condition, with *k* = `peaks: min_replicate_fraction` × *n*, rounded up and
 at least 2 (default 1: all replicates):
 
-- **Naive overlap:** the peak overlaps a peak of at least *k* replicates by at least 50% (of
-  either peak), the criterion of the ENCODE naive overlap (`bedtools intersect -f 0.5 -F 0.5 -e`).
+- **Naive overlap:** the peak overlaps a peak of at least *k* replicates by at least
+  `peaks: min_overlap` (of either peak; default 0.5, the criterion of the ENCODE naive overlap,
+  `bedtools intersect -f 0.5 -F 0.5 -e`).
 - **IDR:** IDR only compares pairs, so there must be *k* replicates of which every pair passed
   the IDR threshold for the peak; its score (column 5) is the lowest scaled IDR of these pairs.
 

@@ -75,7 +75,7 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    shifted tagAlign files and MACS2 as for the main peaks, but with the total chromosome length
    as effective genome size, since multimappers can align anywhere. The peaks of the pooled
    replicates that overlap a peak in at least `peaks: min_replicate_fraction` of the replicates
-   by ≥ 50% are kept, and the peaks of all conditions are merged into consensus peaks.
+   by ≥ `peaks: min_overlap` (default 0.5) are kept, and the peaks of all conditions are merged into consensus peaks.
 
    Each consensus peak gets the repeat with the largest overlap and `frac_unique`, the fraction
    of its insertions from uniquely mapping read pairs. In a peak with a low `frac_unique` the

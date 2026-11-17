@@ -57,6 +57,7 @@ ENCODE pipeline.
 | **peaks**                         |                                                                            |                |
 | keep_chr_regex                    | peaks on chromosomes not matching this (POSIX extended) regex are removed  | [0-9]+\|X\|Y   |
 | min_replicate_fraction            | fraction of the replicates in which a peak of `replicated_peak.narrowPeak` is reproducible (rounded up, at least 2) | 1 |
+| min_overlap                       | minimum overlap (fraction of either peak) of a pooled peak with a replicate peak, for the overlap `replicated_peak.narrowPeak` and the TE peaks | 0.5 |
 | **idr**                           |                                                                            |                |
 | enable                            | run IDR (naive overlap is always run)                                      | true           |
 | threshold                         | IDR threshold                                                              | 0.05           |
