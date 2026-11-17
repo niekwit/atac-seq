@@ -15,6 +15,7 @@ workflow/notebooks/.ipynb_checkpoints/**
 *.log
 .test/resources/**
 .test/logs/**
+.test/methods/**
 **/__pycache__/
 
 # Claude Code config

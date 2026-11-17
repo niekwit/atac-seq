@@ -2,6 +2,7 @@
 import math
 import os
 import re
+import subprocess
 import pandas as pd
 from snakemake.utils import validate
 
@@ -437,4 +438,92 @@ def te_heatmap_config():
         "classes": as_list(heatmap.get("classes", ["LINE", "SINE", "LTR", "DNA"])),
         "subfamilies": as_list(heatmap.get("subfamilies", ["all"])),
         "max_per_class": heatmap.get("max_per_class", 25),
+    }
+
+
+def methods_envs():
+    """
+    Returns the conda environments (workflow/envs/{env}.yaml) used by the
+    jobs of this configuration, whose package versions go into the methods
+    """
+    genome = config["genome"]["ensembl"]
+    # Genome, index, trimming, FastQC/MultiQC, TSS file and deepTools/Picard
+    envs = ["atac", "encode", "reports", "qc", "tss"]
+    if not te_only() and config["idr"]["enable"]:
+        envs.append("idr")
+    # ChIPseeker annotation (ENCODE peaks, or the TE peaks with DESeq2) and
+    # the AnnotationHub blacklist of genomes without an ENCODE exclusion list
+    blacklist_from_r = (
+        genome not in LIFTED_BLACKLISTS and genome not in ENCODE_BLACKLISTS
+    )
+    if not te_only() or deseq2_enabled() or blacklist_from_r:
+        envs.append("r")
+    if genome in LIFTED_BLACKLISTS or ENCODE_TSS.get(genome, (None, None))[1]:
+        envs.append("liftover")
+    if deseq2_enabled() or te_enabled():
+        envs.append("deseq2")
+    if te_enabled():
+        envs += ["te", "gat"]
+        if (
+            deseq2_enabled()
+            and deseq2_contrasts()
+            and te_correlation_config()["datasets"]
+        ):
+            envs.append("eulerr")
+    return envs
+
+
+def workflow_version():
+    """Version (git tag or commit) of the workflow, if it is a git repository"""
+    try:
+        return subprocess.run(
+            [
+                "git",
+                "-C",
+                workflow.basedir,
+                "describe",
+                "--tags",
+                "--always",
+                "--dirty",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def reference_files():
+    """
+    Returns the sources of the genome, blacklist and TSS files of the genome,
+    for the methods
+    """
+    genome = config["genome"]["ensembl"]
+    if genome in LIFTED_BLACKLISTS:
+        accession, chain = LIFTED_BLACKLISTS[genome]
+        blacklist = {
+            "source": "encode",
+            "accession": accession,
+            "lifted_from": chain.split("/")[0],
+        }
+    elif genome in ENCODE_BLACKLISTS:
+        blacklist = {"source": "encode", "accession": ENCODE_BLACKLISTS[genome]}
+    else:
+        blacklist = {"source": "annotationhub"}
+    if genome in ENCODE_TSS:
+        accession, chain = ENCODE_TSS[genome]
+        tss = {"source": "encode", "accession": accession}
+        if chain:
+            tss["lifted_from"] = chain.split("/")[0]
+    else:
+        tss = {"source": "gtf"}
+    return {
+        "fasta": os.path.basename(resources.fasta),
+        "gtf": os.path.basename(resources.gtf),
+        "release": config["genome"]["release"],
+        "ucsc_genome": UCSC_GENOMES.get(genome),
+        "blacklist": blacklist,
+        "tss": tss,
+        "annotation_regions": bool(annotation_regions()),
     }
