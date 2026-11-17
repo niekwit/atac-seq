@@ -5,7 +5,7 @@ LABEL io.github.snakemake.conda_env_hash="b6485b4965ac7f5c12b80f5bdd3320e6798ce6
 # Step 2: Retrieve conda environments
 
 # Conda environment:
-#   source: ../workflow/envs/atac.yaml
+#   source: workflow/envs/atac.yaml
 #   prefix: /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c
 #   name: atac
 #   channels:
@@ -21,10 +21,10 @@ LABEL io.github.snakemake.conda_env_hash="b6485b4965ac7f5c12b80f5bdd3320e6798ce6
 #       - pip:
 #             - pyranges1==1.3.0
 RUN mkdir -p /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c
-COPY ../workflow/envs/atac.yaml /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c/environment.yaml
+COPY workflow/envs/atac.yaml /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/deseq2.yaml
+#   source: workflow/envs/deseq2.yaml
 #   prefix: /conda-envs/febae1ec7d9f7c1e400e8f29d9008d1d
 #   # Counting reads in peaks and DESeq2 analysis of all samples
 #   name: deseq2
@@ -40,10 +40,10 @@ COPY ../workflow/envs/atac.yaml /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c/env
 #     - conda-forge::r-ggrepel
 #     - conda-forge::r-pheatmap
 RUN mkdir -p /conda-envs/febae1ec7d9f7c1e400e8f29d9008d1d
-COPY ../workflow/envs/deseq2.yaml /conda-envs/febae1ec7d9f7c1e400e8f29d9008d1d/environment.yaml
+COPY workflow/envs/deseq2.yaml /conda-envs/febae1ec7d9f7c1e400e8f29d9008d1d/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/encode.yaml
+#   source: workflow/envs/encode.yaml
 #   prefix: /conda-envs/f74af83bc8a7ce9a857b8b62bbf328a9
 #   # Tools used by the ENCODE ATAC-seq pipeline (https://github.com/ENCODE-DCC/atac-seq-pipeline)
 #   name: encode
@@ -66,10 +66,10 @@ COPY ../workflow/envs/deseq2.yaml /conda-envs/febae1ec7d9f7c1e400e8f29d9008d1d/e
 #     - bioconda::ucsc-bedclip=482
 #     - bioconda::ucsc-bedgraphtobigwig=482
 RUN mkdir -p /conda-envs/f74af83bc8a7ce9a857b8b62bbf328a9
-COPY ../workflow/envs/encode.yaml /conda-envs/f74af83bc8a7ce9a857b8b62bbf328a9/environment.yaml
+COPY workflow/envs/encode.yaml /conda-envs/f74af83bc8a7ce9a857b8b62bbf328a9/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/eulerr.yaml
+#   source: workflow/envs/eulerr.yaml
 #   prefix: /conda-envs/97a4ed4484bedf357d14749c7ea21e4b
 #   # Area-proportional Venn (Euler) diagrams
 #   name: eulerr
@@ -81,10 +81,10 @@ COPY ../workflow/envs/encode.yaml /conda-envs/f74af83bc8a7ce9a857b8b62bbf328a9/e
 #     - conda-forge::r-eulerr=7.0.2
 #     - conda-forge::r-gridextra=2.3
 RUN mkdir -p /conda-envs/97a4ed4484bedf357d14749c7ea21e4b
-COPY ../workflow/envs/eulerr.yaml /conda-envs/97a4ed4484bedf357d14749c7ea21e4b/environment.yaml
+COPY workflow/envs/eulerr.yaml /conda-envs/97a4ed4484bedf357d14749c7ea21e4b/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/gat.yaml
+#   source: workflow/envs/gat.yaml
 #   prefix: /conda-envs/c706002875dacea712684a206a04756c
 #   # GAT (Genomic Association Tester); gat 1.3.6 uses numpy.float, removed in
 #   # numpy 1.24
@@ -102,10 +102,10 @@ COPY ../workflow/envs/eulerr.yaml /conda-envs/97a4ed4484bedf357d14749c7ea21e4b/e
 #     - bioconda::gat=1.3.6
 #     - bioconda::bedtools=2.31.1
 RUN mkdir -p /conda-envs/c706002875dacea712684a206a04756c
-COPY ../workflow/envs/gat.yaml /conda-envs/c706002875dacea712684a206a04756c/environment.yaml
+COPY workflow/envs/gat.yaml /conda-envs/c706002875dacea712684a206a04756c/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/idr.yaml
+#   source: workflow/envs/idr.yaml
 #   prefix: /conda-envs/88052609364672bb9c19593ccc476bd9
 #   # IDR as run by the ENCODE ATAC-seq pipeline (https://github.com/ENCODE-DCC/atac-seq-pipeline)
 #   # Separate from encode.yaml, as its numpy pin is incompatible with the working macs2 build
@@ -122,10 +122,10 @@ COPY ../workflow/envs/gat.yaml /conda-envs/c706002875dacea712684a206a04756c/envi
 #     - bioconda::idr=2.0.4.2
 #     - bioconda::ucsc-bedclip=482
 RUN mkdir -p /conda-envs/88052609364672bb9c19593ccc476bd9
-COPY ../workflow/envs/idr.yaml /conda-envs/88052609364672bb9c19593ccc476bd9/environment.yaml
+COPY workflow/envs/idr.yaml /conda-envs/88052609364672bb9c19593ccc476bd9/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/liftover.yaml
+#   source: workflow/envs/liftover.yaml
 #   prefix: /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844
 #   # Lifting the ENCODE exclusion list to a newer assembly
 #   name: liftover
@@ -137,10 +137,10 @@ COPY ../workflow/envs/idr.yaml /conda-envs/88052609364672bb9c19593ccc476bd9/envi
 #     - conda-forge::pigz=2.8
 #     - bioconda::ucsc-liftover=482
 RUN mkdir -p /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844
-COPY ../workflow/envs/liftover.yaml /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844/environment.yaml
+COPY workflow/envs/liftover.yaml /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/qc.yaml
+#   source: workflow/envs/qc.yaml
 #   prefix: /conda-envs/f7d20974e82d452ad6b06c7558708582
 #   # ENCODE ATAC-seq QC: fragment length, GC bias, JSD and annotated regions
 #   name: qc
@@ -161,10 +161,10 @@ COPY ../workflow/envs/liftover.yaml /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844
 #     - bioconda::bedtools=2.31.1
 #     - bioconda::samtools=1.21
 RUN mkdir -p /conda-envs/f7d20974e82d452ad6b06c7558708582
-COPY ../workflow/envs/qc.yaml /conda-envs/f7d20974e82d452ad6b06c7558708582/environment.yaml
+COPY workflow/envs/qc.yaml /conda-envs/f7d20974e82d452ad6b06c7558708582/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/r.yaml
+#   source: workflow/envs/r.yaml
 #   prefix: /conda-envs/309f933dc6e56cf74268a569ddd265d4
 #   name: R
 #   channels:
@@ -179,10 +179,10 @@ COPY ../workflow/envs/qc.yaml /conda-envs/f7d20974e82d452ad6b06c7558708582/envir
 #     - r-tidyverse=2.0.0
 #     - bioconductor-chipseeker=1.46.1
 RUN mkdir -p /conda-envs/309f933dc6e56cf74268a569ddd265d4
-COPY ../workflow/envs/r.yaml /conda-envs/309f933dc6e56cf74268a569ddd265d4/environment.yaml
+COPY workflow/envs/r.yaml /conda-envs/309f933dc6e56cf74268a569ddd265d4/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/reports.yaml
+#   source: workflow/envs/reports.yaml
 #   prefix: /conda-envs/69c6246d338f3230d62ca85ccdfabd04
 #   # Read QC and the MultiQC report
 #   name: reports
@@ -194,10 +194,10 @@ COPY ../workflow/envs/r.yaml /conda-envs/309f933dc6e56cf74268a569ddd265d4/enviro
 #     - bioconda::fastqc=0.12.1
 #     - bioconda::multiqc=1.33
 RUN mkdir -p /conda-envs/69c6246d338f3230d62ca85ccdfabd04
-COPY ../workflow/envs/reports.yaml /conda-envs/69c6246d338f3230d62ca85ccdfabd04/environment.yaml
+COPY workflow/envs/reports.yaml /conda-envs/69c6246d338f3230d62ca85ccdfabd04/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/te.yaml
+#   source: workflow/envs/te.yaml
 #   prefix: /conda-envs/5beefbf5e42bcd760dfc74810c91cc46
 #   # Transposable element (TE) module: multimapper alignment and repeat counting
 #   name: te
@@ -215,10 +215,10 @@ COPY ../workflow/envs/reports.yaml /conda-envs/69c6246d338f3230d62ca85ccdfabd04/
 #     - bioconda::pysam=0.23.3
 #     - bioconda::subread=2.1.1
 RUN mkdir -p /conda-envs/5beefbf5e42bcd760dfc74810c91cc46
-COPY ../workflow/envs/te.yaml /conda-envs/5beefbf5e42bcd760dfc74810c91cc46/environment.yaml
+COPY workflow/envs/te.yaml /conda-envs/5beefbf5e42bcd760dfc74810c91cc46/environment.yaml
 
 # Conda environment:
-#   source: ../workflow/envs/tss.yaml
+#   source: workflow/envs/tss.yaml
 #   prefix: /conda-envs/12bec9fae685a436f8f92dae48aa3c36
 #   # TSS enrichment as in the ENCODE ATAC-seq pipeline
 #   name: tss
@@ -232,7 +232,7 @@ COPY ../workflow/envs/te.yaml /conda-envs/5beefbf5e42bcd760dfc74810c91cc46/envir
 #     - conda-forge::matplotlib-base=3.10
 #     - bioconda::pysam=0.23.3
 RUN mkdir -p /conda-envs/12bec9fae685a436f8f92dae48aa3c36
-COPY ../workflow/envs/tss.yaml /conda-envs/12bec9fae685a436f8f92dae48aa3c36/environment.yaml
+COPY workflow/envs/tss.yaml /conda-envs/12bec9fae685a436f8f92dae48aa3c36/environment.yaml
 
 # Step 3: Generate conda environments
 
