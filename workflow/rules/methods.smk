@@ -151,8 +151,13 @@ rule string_db_version:
 rule methods:
     input:
         versions=METHODS_VERSION_FILES,
-        # A function: the targets may be defined after this file is included
-        targets=lambda w: methods_targets(),
+        # A function: the targets may be defined after this file is included.
+        # Its result is flattened by one level (e.g. a list of expand() results)
+        targets=lambda w: [
+            path
+            for target in methods_targets()
+            for path in ([target] if isinstance(target, str) else target)
+        ],
     output:
         methods="methods/methods.md",
         versions="methods/software_versions.tsv",
