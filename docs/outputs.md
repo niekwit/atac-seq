@@ -57,5 +57,6 @@ All files are listed in [Transposable elements](transposable_elements.md#output)
 `methods/methods.md` (in the analysis directory, not `results/`) is a methods section of the
 steps that were run, written after all other outputs. It gives the configuration values, the
 versions of the tools and references for all of them, and ends with the configuration of the
-run. The versions are those installed in the conda environments of the run, listed per
-environment in `methods/software_versions/{env}.tsv`.
+run. The versions are those installed in the conda environments of the run. They are
+listed in `methods/software_versions.tsv` (columns environment, package, version) for the
+packages named in each environment file and the Python and R interpreters.

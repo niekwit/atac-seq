@@ -9,7 +9,8 @@ from snakemake import __version__ as SNAKEMAKE_VERSION
 # -----------------------------------------------------
 rule software_versions:
     output:
-        "methods/software_versions/{env}.tsv",
+        # Combined into methods/software_versions.tsv by the methods rule
+        temp("results/software_versions/{env}.tsv"),
     wildcard_constraints:
         env="|".join(methods_envs()),
     params:
@@ -45,10 +46,13 @@ rule software_versions:
 # -----------------------------------------------------
 rule methods:
     input:
-        versions=expand("methods/software_versions/{env}.tsv", env=methods_envs()),
+        versions=expand("results/software_versions/{env}.tsv", env=methods_envs()),
         targets=lambda w: ENCODE_TARGETS + TE_TARGETS,
     output:
-        "methods/methods.md",
+        methods="methods/methods.md",
+        # Package versions of all conda environments (environment, package,
+        # version)
+        versions="methods/software_versions.tsv",
     params:
         snakemake_version=SNAKEMAKE_VERSION,
         workflow_version=workflow_version(),

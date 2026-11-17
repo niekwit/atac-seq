@@ -27,7 +27,7 @@ logging.basicConfig(
 config = snakemake.config
 params = snakemake.params
 reference = params["reference"]
-output = snakemake.output[0]
+output = snakemake.output["methods"]
 
 # Installed package versions per conda environment
 # -----------------------------------------------------
@@ -875,5 +875,12 @@ with open(output, "w") as fh:
     fh.write("## References\n\n")
     fh.write("\n".join(f"- {r}" for r in references) + "\n\n")
     fh.write("## Configuration\n\n```yaml\n" + config_yaml + "```\n")
+
+# Package versions of all environments in one table (R versions as in R)
+with open(snakemake.output["versions"], "w") as fh:
+    fh.write("environment\tpackage\tversion\n")
+    for env in sorted(versions):
+        for package in sorted(versions[env]):
+            fh.write(f"{env}\t{package}\t{versions[env][package]}\n")
 
 logging.info(f"Cited {len(cited)} references")
