@@ -8,9 +8,11 @@ also uses [DESeq2](https://doi.org/10.1186/s13059-014-0550-8) (`deseq2: enable: 
 1. **Consensus peaks:** the optimal peak sets of all conditions (`deseq2: peak_method`, overlap
    or IDR) are merged with `bedtools merge`.
 2. **Counting:** Tn5 insertions (the 5' end of each read of `{sample}.nodup.bam`) in the
-   consensus peaks are counted with `featureCounts`.
+   consensus peaks are counted with `featureCounts`. Peaks with fewer than
+   `deseq2: min_count` (default 10) insertions in all samples together are removed before the
+   next steps.
 3. **PCA and sample correlation:** variance stabilising transformation (blind to the
-   conditions) of the peaks with at least `deseq2: min_count` (default 10) insertions.
+   conditions).
 4. **Differential accessibility** between conditions, for each `[treatment, control]` pair in
    `deseq2: contrasts` or, if that is empty, each condition with at least 2 replicates against
    the reference condition (`reference` column of the

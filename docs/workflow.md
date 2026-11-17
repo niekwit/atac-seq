@@ -30,7 +30,8 @@ condition are treated as biological replicates of one ENCODE experiment.
     Jensen-Shannon distance (`deepTools plotFingerprint`), fraction of reads in DHS, promoters,
     enhancers and blacklisted regions, rescue and self-consistency ratios, `ataqv`, `MultiQC`
     (see [QC and reproducibility](qc.md))
-14. Annotation of the optimal peak set (`ChIPseeker`)
+14. Annotation of the optimal peak set (`ChIPseeker`; promoters: `peaks: tss_region` bp, default
+    3000, up- and downstream of the TSS)
 15. Comparison of all samples (not part of the ENCODE pipeline): PCA, sample correlation and
     differential accessibility between conditions from Tn5 insertions in the merged optimal
     peaks (`DESeq2`; see [Comparing samples](comparing_samples.md))

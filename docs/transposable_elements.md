@@ -36,9 +36,10 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
 
 ### Signal tracks and profiles
 
-5. Signal tracks of Tn5 insertions (5' end of each read, `te: bigwig_bin_size` bp bins (default 10), per million insertions;
-   `deepTools bamCoverage`) per sample, and the mean of the replicates of each condition
-   (`deepTools bigwigAverage`). Unlike the ENCODE signal tracks, they include multimappers.
+5. Signal tracks of Tn5 insertions (5' end of each read, bins of `te: bigwig_bin_size` bp
+   (default 10), per million insertions; `deepTools bamCoverage`) per sample, and the mean of
+   the replicates of each condition (`deepTools bigwigAverage`). Unlike the ENCODE signal
+   tracks, they include multimappers.
 6. With subfamilies in `te: profile: subfamilies`: profile of the signal tracks over the
    full-length copies of these subfamilies (copies that cover at least 90% of the RepeatMasker
    consensus), scaled to the same length from 5' to 3' with 2 kb flanks (`deepTools
@@ -75,7 +76,8 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    shifted tagAlign files and MACS2 as for the main peaks, but with the total chromosome length
    as effective genome size, since multimappers can align anywhere. The peaks of the pooled
    replicates that overlap a peak in at least `peaks: min_replicate_fraction` of the replicates
-   by ≥ `peaks: min_overlap` (default 0.5) are kept, and the peaks of all conditions are merged into consensus peaks.
+   by ≥ `peaks: min_overlap` (default 0.5) are kept, and the peaks of all conditions are merged
+   into consensus peaks.
 
    Each consensus peak gets the repeat with the largest overlap and `frac_unique`, the fraction
    of its insertions from uniquely mapping read pairs. In a peak with a low `frac_unique` the
