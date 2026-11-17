@@ -169,7 +169,7 @@ rule jsd:
         metrics="results/qc/{condition}.jsd.qc",
     params:
         samples=lambda w: replicates(w.condition),
-        mapq=30,
+        mapq=config["filter"]["mapq_thresh"],
     threads: 8
     resources:
         runtime=runtime(180),
@@ -205,7 +205,8 @@ rule multiqc:
     output:
         report="results/multiqc/multiqc_report.html",
     params:
-        extra="--verbose --dirs --no-data-dir",
+        options="--verbose --dirs --no-data-dir",
+        extra=extra("multiqc"),
         # MultiQC searches the directories of the input files
         dirs=lambda w, input: sorted({os.path.dirname(f) for f in input}),
     threads: 1
@@ -217,7 +218,7 @@ rule multiqc:
     conda:
         "../envs/reports.yaml"
     shell:
-        "multiqc {params.extra} --force --outdir results/multiqc "
+        "multiqc {params.options} {params.extra} --force --outdir results/multiqc "
         "--filename multiqc_report {params.dirs} > {log} 2>&1"
 
 

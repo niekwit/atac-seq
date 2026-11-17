@@ -23,3 +23,19 @@ path/to/analysis
 ```{include} ../config/README.md
 :start-after: <!-- docs-include-start -->
 ```
+
+## Extra tool arguments
+
+Tools that the workflow runs directly as a command take extra command-line arguments from
+`extra:` in `config/config.yaml`. They are added after the workflow's own options, so for most
+tools they override them, and the [methods](outputs.md#methods) list the ones that were used. For
+example, to give the MultiQC reports a title and to plot the standard error in the TE profiles:
+
+```yaml
+extra:
+  multiqc: "--title 'My project'"
+  plotprofile: "--plotType se"
+```
+
+Tools run from the workflow's own scripts (e.g. MACS2, IDR and `plotFingerprint`) are not
+included. cutadapt and bowtie2 take extra arguments from `cutadapt: extra` and `bowtie2: extra`.

@@ -54,7 +54,7 @@ use rule blacklist_filter as te_blacklist_filter with:
 
 
 # Peaks of the pooled replicates that overlap a peak of at least
-# min_replicate_fraction of the replicates by >= 50%
+# min_replicate_fraction of the replicates by >= min_overlap
 # -----------------------------------------------------
 use rule replicated_peaks as te_replicated_peaks with:
     input:
@@ -68,6 +68,7 @@ use rule replicated_peaks as te_replicated_peaks with:
     params:
         pairs=[],
         min_fraction=config["peaks"].get("min_replicate_fraction", 1),
+        min_overlap=config["peaks"].get("min_overlap", 0.5),
     wildcard_constraints:
         method="overlap",
     log:
@@ -102,6 +103,7 @@ rule te_count_peak_insertions:
     params:
         # -p without --countReadPairs: each read (Tn5 insertion) is counted
         options="-p -F SAF --read2pos 5 --largestOverlap -s 0",
+        extra=extra("featurecounts"),
     threads: 4
     resources:
         runtime=runtime(60),
@@ -111,9 +113,9 @@ rule te_count_peak_insertions:
     conda:
         "../envs/deseq2.yaml"
     shell:
-        "(featureCounts {params.options} -M -T {threads} -a {input.saf} "
+        "(featureCounts {params.options} {params.extra} -M -T {threads} -a {input.saf} "
         "-o {output.multi} {input.bams} && "
-        "featureCounts {params.options} -T {threads} -a {input.saf} "
+        "featureCounts {params.options} {params.extra} -T {threads} -a {input.saf} "
         "-o {output.unique} {input.bams}) > {log} 2>&1"
 
 

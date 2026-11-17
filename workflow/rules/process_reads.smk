@@ -224,6 +224,7 @@ rule bowtie2_index:
         ),
     params:
         prefix=lambda w, output: output[0].removesuffix(".1.bt2"),
+        extra=extra("bowtie2_build"),
     threads: 24
     resources:
         runtime=runtime(240),
@@ -233,7 +234,8 @@ rule bowtie2_index:
     conda:
         "../envs/encode.yaml"
     shell:
-        "bowtie2-build --threads {threads} {input} {params.prefix} > {log} 2>&1"
+        "bowtie2-build --threads {threads} {params.extra} {input} {params.prefix} "
+        "> {log} 2>&1"
 
 
 # Create BED file of blacklisted regions: the ENCODE exclusion list used by
@@ -333,7 +335,8 @@ rule fastqc:
         html="results/fastqc/{sample}_{read}_fastqc.html",
         zip="results/fastqc/{sample}_{read}_fastqc.zip",
     params:
-        extra="--quiet --memory 1024",
+        options="--quiet --memory 1024",
+        extra=extra("fastqc"),
         outdir="results/fastqc/{sample}_{read}",
     resources:
         runtime=runtime(120),
@@ -348,7 +351,7 @@ rule fastqc:
         "../envs/reports.yaml"
     shell:
         "mkdir -p {params.outdir} && "
-        "fastqc {params.extra} --threads {threads} --outdir {params.outdir} "
+        "fastqc {params.options} {params.extra} --threads {threads} --outdir {params.outdir} "
         "{input.fastq} > {log} 2>&1 && "
         "mv {params.outdir}/{wildcards.sample}_{wildcards.read}_001_fastqc.html {output.html} && "
         "mv {params.outdir}/{wildcards.sample}_{wildcards.read}_001_fastqc.zip {output.zip} && "
@@ -451,7 +454,8 @@ rule markduplicates:
     log:
         "logs/mark_duplicates/{sample}.log",
     params:
-        extra="--REMOVE_DUPLICATES false --VALIDATION_STRINGENCY LENIENT",
+        options="--REMOVE_DUPLICATES false --VALIDATION_STRINGENCY LENIENT",
+        extra=extra("markduplicates"),
         java_heap="3g",
     threads: 1
     resources:
@@ -461,7 +465,7 @@ rule markduplicates:
     conda:
         "../envs/qc.yaml"
     shell:
-        "picard -Xmx{params.java_heap} MarkDuplicates {params.extra} "
+        "picard -Xmx{params.java_heap} MarkDuplicates {params.options} {params.extra} "
         "-I {input.bams} -O {output.bam} -M {output.metrics} "
         "--TMP_DIR {resources.tmpdir} > {log} 2>&1"
 

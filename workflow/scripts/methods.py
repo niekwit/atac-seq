@@ -417,9 +417,15 @@ filter_chrs = config["filter"]["filter_chrs"]
 min_replicate_fraction = config["peaks"].get("min_replicate_fraction", 1)
 all_replicates = min_replicate_fraction >= 1
 min_fraction = f"{min_replicate_fraction:.0%}"
+# :g keeps small thresholds (0.004 -> 0.4%) and drops float noise (0.3 -> 30%)
+min_overlap = f"{config['peaks'].get('min_overlap', 0.5) * 100:g}%"
 fdr = config.get("deseq2", {}).get("fdr", 0.05)
 lfc_threshold = config.get("deseq2", {}).get("lfc_threshold", 0)
 count_options = "-p -F SAF --read2pos 5 --largestOverlap -s 0"
+tss_region = config["peaks"].get("tss_region", 3000)
+min_count = config.get("deseq2", {}).get("min_count", 10)
+bin_size = config.get("te", {}).get("bigwig_bin_size", 10)
+mapq_thresh = config["filter"]["mapq_thresh"]
 blacklist = reference["blacklist"]
 tss = reference["tss"]
 
@@ -537,7 +543,7 @@ def blacklist_text():
 
 def chipseeker_text():
     return (
-        f"{tool('ChIPseeker', 'TSS region ± 3 kb')}, using a TxDb built from the "
+        f"{tool('ChIPseeker', f'TSS region ± {number(tss_region)} bp')}, using a TxDb built from the "
         f"Ensembl GTF with {tool('txdbmaker')} and {tool('rtracklayer')}"
     )
 
@@ -585,7 +591,7 @@ if not te_only:
                 else f"at least {min_fraction} of the replicates of a condition "
                 "(rounded up, at least 2)"
             )
-            + " were reported (overlap ≥ 50%"
+            + f" were reported (overlap ≥ {min_overlap}"
             + (", or IDR below the threshold for all pairs" if idr else "")
             + ")."
         )
@@ -624,7 +630,7 @@ if not te_only:
         "CollectInsertSizeMetrics and CollectGcBiasMetrics), fraction of reads "
         f"in {regions_text}, fraction of reads in peaks, and fingerprints and "
         "Jensen–Shannon distances of the replicates with "
-        f"{tool('deepTools', 'plotFingerprint, MAPQ ≥ 30')}. Further QC was done "
+        f"{tool('deepTools', f'plotFingerprint, MAPQ ≥ {mapq_thresh}')}. Further QC was done "
         f"with {tool('ataqv')}, "
         f"and reports were combined with {tool('MultiQC')}."
     )
@@ -647,7 +653,7 @@ def deseq2_sentences(features):
     )
     if contrasts:
         text += (
-            f" {features[0].upper() + features[1:]} with < 10 insertions in all "
+            f" {features[0].upper() + features[1:]} with < {min_count} insertions in all "
             "samples together were removed, and differential accessibility "
             f"({contrast_text}) was tested (design {code('~ condition')}; "
             f"Wald test of {lfc_text}; Benjamini–Hochberg adjusted p < {fdr}, "
@@ -703,7 +709,7 @@ if te:
         "were made with "
         + tool(
             "deepTools",
-            f"bamCoverage {code('--binSize 10 --normalizeUsing CPM --Offset 1')}",
+            f"bamCoverage {code(f'--binSize {bin_size} --normalizeUsing CPM --Offset 1')}",
         )
         + " and averaged per condition (bigwigAverage)."
     )
@@ -778,13 +784,13 @@ if te:
     if all_replicates:
         text += (
             " Consensus TE peaks were the pooled peaks overlapping a peak of all "
-            "the replicates (≥ 50% overlap), merged over the conditions "
+            f"the replicates (≥ {min_overlap} overlap), merged over the conditions "
             "(BEDTools merge)."
         )
     else:
         text += (
             f" Pooled peaks overlapping a peak of at least {min_fraction} of the "
-            f"replicates (rounded up, at least 2{single}) by ≥ 50% were merged "
+            f"replicates (rounded up, at least 2{single}) by ≥ {min_overlap} were merged "
             "into consensus TE peaks (BEDTools merge)."
         )
     text += (
@@ -854,6 +860,41 @@ text = (
 if r_used:
     text += f", and {tool('R')}" + (f" with {join(r_packages)}" if r_packages else "")
 sections.append(text + ".")
+
+# Extra command-line arguments (extra: in the config)
+# -----------------------------------------------------
+EXTRA_NAMES = {
+    "bowtie2_build": "bowtie2-build",
+    "fastqc": "FastQC",
+    "markduplicates": "Picard MarkDuplicates",
+    "ataqv": "ataqv",
+    "featurecounts": "featureCounts",
+    "multiqc": "MultiQC",
+    "bamcoverage": "bamCoverage",
+    "bigwigaverage": "bigwigAverage",
+    "computematrix": "computeMatrix",
+    "plotprofile": "plotProfile",
+}
+# Only tools that run with these settings
+profiles = bool(params["profile"]["subfamilies"])
+EXTRA_RUNS = {
+    "markduplicates": not te_only,
+    "ataqv": not te_only,
+    "featurecounts": (deseq2 and not te_only) or te,
+    "bamcoverage": te,
+    "bigwigaverage": te,
+    "computematrix": te and profiles,
+    "plotprofile": te and profiles,
+}
+extras = [
+    f"{EXTRA_NAMES.get(key, key)} {code(value)}"
+    for key, value in (config.get("extra") or {}).items()
+    if value and EXTRA_RUNS.get(key, True)
+]
+if extras:
+    sections.append(
+        "Additional command-line arguments were passed to " + join(extras) + "."
+    )
 
 # References and configuration
 # -----------------------------------------------------

@@ -41,6 +41,7 @@ rule count_peak_insertions:
     params:
         # -p without --countReadPairs: each read (Tn5 insertion) is counted
         options="-p -F SAF --read2pos 5 --largestOverlap -s 0",
+        extra=extra("featurecounts"),
     threads: 4
     resources:
         runtime=runtime(60),
@@ -50,7 +51,7 @@ rule count_peak_insertions:
     conda:
         "../envs/deseq2.yaml"
     shell:
-        "featureCounts {params.options} -T {threads} -a {input.saf} "
+        "featureCounts {params.options} {params.extra} -T {threads} -a {input.saf} "
         "-o {output.counts} {input.bams} > {log} 2>&1"
 
 
@@ -70,6 +71,7 @@ rule deseq2_qc:
         conditions=SAMPLE_SHEET["condition"].tolist(),
         levels=deseq2_levels(),
         ntop=config.get("deseq2", {}).get("pca_ntop", 500),
+        min_count=config.get("deseq2", {}).get("min_count", 10),
     threads: 1
     resources:
         runtime=runtime(60),
@@ -92,6 +94,8 @@ rule annotate_consensus_peaks:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     output:
         txt="results/deseq2/consensus_peaks_annotated.txt",
+    params:
+        tss_region=config["peaks"].get("tss_region", 3000),
     threads: 1
     resources:
         runtime=runtime(30),
@@ -116,6 +120,7 @@ rule deseq2_fit:
         samples=SAMPLES,
         conditions=SAMPLE_SHEET["condition"].tolist(),
         levels=deseq2_levels(),
+        min_count=config.get("deseq2", {}).get("min_count", 10),
     threads: 4
     resources:
         runtime=runtime(120),

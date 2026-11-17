@@ -76,6 +76,15 @@ properties:
         exclusiveMinimum: 0
         maximum: 1
         default: 1
+      min_overlap:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+        default: 0.5
+      tss_region:
+        type: integer
+        minimum: 1
+        default: 3000
     required: ["keep_chr_regex"]
 
   idr:
@@ -117,6 +126,10 @@ properties:
       lfc_threshold:
         type: number
         minimum: 0
+      min_count:
+        type: integer
+        minimum: 0
+        default: 10
 
   te:
     type: object
@@ -136,6 +149,10 @@ properties:
         type: string
         enum: ["deseq2", "insertions"]
         default: deseq2
+      bigwig_bin_size:
+        type: integer
+        minimum: 1
+        default: 10
       heatmap:
         type: object
         properties:
@@ -191,6 +208,41 @@ properties:
             type: integer
             minimum: 100
             default: 10000
+
+  extra:
+    type: object
+    properties:
+      bowtie2_build:
+        type: [string, "null"]
+        default: ""
+      fastqc:
+        type: [string, "null"]
+        default: ""
+      markduplicates:
+        type: [string, "null"]
+        default: ""
+      ataqv:
+        type: [string, "null"]
+        default: ""
+      featurecounts:
+        type: [string, "null"]
+        default: ""
+      multiqc:
+        type: [string, "null"]
+        default: ""
+      bamcoverage:
+        type: [string, "null"]
+        default: ""
+      bigwigaverage:
+        type: [string, "null"]
+        default: ""
+      computematrix:
+        type: [string, "null"]
+        default: ""
+      plotprofile:
+        type: [string, "null"]
+        default: ""
+    additionalProperties: false
 
 required:
   - genome

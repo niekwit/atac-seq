@@ -13,6 +13,7 @@ peak_file <- snakemake@input[["peaks"]]
 edb_file <- snakemake@input[["edb"]]
 txdb_file <- snakemake@input[["txdb"]]
 txt <- snakemake@output[["txt"]]
+tss_region <- snakemake@params[["tss_region"]]
 
 # Load peaks: narrowPeak or BED with the peak ID in column 4 (0-based BED
 # coordinates)
@@ -44,7 +45,11 @@ seqlevels(peaks, pruning.mode = "coarse") <- intersect(
   seqlevels(peaks),
   seqlevels(txdb)
 )
-peakAnno <- annotatePeak(peaks, tssRegion = c(-3000, 3000), TxDb = txdb)
+peakAnno <- annotatePeak(
+  peaks,
+  tssRegion = c(-tss_region, tss_region),
+  TxDb = txdb
+)
 
 # Add gene names and gene biotype to annotation
 load(edb_file)

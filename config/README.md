@@ -46,7 +46,7 @@ ENCODE pipeline.
 | multimapping                      | maximum number of alignments of a read; 0: filter on MAPQ instead          | 4              |
 | extra                             | other bowtie2 arguments                                                    | -X2000 --mm    |
 | **filter**                        |                                                                            |                |
-| mapq_thresh                       | minimum MAPQ (only used when `multimapping` is 0)                          | 30             |
+| mapq_thresh                       | minimum MAPQ of the fingerprint (JSD) QC and, when `multimapping` is 0, of the read filter | 30 |
 | filter_chrs                       | chromosomes whose reads are removed after deduplication                    | [MT]           |
 | **subsample_reads**               | number of reads to subsample each replicate to (0: none)                   | 0              |
 | **macs2**                         |                                                                            |                |
@@ -57,6 +57,8 @@ ENCODE pipeline.
 | **peaks**                         |                                                                            |                |
 | keep_chr_regex                    | peaks on chromosomes not matching this (POSIX extended) regex are removed  | [0-9]+\|X\|Y   |
 | min_replicate_fraction            | fraction of the replicates in which a peak of `replicated_peak.narrowPeak` is reproducible (rounded up, at least 2) | 1 |
+| min_overlap                       | minimum overlap (fraction of either peak) of a pooled peak with a replicate peak, for the overlap `replicated_peak.narrowPeak` and the TE peaks | 0.5 |
+| tss_region                        | promoter window (bp up- and downstream of the TSS) of the ChIPseeker annotation | 3000 |
 | **idr**                           |                                                                            |                |
 | enable                            | run IDR (naive overlap is always run)                                      | true           |
 | threshold                         | IDR threshold                                                              | 0.05           |
@@ -68,11 +70,13 @@ ENCODE pipeline.
 | contrasts                         | [treatment, control] pairs; empty: each condition against the reference    | []             |
 | fdr                               | adjusted p-value below which a peak is differential                        | 0.05           |
 | lfc_threshold                     | test against this absolute log2 fold change (0: any change)                | 0              |
+| min_count                         | peaks (and TE subfamilies) with fewer insertions in all samples together are removed before PCA, correlation and testing | 10 |
 | **te**                            |                                                                            |                |
 | enable                            | run the transposable element module                                        | false          |
 | only                              | run only the TE module (with the genome, index and read trimming it needs), not the ENCODE peaks, signal tracks, QC and DESeq2 of the peaks | false |
 | classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
 | normalisation                     | library size for the DESeq2 comparison of subfamilies: `deseq2` (median-of-ratios over the subfamilies) or `insertions` (all kept insertions of a sample) | deseq2 |
+| bigwig_bin_size                   | bin size (bp) of the TE signal tracks                                      | 10             |
 | heatmap: classes                  | list of classes in the heatmap of each contrast; `["all"]` for every class | ["LINE", "SINE", "LTR", "DNA"] |
 | heatmap: subfamilies              | list of subfamilies in the heatmap; `["all"]` for the significant subfamilies of the selected classes. Named subfamilies are plotted whether significant or not (significant ones marked with *) | ["all"] |
 | heatmap: max_per_class            | most significant subfamilies per class in the heatmap (with `subfamilies: ["all"]`) | 25 |
@@ -82,3 +86,14 @@ ENCODE pipeline.
 | profile: body_length              | length (bp) to which the copies are scaled in the profile                  | 6000 |
 | correlation: datasets             | data sets to compare with the differential TE peaks with GAT, as name: BED file (e.g. EM-seq DMRs; UCSC or Ensembl chromosome names) | {} |
 | correlation: gat_samples          | number of random placements of the peaks in GAT                            | 10000 |
+| **extra**                         | extra command-line arguments of tools run directly as a command, appended to the workflow's own options (cutadapt and bowtie2: `extra` in their sections) | |
+| bowtie2_build                     | bowtie2-build (genome index)                                               | ""             |
+| fastqc                            | FastQC                                                                     | ""             |
+| markduplicates                    | Picard MarkDuplicates                                                      | ""             |
+| ataqv                             | ataqv                                                                      | ""             |
+| featurecounts                     | featureCounts (consensus peaks, TE subfamilies and TE peaks)               | ""             |
+| multiqc                           | MultiQC (both reports)                                                     | ""             |
+| bamcoverage                       | deepTools bamCoverage (TE signal tracks)                                   | ""             |
+| bigwigaverage                     | deepTools bigwigAverage (TE mean signal tracks)                            | ""             |
+| computematrix                     | deepTools computeMatrix (TE profiles)                                      | ""             |
+| plotprofile                       | deepTools plotProfile (TE profiles)                                        | ""             |

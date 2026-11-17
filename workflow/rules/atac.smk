@@ -276,6 +276,7 @@ rule replicated_peaks:
     params:
         pairs=lambda w: true_replicate_pairs(w.condition),
         min_fraction=config["peaks"].get("min_replicate_fraction", 1),
+        min_overlap=config["peaks"].get("min_overlap", 0.5),
     threads: 1
     resources:
         runtime=runtime(30),
@@ -303,7 +304,7 @@ rule ataqv:
     params:
         organism=ataqv_organism(),
         mito=config["mito_chr_name"],
-        extra="",
+        extra=extra("ataqv"),
     resources:
         runtime=runtime(180),
         mem_mb=2000,
@@ -334,7 +335,6 @@ rule ataqv_report:
         html="results/ataqv_report/index.html",
     params:
         dir=lambda w, output: os.path.dirname(output["html"]),
-        extra="",
     resources:
         runtime=runtime(30),
         mem_mb=1000,
@@ -356,6 +356,8 @@ rule annotate_peaks:
         txdb=f"resources/{resources.genome}_{resources.build}_txdb.Rdata",
     output:
         txt="results/{method}/{condition}/optimal_peak_annotated.txt",
+    params:
+        tss_region=config["peaks"].get("tss_region", 3000),
     threads: 1
     resources:
         runtime=runtime(30),

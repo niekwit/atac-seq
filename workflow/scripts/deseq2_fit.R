@@ -37,7 +37,7 @@ sample_info <- data.frame(
   row.names = samples
 )
 dds <- DESeqDataSetFromMatrix(counts, sample_info, design = ~condition)
-dds <- dds[rowSums(counts(dds)) >= 10, ]
+dds <- dds[rowSums(counts(dds)) >= snakemake@params[["min_count"]], ]
 dds <- DESeq(
   dds,
   parallel = TRUE,

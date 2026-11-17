@@ -41,7 +41,7 @@ sample_info <- data.frame(
   row.names = samples
 )
 dds <- DESeqDataSetFromMatrix(counts, sample_info, design = ~1)
-dds <- dds[rowSums(counts(dds)) >= 10, ]
+dds <- dds[rowSums(counts(dds)) >= snakemake@params[["min_count"]], ]
 dds <- estimateSizeFactors(dds)
 print(sizeFactors(dds))
 

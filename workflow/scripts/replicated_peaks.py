@@ -6,9 +6,10 @@ rounded up, and at least 2.
 
 Peaks are peaks of the pooled sample (blacklist-filtered), identified by
 chromosome, start, end and summit:
-- overlap: the pooled peak overlaps a peak of at least k replicates by >= 50%
-  (of either peak), the criterion of the naive overlap of ENCODE, counted
-  with bedtools intersect -f 0.5 -F 0.5 -e. The pooled peak lines are written.
+- overlap: the pooled peak overlaps a peak of at least k replicates by
+  >= peaks: min_overlap (of either peak; default 0.5, the criterion of the
+  naive overlap of ENCODE), counted with bedtools intersect -f -F -e. The
+  pooled peak lines are written.
 - IDR: the IDR peaks of the pairs of true replicates are subsets of the
   pooled peaks. A peak is kept if there are k replicates of which all pairs
   passed the IDR threshold for the peak. The lines of the first pair with
@@ -16,7 +17,8 @@ chromosome, start, end and summit:
   IDR) of these pairs.
 
 With k = n (default), a peak is in the peak sets of all pairs of replicates;
-with two replicates, this is the conservative peak set.
+with two replicates, this is the conservative peak set (for overlap only with
+min_overlap 0.5, the default, as the ENCODE naive overlap always uses 50%).
 """
 
 import logging
@@ -32,6 +34,7 @@ pair_peaks = list(snakemake.input["pairs"])
 pooled = snakemake.input["pooled"]
 pairs = snakemake.params["pairs"]
 fraction = snakemake.params["min_fraction"]
+min_overlap = str(snakemake.params["min_overlap"])
 output = snakemake.output[0]
 log = snakemake.log[0]
 
@@ -71,7 +74,7 @@ if method == "overlap":
     for peaks in replicate_peaks:
         command = [
             "bedtools", "intersect", "-nonamecheck", "-u",
-            "-f", "0.5", "-F", "0.5", "-e",
+            "-f", min_overlap, "-F", min_overlap, "-e",
             "-a", pooled, "-b", peaks,
         ]  # fmt: skip
         overlapping = read_peaks(

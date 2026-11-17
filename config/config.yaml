@@ -22,7 +22,8 @@ bowtie2:
   extra: "-X2000 --mm"
 
 filter:
-  # Only used when bowtie2:multimapping is 0
+  # Minimum MAPQ of the deepTools fingerprint (JSD) QC and, when
+  # bowtie2:multimapping is 0, of the read filter
   mapq_thresh: 30
   # Reads on these chromosomes are removed after deduplication
   filter_chrs: ["MT"]
@@ -45,6 +46,14 @@ peaks:
   # condition (rounded up, at least 2; not part of the ENCODE pipeline):
   # results/{idr,overlap}/{condition}/replicated_peak.narrowPeak
   min_replicate_fraction: 1
+  # A pooled peak is reproducible in a replicate if it overlaps a peak of the
+  # replicate by at least this fraction (of either peak; ENCODE naive overlap:
+  # 0.5). Used for results/overlap/{condition}/replicated_peak.narrowPeak and
+  # the TE peaks
+  min_overlap: 0.5
+  # Promoter window (bp up- and downstream of the TSS) of the ChIPseeker
+  # peak annotation (tssRegion)
+  tss_region: 3000
 
 idr:
   enable: true
@@ -70,6 +79,9 @@ deseq2:
   fdr: 0.05
   # Test against this absolute log2 fold change (0: any change)
   lfc_threshold: 0
+  # Peaks (and TE subfamilies) with fewer insertions in all samples together
+  # are removed before the DESeq2 PCA, correlation and testing
+  min_count: 10
 
 # Transposable element (TE) module (not part of the ENCODE pipeline): counts
 # Tn5 insertions in RepeatMasker repeats per subfamily, family and class,
@@ -85,6 +97,8 @@ te:
   # enable): deseq2 (median-of-ratios over the subfamilies) or insertions
   # (all kept insertions of a sample, for when most repeats change)
   normalisation: deseq2
+  # Bin size (bp) of the TE signal tracks (results/te/bigwig/)
+  bigwig_bin_size: 10
   # Heatmap per DESeq2 contrast (results/te/deseq2/{contrast}/heatmap_classes.pdf),
   # faceted by class. Lists; ["all"] selects every class or subfamily
   heatmap:
@@ -129,3 +143,19 @@ te:
     #   EM-seq hypomethylated DMRs: /path/to/hypo_dmrs.bed
     #   EM-seq hypermethylated DMRs: /path/to/hyper_dmrs.bed
     gat_samples: 10000
+
+# Extra command-line arguments of tools that are run directly as a command,
+# appended to the workflow's own options ("": none). Tools run from the
+# workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;
+# cutadapt and bowtie2 take theirs from cutadapt: extra and bowtie2: extra
+extra:
+  bowtie2_build: ""
+  fastqc: ""
+  markduplicates: ""
+  ataqv: ""
+  featurecounts: ""
+  multiqc: ""
+  bamcoverage: ""
+  bigwigaverage: ""
+  computematrix: ""
+  plotprofile: ""
