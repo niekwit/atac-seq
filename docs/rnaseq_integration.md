@@ -50,8 +50,8 @@ rnaseq:
   same columns). Gene rows are only used for the peak figures, TE rows only for the subfamily
   figures. Locus-level tables (one row per copy) are not supported.
 - Rows that match no gene or subfamily are left out and listed in
-  `logs/integration/rnaseq_prepare_{contrast}.log`, with the numbers of matched rows. Check this
-  log first if the results look empty. A gene or subfamily that is in the table more than once
+  `logs/integration/rnaseq_prepare_{contrast}.log` (`logs/te/integration/` with `te: only`), with
+  the numbers of matched rows. Check this log first if the results look empty. A gene or subfamily that is in the table more than once
   keeps the row with the lowest `padj`.
 - Genes and subfamilies with `padj < fdr` and `|log2FoldChange| > lfc_threshold` are up- or
   downregulated. Rows without `padj` (not tested, e.g. removed by the independent filtering of
@@ -123,7 +123,8 @@ In `results/integration/{contrast}/` (genes against the ENCODE consensus peaks),
 | `subfamilies/subfamilies.tsv` | per subfamily tested in both: ATAC-seq (`atac_*`) and RNA-seq (`rna_*`) results, numbers of TE peaks and `concordance` |
 | `subfamilies/correlation.tsv`, `scatter.pdf`, `cdf.pdf`, `cdf_tests.tsv`, `enrichment.tsv` | as above, for the subfamilies |
 
-`results/integration/rnaseq/{contrast}.tsv` has the matched genes and subfamilies of the
+`results/integration/rnaseq/{contrast}.tsv` (`results/te/integration/rnaseq/` with `te: only`, so
+that all output is in `results/te/integration/`) has the matched genes and subfamilies of the
 RNA-seq table, with their up- or downregulation.
 
 ## Caveats

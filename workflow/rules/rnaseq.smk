@@ -6,6 +6,20 @@
 # subfamily counts and TE peaks. Not part of the ENCODE pipeline.
 
 
+# Prepared RNA-seq table: with te: only, next to the TE module results, so
+# that all integration output is in results/te/integration/
+RNASEQ_TABLE = (
+    "results/te/integration/rnaseq/{contrast}.tsv"
+    if te_only()
+    else "results/integration/rnaseq/{contrast}.tsv"
+)
+RNASEQ_LOG = (
+    "logs/te/integration/rnaseq_prepare_{contrast}.log"
+    if te_only()
+    else "logs/integration/rnaseq_prepare_{contrast}.log"
+)
+
+
 # Genes and TE subfamilies of the RNA-seq table, with their differential
 # expression
 # -----------------------------------------------------
@@ -16,7 +30,7 @@ rule rnaseq_prepare:
         # Subfamilies only with the TE module
         subfamilies=lambda w: (["resources/te/subfamilies.tsv"] if te_enabled() else []),
     output:
-        table="results/integration/rnaseq/{contrast}.tsv",
+        table=RNASEQ_TABLE,
     params:
         columns=rnaseq_config()["columns"],
         id_type=rnaseq_config()["id_type"],
@@ -28,7 +42,7 @@ rule rnaseq_prepare:
         runtime=runtime(15),
         mem_mb=4000,
     log:
-        "logs/integration/rnaseq_prepare_{contrast}.log",
+        RNASEQ_LOG,
     conda:
         "../envs/qc.yaml"
     script:
@@ -41,7 +55,7 @@ rule rnaseq_prepare:
 rule rnaseq_genes:
     input:
         atac="results/deseq2/{contrast}/differential_peaks.tsv",
-        rnaseq="results/integration/rnaseq/{contrast}.tsv",
+        rnaseq=RNASEQ_TABLE,
     output:
         genes="results/integration/{contrast}/genes.tsv",
         concordant="results/integration/{contrast}/concordant_genes.tsv",
@@ -77,7 +91,7 @@ rule rnaseq_genes:
 use rule rnaseq_genes as te_rnaseq_genes with:
     input:
         atac="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
-        rnaseq="results/integration/rnaseq/{contrast}.tsv",
+        rnaseq=RNASEQ_TABLE,
     output:
         genes="results/te/integration/{contrast}/genes/genes.tsv",
         concordant="results/te/integration/{contrast}/genes/concordant_genes.tsv",
@@ -104,7 +118,7 @@ rule te_rnaseq_subfamilies:
     input:
         atac="results/te/deseq2/{contrast}/differential_subfamilies.tsv",
         peaks="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
-        rnaseq="results/integration/rnaseq/{contrast}.tsv",
+        rnaseq=RNASEQ_TABLE,
     output:
         subfamilies="results/te/integration/{contrast}/subfamilies/subfamilies.tsv",
         correlation="results/te/integration/{contrast}/subfamilies/correlation.tsv",
