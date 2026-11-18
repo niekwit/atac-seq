@@ -36,9 +36,11 @@ of them. The tagAlign files of the TE module (`te: enable`) are subsampled in th
 Only peak calling and what is made from the tagAlign files use the subsampled reads: the peaks
 (numbers, reproducibility, consensus peaks), FRiP, and the MACS2 fold-enrichment and p-value
 signal tracks (`results/bigwig/`). The insertions in the consensus peaks and in the repeats are
-counted from all reads, and the TE signal tracks are made from all reads, so the differential
-accessibility tests (DESeq2) are not affected: DESeq2 corrects for sequencing depth with its
-size factors, and removing reads would only reduce its power.
+counted from all reads, and the TE signal tracks are made from all reads: DESeq2 corrects for
+sequencing depth with its size factors, and removing reads from the counts would only reduce
+its power. The differential accessibility of the peaks can still change, as the consensus peaks
+that are tested come from the subsampled peak calls; the test of the repeat subfamilies does
+not change.
 
 **When to use it:** MACS2 finds more peaks in deeper libraries, as weak peaks become
 significant with more reads. If the libraries differ a lot in depth after duplicate removal

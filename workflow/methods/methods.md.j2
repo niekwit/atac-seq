@@ -15,7 +15,7 @@
 {% if subsample == "min" %}
 {% set subsample_text = "subsampled to the number of reads of the smallest library" %}
 {% elif subsample %}
-{% set subsample_text = "subsampled to " ~ number(subsample) ~ " reads" %}
+{% set subsample_text = "subsampled to at most " ~ number(subsample) ~ " reads (libraries with fewer reads were used in full)" %}
 {% else %}
 {% set subsample_text = "" %}
 {% endif %}
@@ -229,8 +229,8 @@ Peaks were called from these alignments as above (MACS2 with
 {{ gsize_text }} as effective genome size, blacklist filtering).
 {% endif %}
 {% if subsample_text %}
-The tagAlign files of the TE alignments were {{ subsample_text }} (of the TE
-alignments) before peak calling.
+Before peak calling, the tagAlign files of the TE alignments were
+{{ subsample_text }}{% if subsample == "min" %} of the TE alignments{% endif %}.
 {% endif %}
 {% if all_replicates %}
 Consensus TE peaks were the pooled peaks overlapping a peak of all the

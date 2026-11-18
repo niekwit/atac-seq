@@ -27,5 +27,12 @@ for sample, bam in zip(samples, bams):
     )
     logging.info(f"{sample}: {pairs} read pairs ({bam})")
     rows.append(f"{sample}\t{pairs}")
+empty = [row.split("\t")[0] for row in rows[1:] if row.endswith("\t0")]
+if empty:
+    # Stops before any tagAlign file is made: a minimum of 0 cannot be used
+    raise ValueError(
+        f"subsample_reads: min: no read pairs in {', '.join(empty)}; remove these "
+        "samples or set subsample_reads to a number"
+    )
 with open(snakemake.output[0], "w") as fh:
     fh.write("\n".join(rows) + "\n")

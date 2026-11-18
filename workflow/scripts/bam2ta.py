@@ -60,6 +60,9 @@ if subsample == "min":
     with open(snakemake.input["sizes"][0]) as fh:
         sizes = [line.rstrip("\n").split("\t") for line in fh][1:]
     subsample = 2 * min(int(pairs) for _, pairs in sizes)
+    if subsample == 0:
+        # 0 would mean no subsampling
+        raise ValueError("subsample_reads: min: a library has no read pairs")
 subsample = int(subsample)
 threads = str(snakemake.threads)
 log = snakemake.log[0]
