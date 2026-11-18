@@ -194,6 +194,10 @@ rule methods:
         # Contrasts integrated with RNA-seq, and its settings
         rnaseq=lambda w: list(rnaseq_contrasts()),
         rnaseq_config=rnaseq_config(),
+        # Contrasts integrated with H3K9me3 ({contrast: settings}), and its
+        # settings
+        h3k9me3=lambda w: h3k9me3_contrasts(),
+        h3k9me3_config=h3k9me3_config(),
         # From the config, so the data set files are not checked without TE
         gat_samples=config.get("te", {})
         .get("correlation", {})

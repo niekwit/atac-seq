@@ -322,6 +322,53 @@ Fisher's exact tests were adjusted with the
 Benjamini–Hochberg method {{ cite("benjamini1995") }}.
 {% endif %}
 
+{% if h3k9me3 %}
+## Integration with differential H3K9me3
+
+Differential accessibility was compared with the H3K9me3 regions that change
+in the same contrast ({{ h3k9me3 | join_and }}).
+{% if h3k9me3_diffbind %}
+DiffBind sites with FDR < {{ h3k9me3_fdr }} were called lost (log2 fold change
+< 0) or gained (> 0) in the treatment, and the other sites unchanged.
+{% endif %}
+{% if h3k9me3_bed %}
+Regions given as a BED file (one direction of change) were merged where they
+overlapped ({{ tool("bedtools") }} merge).
+{% endif %}
+{% if te_only %}Peaks of the TE module{% else %}Consensus peaks{% endif %} tested by DESeq2
+(with adjusted p-value) were assigned the H3K9me3 region they overlapped most (bedtools intersect). The percentages of more and less
+accessible peaks in regions that lost or gained H3K9me3 were compared with
+those of the unchanged peaks (Fisher's exact test), and the shrunken log2 fold
+changes of the peaks in each group of regions with those of the peaks outside
+the regions (Wilcoxon rank-sum test).
+{% if h3k9me3_diffbind %}
+Peak and H3K9me3 log2 fold changes of the peaks in DiffBind sites were
+correlated (Spearman).
+{% endif %}
+{% if h3k9me3_bigwigs %}
+The H3K9me3 signal of the control and the treatment around the centre of the
+more, less and unchanged accessible peaks (± {{ h3k9me3_flank }} bp, 50 bp
+bins) was calculated with computeMatrix reference-point and plotted with
+plotProfile and plotHeatmap.
+{% endif %}
+{% if te %}
+{% if not te_only %}
+The same analyses were run for the peaks of the TE module.
+{% endif %}
+Tn5 insertions per million (mean of the replicates of each condition) over the
+H3K9me3 regions (scaled to {{ h3k9me3_body }} bp, ± {{ h3k9me3_flank }}
+bp) were calculated with computeMatrix scale-regions. For each repeat subfamily
+with at least {{ h3k9me3_min_copies }} copies, the percentage of copies with at
+least half their length in the H3K9me3 regions was correlated with the
+subfamily's shrunken log2 fold change (Spearman). Full-length copies of the
+profile subfamilies were classified by their overlap with the H3K9me3 regions
+and with more accessible TE peaks, and the association was tested with
+Fisher's exact test.
+{% endif %}
+P-values of the Wilcoxon and Fisher's exact tests were adjusted with the
+Benjamini–Hochberg method {{ cite("benjamini1995") }}.
+{% endif %}
+
 {% set r_packages = [] %}
 {% if annotation %}{% set _ = r_packages.append(tool("tidyverse")) %}{% endif %}
 {% if deseq2 %}
@@ -329,7 +376,7 @@ Benjamini–Hochberg method {{ cite("benjamini1995") }}.
 {% set _ = r_packages.append(tool("ggrepel")) %}
 {% set _ = r_packages.append(tool("pheatmap")) %}
 {% endif %}
-{% if rnaseq %}{% set _ = r_packages.append(tool("cowplot")) %}{% endif %}
+{% if rnaseq or h3k9me3 %}{% set _ = r_packages.append(tool("cowplot")) %}{% endif %}
 Custom scripts used {{ tool("python") }} with {{ tool("numpy") }},
 {{ tool("pandas") }}, {{ tool("scipy") }} and {{ tool("matplotlib") }}
 {% if r_used %}

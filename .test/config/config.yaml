@@ -172,6 +172,63 @@ rnaseq:
   # down- and unchanged genes, this many bp up- and downstream
   tss_profile_flank: 3000
 
+# Integration with differential H3K9me3 (not part of the ENCODE pipeline;
+# needs deseq2: enable): the differential accessibility of a contrast is
+# compared with the H3K9me3 regions that change in the same contrast (e.g.
+# CUT&RUN). Consensus peaks: results/integration/h3k9me3/{contrast}/; with the
+# TE module (also with te: only), TE peaks, signal over the H3K9me3 regions
+# and repeat subfamilies: results/te/integration/h3k9me3/{contrast}/
+h3k9me3:
+  # DESeq2 contrast name ({treatment}_vs_{control}): H3K9me3 data of the same
+  # contrast; empty: no integration
+  contrasts:
+    ko_vs_wt:
+      # Synthetic DiffBind table (ko_vs_wt_lost.bed: its lost sites, for a
+      # run with diffbind: false)
+      regions: config/h3k9me3/ko_vs_wt_diffbind.csv
+      diffbind: true
+      bigwigs:
+        control: config/h3k9me3/wt_h3k9me3.bw
+        treatment: config/h3k9me3/ko_h3k9me3.bw
+  # contrasts:
+  #   ko_vs_wt:
+  #     # Differential H3K9me3 regions: a DiffBind results table, or a BED
+  #     # file of regions that change in one direction (e.g. MACS2 peaks of
+  #     # the control called with the treatment as control sample)
+  #     regions: /path/to/ko_vs_wt_h3k9me3.bed
+  #     # true: regions is a DiffBind results table (tab-separated, or .csv)
+  #     # of all sites, e.g. as.data.frame(dba.report(db, th = 1)), with
+  #     # log2 fold changes and FDR; false: a BED file
+  #     diffbind: false
+  #     # BED file only: H3K9me3 in the regions is lost or gained in the
+  #     # treatment
+  #     direction: lost
+  #     # Optional: H3K9me3 signal (BigWig) of the control and the treatment,
+  #     # e.g. the mean of the replicates (deepTools bigwigAverage); profile
+  #     # of the signal around the differential peaks
+  #     bigwigs:
+  #       control: /path/to/wt_h3k9me3.bw
+  #       treatment: /path/to/ko_h3k9me3.bw
+  # Columns of the DiffBind tables; log2fc: log2 fold change of the treatment
+  # over the control (flip_fold: true if it is control over treatment)
+  columns:
+    chr: seqnames
+    start: start
+    end: end
+    log2fc: Fold
+    fdr: FDR
+  flip_fold: false
+  # DiffBind regions with FDR below fdr are lost (log2 fold change below 0)
+  # or gained (above 0)
+  fdr: 0.05
+  # Profiles: flank (bp) around the ATAC-seq peak centres and the H3K9me3
+  # regions; H3K9me3 regions are scaled to body_length bp
+  profile_flank: 5000
+  profile_body_length: 5000
+  # TE module: subfamilies with at least this many copies in the genome are
+  # compared (subfamilies/)
+  min_copies: 20
+
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
 # workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;

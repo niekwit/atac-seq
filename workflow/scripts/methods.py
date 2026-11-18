@@ -130,6 +130,14 @@ context = {
         if params["rnaseq_config"]["lfc_threshold"]
         else "log2 fold change ≠ 0"
     ),
+    "h3k9me3": list(params["h3k9me3"]),
+    "h3k9me3_diffbind": any(s["diffbind"] for s in params["h3k9me3"].values()),
+    "h3k9me3_bed": any(not s["diffbind"] for s in params["h3k9me3"].values()),
+    "h3k9me3_bigwigs": any(s["bigwigs"] for s in params["h3k9me3"].values()),
+    "h3k9me3_fdr": params["h3k9me3_config"]["fdr"],
+    "h3k9me3_flank": params["h3k9me3_config"]["profile_flank"],
+    "h3k9me3_body": params["h3k9me3_config"]["profile_body_length"],
+    "h3k9me3_min_copies": params["h3k9me3_config"]["min_copies"],
     "annotation": annotation,
     "r_used": annotation or reference["blacklist"]["source"] == "annotationhub",
 }
