@@ -96,7 +96,8 @@ The analyses:
    which are often assigned to the wrong gene. p-values are adjusted (Benjamini-Hochberg) over all
    tests of a contrast.
 3. **TSS profile** (TE module, `genes/tss_profile.pdf`): Tn5 insertions per million (mean of the
-   replicates of each condition, the CPM signal tracks of the TE module) within
+   replicates of each condition, the signal tracks of the TE module, scaled as set by
+   `te: bigwig_normalisation`) within
    `tss_profile_flank` of the TSS of the up-, down- and unchanged genes of the RNA-seq data, one
    panel per group, with the two conditions of the contrast as lines (deepTools computeMatrix
    reference-point and plotProfile). If accessibility follows expression, the treatment line is
@@ -206,12 +207,32 @@ regulated and near a less accessible peak.
 
 **TSS profile** (`genes/tss_profile.pdf`): Tn5 insertions per million around the TSS of each RNA-seq
 group, as the mean of the replicates. Upregulated genes have a broad signal (many are in or near
-repeats), while downregulated and unchanged genes have a sharp promoter peak. In this data set the
-heterozygous signal is higher in all three groups, unchanged genes included. That points to a
-difference between the libraries (e.g. in the fraction of reads in open chromatin) rather than in
-accessibility. Insertions per million are scaled to the total reads only, unlike DESeq2, which
-normalises on the peaks. Compare each group with the unchanged genes, not the two lines directly,
-and use the peak tests above for significance.
+repeats), while downregulated and unchanged genes have a sharp promoter peak. The heterozygous
+signal is higher in all three groups, by about as much at up- as at downregulated genes, and
+also at the unchanged genes (knockout/het at the TSS: 0.70, 0.78 and 0.86). So the profile shows
+a change that applies to promoters in general, not one that follows expression: the 100
+upregulated genes with a more accessible peak at the promoter (see the enrichment above) are
+too few to change the mean of 4,898 genes.
+
+The difference at all promoters is not a difference in sequencing depth, which both scalings
+remove, nor in the TSS enrichment of the samples (10.9 and 11.4 het, 10.3 and 12.2 knockout,
+`results/te/qc/te_qc_summary.tsv`). The knockout libraries have a higher fraction of their
+insertions in peaks, which shifts the signal per million away from the promoters. With the
+default scaling (`te: bigwig_normalisation: cpm`) this lowers the knockout signal at the TSS.
+Scaling with the DESeq2 size factors of the TE peaks (`deseq2`) makes the typical peak, which is
+distal, the same height in both conditions, and so widens the gap at promoters (0.66, 0.67 and
+0.73):
+
+![Morc1: TSS profile with tracks scaled by DESeq2 size factors](images/rnaseq_integration/morc1_genes_tss_profile_deseq2.png)
+
+This agrees with DESeq2, which gives the TE peaks within 1 kb of a TSS a median log2 fold change
+of −0.12, against +0.03 for distal peaks. Both profiles say the same thing about the
+gene groups: compare each group with the unchanged genes, not the two lines with each other,
+and use the peak tests above for significance. See
+[Scaling of the signal tracks](transposable_elements.md#scaling-of-the-signal-tracks) for when
+to use which scaling. (The DESeq2-scaled profile here was made from the CPM tracks multiplied by
+library factor / size factor from `size_factors.tsv`, which gives the same tracks as
+`bigwig_normalisation: deseq2`.)
 
 ### Repeat subfamilies
 
