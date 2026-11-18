@@ -35,6 +35,7 @@ rnaseq:
   lfc_threshold: 0
   distance_bins: [1000, 10000, 50000, 100000]
   pair_lfc_threshold: 1
+  tss_profile_flank: 3000    # TE module: TSS profile, bp on each side
 ```
 
 - **Tables:** tab-separated, or comma-separated if the name ends in `.csv` (or `.csv.gz`), e.g.
@@ -94,7 +95,15 @@ The analyses:
    distances. Concordant changes are usually strongest at promoters and weaker for distal peaks,
    which are often assigned to the wrong gene. p-values are adjusted (Benjamini-Hochberg) over all
    tests of a contrast.
-3. **Correlation** (`correlation.tsv`): Spearman correlation of the shrunken log2 fold change of
+3. **TSS profile** (TE module, `genes/tss_profile.pdf`): Tn5 insertions per million (mean of the
+   replicates of each condition, the CPM signal tracks of the TE module) within
+   `tss_profile_flank` of the TSS of the up-, down- and unchanged genes of the RNA-seq data, one
+   panel per group, with the two conditions of the contrast as lines (deepTools computeMatrix
+   reference-point and plotProfile). If accessibility follows expression, the treatment line is
+   above the control line at upregulated genes and below it at downregulated genes; the unchanged
+   genes show differences that apply to all genes (e.g. normalisation or composition). The TSS
+   BED files of the groups and the deepTools matrix are next to it.
+4. **Correlation** (`correlation.tsv`): Spearman correlation of the shrunken log2 fold change of
    each peak and the log2 fold change of its gene, per distance bin, for all peaks and for
    differential peaks only. Genome-wide correlations are typically weak (rho of about 0.1 to
    0.3), as many changes in accessibility do not change expression (e.g. poised enhancers) and
@@ -129,6 +138,7 @@ In `results/integration/rna-seq/{contrast}/` (genes against the ENCODE consensus
 | `correlation.tsv`       | Spearman correlation per distance bin, of all and of the differential peaks |
 | `pairs.tsv`             | peak-gene pairs with a significant change in both: peak and gene, distance to the TSS, both log2 fold changes and adjusted p-values, `category`, `combined_score` (product of the log2 fold changes) and `padj_both` (the larger adjusted p-value) |
 | `scatter.pdf`, `distance.pdf` | plots of these pairs (see above)                    |
+| `tss_profile.pdf`, `tss_profile.matrix.gz`, `tss_{up,down,unchanged}.bed` | TE module (`genes/`): Tn5 insertions per million around the TSS of the up-, down- and unchanged genes, with the deepTools matrix and the TSS of each group |
 | `subfamilies/subfamilies.tsv` | per subfamily tested in both: ATAC-seq (`atac_*`) and RNA-seq (`rna_*`) results, numbers of TE peaks and `concordance` |
 | `subfamilies/correlation.tsv`, `scatter.pdf`, `cdf.pdf`, `cdf_tests.tsv`, `enrichment.tsv` | correlation, scatter plot, cumulative distributions of the RNA-seq log2 fold changes per accessibility group with Wilcoxon tests, and Fisher's exact tests, for the subfamilies |
 

@@ -124,6 +124,7 @@ context = {
     "rnaseq_max": f"{max(params['rnaseq_config']['distance_bins']) / 1000:g} kb",
     "rnaseq_fdr": params["rnaseq_config"]["fdr"],
     "rnaseq_pair_lfc": params["rnaseq_config"]["pair_lfc_threshold"],
+    "rnaseq_tss_flank": params["rnaseq_config"]["tss_profile_flank"],
     "rnaseq_lfc_text": (
         f"|log2 fold change| > {params['rnaseq_config']['lfc_threshold']}"
         if params["rnaseq_config"]["lfc_threshold"]

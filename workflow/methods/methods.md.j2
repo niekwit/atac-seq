@@ -303,6 +303,10 @@ concordant (more accessible and up, or less accessible and down) or
 discordant; the larger of the two adjusted p-values was used as the p-value of
 a change in both (intersection-union test {{ cite("berger1982") }}).
 {% if te %}
+Tn5 insertions per million (mean of the replicates of each condition) around
+the TSS (± {{ rnaseq_tss_flank }} bp, 50 bp bins) of the up-, down- and
+unchanged genes were calculated with computeMatrix reference-point and plotted
+with plotProfile.
 Repeat subfamilies in the RNA-seq results (e.g. TEtranscripts) were compared
 with the differential accessibility of their insertions and of the TE peaks
 overlapping them (Spearman correlation, Fisher's exact tests, and Wilcoxon

@@ -94,6 +94,7 @@ ENCODE pipeline.
 | te_separator                      | TE rows: the ID up to the first separator is the subfamily (e.g. `L1MdTf_I:L1:LINE`) | ":"   |
 | fdr, lfc_threshold                | genes with `padj < fdr` and \|log2 fold change\| > `lfc_threshold` are up- or downregulated | 0.05, 0 |
 | distance_bins                     | peaks are assigned to the nearest TSS within the largest distance (bp); tests per distance bin | [1000, 10000, 50000, 100000] |
+| tss_profile_flank                 | TE module: bp up- and downstream of the TSS for the profile of the Tn5 insertions (CPM) at the up-, down- and unchanged genes | 3000 |
 | pair_lfc_threshold                | minimum \|log2 fold change\| of both the peak and the gene for the peak-gene pairs with a significant change in both (scatter and distance plots) | 1 |
 | **extra**                         | extra command-line arguments of tools run directly as a command, appended to the workflow's own options (cutadapt and bowtie2: `extra` in their sections) | |
 | bowtie2_build                     | bowtie2-build (genome index)                                               | ""             |

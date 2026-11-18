@@ -149,3 +149,47 @@ rule te_rnaseq_subfamilies:
         "../envs/integration.yaml"
     script:
         "../scripts/rnaseq_subfamilies.R"
+
+
+# Tn5 insertions (CPM, mean of the replicates) of the two conditions of the
+# contrast around the TSS of the up-, down- and unchanged genes (TE module,
+# which has the CPM signal tracks)
+# -----------------------------------------------------
+rule te_rnaseq_tss_profile:
+    input:
+        rnaseq=RNASEQ_TABLE,
+        gtf=resources.gtf,
+        # Control first, as the reference (grey)
+        bigwigs=lambda w: expand(
+            "results/te/bigwig/mean/{condition}.cpm.bigwig",
+            condition=[
+                deseq2_contrasts()[w.contrast][1],
+                deseq2_contrasts()[w.contrast][0],
+            ],
+        ),
+    output:
+        up="results/te/integration/rna-seq/{contrast}/genes/tss_up.bed",
+        down="results/te/integration/rna-seq/{contrast}/genes/tss_down.bed",
+        unchanged="results/te/integration/rna-seq/{contrast}/genes/tss_unchanged.bed",
+        matrix="results/te/integration/rna-seq/{contrast}/genes/tss_profile.matrix.gz",
+        pdf="results/te/integration/rna-seq/{contrast}/genes/tss_profile.pdf",
+    params:
+        labels=lambda w: [
+            deseq2_contrasts()[w.contrast][1],
+            deseq2_contrasts()[w.contrast][0],
+        ],
+        # As in the smallRNA-seq workflow: reference grey, treatment red
+        colours=["#999999", "#dd3b3b"],
+        flank=rnaseq_config()["tss_profile_flank"],
+        extra_computematrix=extra("computematrix"),
+        extra_plotprofile=extra("plotprofile"),
+    threads: 4
+    resources:
+        runtime=runtime(60),
+        mem_mb=8000,
+    log:
+        "logs/te/integration/rnaseq_tss_profile_{contrast}.log",
+    conda:
+        "../envs/qc.yaml"
+    script:
+        "../scripts/rnaseq_tss_profile.py"

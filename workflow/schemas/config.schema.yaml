@@ -264,6 +264,10 @@ properties:
         type: number
         minimum: 0
         default: 1
+      tss_profile_flank:
+        type: integer
+        minimum: 100
+        default: 3000
 
   extra:
     type: object

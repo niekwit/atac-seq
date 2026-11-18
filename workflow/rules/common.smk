@@ -446,6 +446,7 @@ def rnaseq_config():
         ),
         "te_separator": rnaseq.get("te_separator", ":"),
         "pair_lfc_threshold": rnaseq.get("pair_lfc_threshold", 1),
+        "tss_profile_flank": rnaseq.get("tss_profile_flank", 3000),
     }
 
 

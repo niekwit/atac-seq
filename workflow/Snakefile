@@ -163,6 +163,7 @@ if te_enabled():
                 "genes/enrichment.pdf",
                 "genes/scatter.pdf",
                 "genes/distance.pdf",
+                "genes/tss_profile.pdf",
                 "subfamilies/subfamilies.tsv",
                 "subfamilies/scatter.pdf",
                 "subfamilies/cdf.pdf",

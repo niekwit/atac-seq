@@ -168,6 +168,9 @@ rnaseq:
   # each data set) and |log2 fold change| above this in both: scatter and
   # distance plots (pairs.tsv)
   pair_lfc_threshold: 1
+  # TE module: profile of the Tn5 insertions (CPM) around the TSS of the up-,
+  # down- and unchanged genes, this many bp up- and downstream
+  tss_profile_flank: 3000
 
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
