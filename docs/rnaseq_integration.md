@@ -81,15 +81,13 @@ The analyses:
    (padj < `rnaseq: fdr`), both with |log2 fold change| > `pair_lfc_threshold` (default 1;
    shrunken log2 fold change for the peaks). Each pair is *concordant up* (more accessible, up),
    *concordant down* (less accessible, down), *more accessible, down* or *less accessible, up*.
-   Three plots show them:
+   The larger of the two adjusted p-values (`padj_both`) is a p-value for a change in both
+   (intersection-union test, [Berger 1982](https://doi.org/10.1080/00401706.1982.10487790)); the
+   product of the two, used in some tutorials, is not a p-value. Two plots show the pairs:
    - **Scatter** (`scatter.pdf`): peak against gene log2 fold change, with Spearman's rho.
-   - **Volcano** (`volcano.pdf`): the product of the two log2 fold changes (positive:
-     concordant) against the larger of the two adjusted p-values. The larger p-value is a
-     p-value for a change in both (intersection-union test,
-     [Berger 1982](https://doi.org/10.1080/00401706.1982.10487790)); the product of the two,
-     used in some tutorials, is not a p-value. The 20 genes with the smallest are labelled.
    - **Distance** (`distance.pdf`): the distances of the peaks to the TSS, per category: are
-     concordant pairs more common at promoters?
+     concordant pairs more common at promoters? This shows where the pairs are, not whether
+     they are more common than expected; that is the enrichment test below.
 2. **Enrichment** (`enrichment.tsv`, `enrichment.pdf`): Fisher's exact tests of whether
    upregulated genes have more accessible peaks more often than the other tested genes (and up
    with less accessible, down with more and with less accessible), per distance bin and for all
@@ -130,7 +128,7 @@ In `results/integration/{contrast}/` (genes against the ENCODE consensus peaks),
 | `enrichment.tsv`, `enrichment.pdf` | Fisher's exact tests per distance bin: numbers of genes, fractions of the up- or downregulated and the other genes with a differential peak, odds ratio with 95% confidence interval, p and adjusted p. Tests without up- or downregulated genes or without genes with a differential peak are NA and not plotted; odds ratios of infinity or 0 (no genes in one cell of the table) are drawn as triangles at the top or bottom of the plot |
 | `correlation.tsv`       | Spearman correlation per distance bin, of all and of the differential peaks |
 | `pairs.tsv`             | peak-gene pairs with a significant change in both: peak and gene, distance to the TSS, both log2 fold changes and adjusted p-values, `category`, `combined_score` (product of the log2 fold changes) and `padj_both` (the larger adjusted p-value) |
-| `scatter.pdf`, `volcano.pdf`, `distance.pdf` | plots of these pairs (see above)       |
+| `scatter.pdf`, `distance.pdf` | plots of these pairs (see above)                    |
 | `subfamilies/subfamilies.tsv` | per subfamily tested in both: ATAC-seq (`atac_*`) and RNA-seq (`rna_*`) results, numbers of TE peaks and `concordance` |
 | `subfamilies/correlation.tsv`, `scatter.pdf`, `cdf.pdf`, `cdf_tests.tsv`, `enrichment.tsv` | correlation, scatter plot, cumulative distributions of the RNA-seq log2 fold changes per accessibility group with Wilcoxon tests, and Fisher's exact tests, for the subfamilies |
 

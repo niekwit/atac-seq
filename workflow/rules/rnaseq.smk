@@ -64,7 +64,6 @@ rule rnaseq_genes:
         correlation="results/integration/{contrast}/correlation.tsv",
         pairs="results/integration/{contrast}/pairs.tsv",
         scatter="results/integration/{contrast}/scatter.pdf",
-        volcano="results/integration/{contrast}/volcano.pdf",
         distance="results/integration/{contrast}/distance.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
@@ -102,7 +101,6 @@ use rule rnaseq_genes as te_rnaseq_genes with:
         correlation="results/te/integration/{contrast}/genes/correlation.tsv",
         pairs="results/te/integration/{contrast}/genes/pairs.tsv",
         scatter="results/te/integration/{contrast}/genes/scatter.pdf",
-        volcano="results/te/integration/{contrast}/genes/volcano.pdf",
         distance="results/te/integration/{contrast}/genes/distance.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],

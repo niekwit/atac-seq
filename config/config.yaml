@@ -184,8 +184,8 @@ rnaseq:
   # distance bin (0-1 kb, 1-10 kb, ...) and for all distances
   distance_bins: [1000, 10000, 50000, 100000]
   # Peak-gene pairs with a significant change in both (padj below the fdr of
-  # each data set) and |log2 fold change| above this in both: scatter,
-  # volcano and distance plots (pairs.tsv)
+  # each data set) and |log2 fold change| above this in both: scatter and
+  # distance plots (pairs.tsv)
   pair_lfc_threshold: 1
 
 # Extra command-line arguments of tools that are run directly as a command,

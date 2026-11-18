@@ -15,18 +15,16 @@ sink(log, type = "message")
 #   per distance bin
 # - correlation.tsv: Spearman correlation of the peak and gene log2 fold
 #   changes, per distance bin, of all and of the differential peaks
-# - pairs.tsv, scatter.pdf, volcano.pdf, distance.pdf: the peak-gene pairs
-#   with a significant change in both (padj below the fdr of each data set
-#   and |log2 fold change| > pair_lfc_threshold), by category (concordant
-#   up or down, more accessible but down, less accessible but up): scatter
-#   plot of the two log2 fold changes, "volcano" plot of their product
-#   against the larger of the two adjusted p-values (a p-value for a change
-#   in both, intersection-union test; Berger 1982), and distances of the
-#   peaks to the TSS
+# - pairs.tsv, scatter.pdf, distance.pdf: the peak-gene pairs with a
+#   significant change in both (padj below the fdr of each data set and
+#   |log2 fold change| > pair_lfc_threshold), by category (concordant up or
+#   down, more accessible but down, less accessible but up), with the larger
+#   of the two adjusted p-values as a p-value for a change in both
+#   (intersection-union test; Berger 1982): scatter plot of the two log2
+#   fold changes, and distances of the peaks to the TSS
 
 library(ggplot2)
 library(cowplot)
-library(ggrepel)
 
 # Load Snakemake parameters
 treatment <- snakemake@params[["treatment"]]
@@ -37,7 +35,6 @@ peak_set <- snakemake@params[["peak_set"]]
 bins <- sort(as.numeric(unlist(snakemake@params[["distance_bins"]])))
 # Minimum |log2 fold change| of the peak and the gene for the pairs
 pair_lfc <- as.numeric(snakemake@params[["pair_lfc_threshold"]])
-n_labels <- 20
 
 atac <- read.delim(
   snakemake@input[["atac"]],
@@ -537,10 +534,6 @@ save_plot <- function(name, plot, width, height) {
     bg = "white"
   )
 }
-# The genes with the smallest padj_both (one label per gene)
-labelled <- head(unique(sig$gene_name[!is.na(sig$gene_name)]), n_labels)
-label_data <- sig[!duplicated(sig$gene_name) & sig$gene_name %in% labelled, ]
-
 # Scatter plot of the two log2 fold changes
 if (nrow(sig) == 0) {
   scatter <- message_plot(empty_message)
@@ -581,49 +574,6 @@ if (nrow(sig) == 0) {
     theme(plot.caption = element_text(hjust = 0, size = 10))
 }
 save_plot("scatter", scatter, 8, 6)
-
-# "Volcano" plot: product of the log2 fold changes (positive: concordant)
-# against the larger of the two adjusted p-values
-if (nrow(sig) == 0) {
-  volcano <- message_plot(empty_message)
-} else {
-  # padj of 0 (below the smallest double) at the top of the plot
-  floor_p <- function(p) pmax(p, .Machine$double.xmin)
-  volcano <- ggplot(
-    sig,
-    aes(combined_score, -log10(floor_p(padj_both)))
-  ) +
-    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-    geom_point(
-      aes(fill = category),
-      shape = 21,
-      size = 1.8,
-      colour = "black",
-      stroke = 0.2,
-      alpha = 0.8
-    ) +
-    geom_text_repel(
-      data = label_data,
-      aes(label = gene_name),
-      size = 3,
-      max.overlaps = Inf,
-      min.segment.length = 0
-    ) +
-    category_scale("fill") +
-    labs(
-      x = "ATAC-seq × RNA-seq log2 fold change (> 0: concordant)",
-      y = "-log10 adjusted p-value (larger of the two)",
-      fill = NULL,
-      caption = paste0(
-        peak_set,
-        "\nPairs with a significant change in both; y: the larger of the ",
-        "two adjusted p-values (intersection-union test)"
-      )
-    ) +
-    theme_cowplot(12) +
-    theme(plot.caption = element_text(hjust = 0, size = 10))
-}
-save_plot("volcano", volcano, 8, 6)
 
 # Distances of the peaks to the TSS, per category
 if (nrow(sig) == 0) {
