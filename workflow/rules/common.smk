@@ -227,6 +227,15 @@ ENCODE_TSS = {
 }
 
 
+def subsample_min():
+    """
+    subsample_reads: min subsamples each replicate to the number of reads of
+    the smallest library (after deduplication), separately for the ENCODE and
+    the TE alignments
+    """
+    return config["subsample_reads"] == "min"
+
+
 def deseq2_enabled():
     """The DESeq2 analysis of all samples is optional and needs at least 2 samples"""
     return config.get("deseq2", {}).get("enable", False) and len(SAMPLES) > 1

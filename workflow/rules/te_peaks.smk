@@ -8,9 +8,19 @@
 
 # Tn5 shifted tagAlign of the TE alignments
 # -----------------------------------------------------
+use rule library_sizes as te_library_sizes with:
+    input:
+        bams=expand("results/te/{sample}.filtered.bam", sample=SAMPLES),
+    output:
+        "results/te/tagalign/library_sizes.tsv",
+    log:
+        "logs/te/bam2ta/library_sizes.log",
+
+
 use rule bam2ta as te_bam2ta with:
     input:
         bam="results/te/{sample}.filtered.bam",
+        sizes=["results/te/tagalign/library_sizes.tsv"] if subsample_min() else [],
     output:
         "results/te/tagalign/{sample}.tagAlign.gz",
     log:

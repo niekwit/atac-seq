@@ -6,11 +6,33 @@ STEM_REGEX = (
 )
 
 
+# Read pairs of the filtered BAM files, for subsample_reads: min
+# -----------------------------------------------------
+rule library_sizes:
+    input:
+        bams=expand("results/filtered/{sample}.nodup.bam", sample=SAMPLES),
+    output:
+        "results/tagalign/library_sizes.tsv",
+    params:
+        samples=SAMPLES,
+    threads: 4
+    resources:
+        runtime=runtime(30),
+        mem_mb=2000,
+    log:
+        "logs/bam2ta/library_sizes.log",
+    conda:
+        "../envs/encode.yaml"
+    script:
+        "../scripts/library_sizes.py"
+
+
 # Convert filtered BAM files to Tn5 shifted tagAlign files
 # -----------------------------------------------------
 rule bam2ta:
     input:
         bam="results/filtered/{sample}.nodup.bam",
+        sizes=["results/tagalign/library_sizes.tsv"] if subsample_min() else [],
     output:
         "results/tagalign/{sample}.tagAlign.gz",
     params:

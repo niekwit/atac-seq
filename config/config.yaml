@@ -28,7 +28,9 @@ filter:
   # Reads on these chromosomes are removed after deduplication
   filter_chrs: ["MT"]
 
-# Number of reads to subsample each tagAlign to (0: no subsampling)
+# Number of reads to subsample each tagAlign to for peak calling (0: no
+# subsampling; min: the reads of the smallest library after deduplication),
+# also for the TE peaks; DESeq2 counts all reads. See docs/configuration.md
 subsample_reads: 0
 
 macs2:

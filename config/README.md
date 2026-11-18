@@ -48,7 +48,7 @@ ENCODE pipeline.
 | **filter**                        |                                                                            |                |
 | mapq_thresh                       | minimum MAPQ of the fingerprint (JSD) QC and, when `multimapping` is 0, of the read filter | 30 |
 | filter_chrs                       | chromosomes whose reads are removed after deduplication                    | [MT]           |
-| **subsample_reads**               | number of reads to subsample each replicate to (0: none)                   | 0              |
+| **subsample_reads**               | number of reads to subsample each replicate to for peak calling, also of the TE module (0: none; `min`: the reads of the smallest library after deduplication); see [Subsampling](../docs/configuration.md#subsampling) | 0 |
 | **macs2**                         |                                                                            |                |
 | gsize                             | effective genome size (hs, mm or a number)                                 | mm             |
 | pval_thresh                       | p-value threshold                                                          | 0.01           |

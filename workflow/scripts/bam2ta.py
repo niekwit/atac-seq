@@ -23,7 +23,8 @@ What
 2. Each pair is converted to two tagAlign lines, read 1 first (as
    `bedtools bamtobed -bedpe -mate1`); reads without a mate are skipped
 3. If subsample_reads > 0, that many reads (half as many pairs) are
-   randomly selected. The random seed is the size of the uncompressed
+   randomly selected; with subsample_reads: min, as many as the smallest
+   library (library_sizes.tsv, read pairs of each filtered BAM file). The random seed is the size of the uncompressed
    tagAlign file, as in ENCODE
 4. Tn5 shift: start + 4 on the plus strand, end - 5 on the minus strand;
    reads that would become empty are reduced to 1 bp at the read end
@@ -53,7 +54,13 @@ import pysam
 # Load Snakemake variables
 bam = snakemake.input["bam"]
 output = snakemake.output[0]
-subsample = int(snakemake.params["subsample"])
+subsample = snakemake.params["subsample"]
+if subsample == "min":
+    # Reads (2 per pair) of the smallest library
+    with open(snakemake.input["sizes"][0]) as fh:
+        sizes = [line.rstrip("\n").split("\t") for line in fh][1:]
+    subsample = 2 * min(int(pairs) for _, pairs in sizes)
+subsample = int(subsample)
 threads = str(snakemake.threads)
 log = snakemake.log[0]
 
@@ -179,7 +186,10 @@ try:
         logging.info(f"Converted {n_pairs} read pairs")
 
         n_keep = min(subsample // 2, n_pairs)
-        logging.info(f"Subsampling {n_keep} read pairs (random seed: {n_bytes})")
+        logging.info(
+            f"Subsampling {n_keep} read pairs (subsample_reads: {subsample} reads; "
+            f"random seed: {n_bytes})"
+        )
         keep = bytearray([1]) * n_keep + bytearray(n_pairs - n_keep)
         random.Random(n_bytes).shuffle(keep)
 

@@ -73,7 +73,8 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
 ### TE peaks
 
 8. Peaks from the TE alignments, so that open regions in young repeats are included: Tn5
-   shifted tagAlign files and MACS2 as for the main peaks, but with the total chromosome length
+   shifted tagAlign files (subsampled with `subsample_reads`, see
+   [Subsampling](configuration.md#subsampling)) and MACS2 as for the main peaks, but with the total chromosome length
    as effective genome size, since multimappers can align anywhere. The peaks of the pooled
    replicates that overlap a peak in at least `peaks: min_replicate_fraction` of the replicates
    by ≥ `peaks: min_overlap` (default 0.5) are kept, and the peaks of all conditions are merged

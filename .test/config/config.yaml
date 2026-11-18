@@ -17,7 +17,7 @@ filter:
   mapq_thresh: 30
   filter_chrs: ["MT"]
 
-subsample_reads: 0
+subsample_reads: min
 
 macs2:
   # Test genome is human chr11 only
