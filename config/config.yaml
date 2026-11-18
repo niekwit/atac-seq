@@ -208,8 +208,8 @@ h3k9me3:
   #     # the control called with the treatment as control sample)
   #     regions: /path/to/ko_vs_wt_h3k9me3.bed
   #     # true: regions is a DiffBind results table (tab-separated, or .csv)
-  #     # of all sites, e.g. as.data.frame(dba.report(db, th = 1)), with
-  #     # log2 fold changes and FDR; false: a BED file
+  #     # of all sites, e.g. as.data.frame(dba.report(db, th = 1,
+  #     # precision = 0)), with log2 fold changes and FDR; false: a BED file
   #     diffbind: false
   #     # BED file only: H3K9me3 in the regions is lost or gained in the
   #     # treatment
@@ -233,7 +233,7 @@ h3k9me3:
   # or gained (above 0)
   fdr: 0.05
   # Profiles: flank (bp) around the ATAC-seq peak centres and the H3K9me3
-  # regions; H3K9me3 regions are scaled to body_length bp
+  # regions; H3K9me3 regions are scaled to body_length bp (multiples of 50)
   profile_flank: 5000
   profile_body_length: 5000
   # TE module: subfamilies with at least this many copies in the genome are

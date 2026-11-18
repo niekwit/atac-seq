@@ -10,8 +10,9 @@ sink(log, type = "message")
 #   least min_copies copies and tested by DESeq2, the percentage of copies in
 #   regions that lose (and gain) H3K9me3 against the shrunken log2 fold change
 #   of the insertions in all copies; Spearman correlation per H3K9me3 change.
-#   The dashed line is the percentage of the genome in the regions (expected
-#   for copies placed at random).
+#   The dashed line is the percentage of the genome in the regions, as a
+#   reference (not the expected percentage of copies under random placement,
+#   which also depends on the lengths of the copies and regions).
 # - full_length.tsv, full_length.pdf: full-length copies of the te: profile:
 #   subfamilies entries by H3K9me3 change and accessibility (TE peaks), with
 #   Fisher's exact test of the copies in the H3K9me3 regions against the
@@ -184,6 +185,17 @@ if (nrow(subfamilies) == 0) {
     ),
     collapse = "\n"
   )
+  classes <- sort(unique(plot_data$class))
+  class_colours <- setNames(
+    if (length(classes) <= 9) {
+      RColorBrewer::brewer.pal(9, "Set1")[seq_along(classes)]
+    } else {
+      grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Set1"))(
+        length(classes)
+      )
+    },
+    classes
+  )
   scatter <- ggplot(
     plot_data,
     aes(percent, log2FoldChange_shrunken, label = label)
@@ -205,7 +217,8 @@ if (nrow(subfamilies) == 0) {
     geom_text_repel(size = 3, max.overlaps = Inf, show.legend = FALSE) +
     facet_wrap(~h3k9me3_change, scales = "free_x") +
     scale_x_continuous(trans = "sqrt") +
-    scale_fill_brewer(palette = "Set1") +
+    # Set1, extended for more than 9 classes
+    scale_fill_manual(values = class_colours) +
     scale_alpha_manual(values = c("no" = 0.35, "yes" = 1), drop = FALSE) +
     guides(
       fill = guide_legend(order = 1, override.aes = list(alpha = 1)),
@@ -383,6 +396,8 @@ ggsave(
   snakemake@output[["full_length"]],
   full_length_plot,
   width = 4 + 0.8 * max(1, length(groups)),
+  # Many te: profile: subfamilies entries make a wide plot
+  limitsize = FALSE,
   height = 6,
   dpi = 300,
   bg = "white"

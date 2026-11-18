@@ -29,8 +29,8 @@ h3k9me3:
     fdr: FDR
   flip_fold: false
   fdr: 0.05
-  profile_flank: 5000
-  profile_body_length: 5000
+  profile_flank: 5000         # multiple of 50 (computeMatrix bins)
+  profile_body_length: 5000   # multiple of 50
   min_copies: 20
 ```
 
@@ -38,8 +38,10 @@ h3k9me3:
 
 - **DiffBind table** (`diffbind: true`): all sites with their log2 fold change and FDR, written
   for example with
-  `write.csv(as.data.frame(dba.report(db, th = 1)), "ko_vs_wt_h3k9me3.csv")` (`th = 1` reports
-  all sites, not only the significant ones, which are needed as the unchanged background). The
+  `write.csv(as.data.frame(dba.report(db, th = 1, precision = 0)), "ko_vs_wt_h3k9me3.csv")`
+  (`th = 1` reports all sites, not only the significant ones, which are needed as the unchanged
+  background; `precision = 0` keeps the FDR and fold changes unrounded, so that a site with FDR
+  0.0496 is not written as 0.05). The
   table is tab-separated, or comma-separated if the name ends in `.csv`. The starts are 1-based
   (as in DiffBind's GRanges) and are converted to BED. `Fold` must be the log2 fold change of the
   treatment over the control. DiffBind divides the first group of its contrast by the second,
@@ -91,21 +93,28 @@ region). The analyses:
      with at least half their length in the H3K9me3 regions against the shrunken log2 fold change
      of the insertions in all its copies (`te/deseq2/{contrast}/differential_subfamilies.tsv`),
      with Spearman's rho. The dashed vertical line is the percentage of the genome in the
-     regions: subfamilies to its right are in the regions more than expected for copies placed at
-     random. Subfamilies that are H3K9me3 targets and open up are at the top right.
+     regions, as a reference. It is not the percentage of copies expected for random placement,
+     which also depends on the lengths of the copies and regions (a copy counts only if at least
+     half of it is in one region), so use it as a guide, not a test. Subfamilies that are H3K9me3
+     targets and open up are at the top right.
    - **Full-length copies:** the full-length copies of the `te: profile: subfamilies` entries
-     (e.g. young L1s), by whether they are in a region that loses H3K9me3 and whether a more
-     accessible TE peak overlaps them, with Fisher's exact test of the association per entry.
+     (e.g. young L1s), by whether they are in a region that loses H3K9me3 (gains, for a BED file
+     with `direction: gained`) and whether a more accessible TE peak overlaps them, with Fisher's
+     exact test of the association per entry. Without `te: profile: subfamilies` the plot says
+     there are no full-length copies.
 5. **H3K9me3 signal around the differential peaks** (with `bigwigs`, `signal_profile.pdf`,
    `signal_heatmap.pdf`): H3K9me3 signal of the control and the treatment within `profile_flank`
    of the centre of the more, less and unchanged accessible peaks (computeMatrix
-   reference-point). This is the reverse of 3: did the sites that open have H3K9me3 in the
+   reference-point; peaks not tested by DESeq2 are left out). This is the reverse of 3: did the sites that open have H3K9me3 in the
    control that is lost in the treatment?
 6. **Fold change scatter** (DiffBind tables only, `scatter.pdf`, `correlation.tsv`): the shrunken
    ATAC-seq log2 fold change of each peak in a DiffBind site against the H3K9me3 log2 fold change
-   of that site, with Spearman's rho over all pairs and over the pairs significant in both. The
-   numbers in the corners count the pairs significant in both per quadrant: the top left
-   (H3K9me3 lost, more accessible) is the expected relationship for a repressive mark.
+   of that site. The numbers in the corners count the pairs significant in both per quadrant: the
+   top left (H3K9me3 lost, more accessible) is the expected relationship for a repressive mark.
+   Peaks in the same site are not independent, so Spearman's rho of the peaks is given without
+   a p-value. The test is per site, with the mean log2 fold change of its peaks (one value per
+   site), over all sites and over the sites with a significant change in both (a significant
+   H3K9me3 change and at least one differential peak).
 
 p-values of the Fisher's exact and Wilcoxon tests are adjusted (Benjamini-Hochberg) over the tests
 of each table.
@@ -120,7 +129,7 @@ In `results/integration/h3k9me3/{contrast}/` (ENCODE consensus peaks) and
 | `peaks.tsv`                           | per tested peak: ATAC-seq results and the H3K9me3 region it overlaps most (`h3k9me3_region`, `h3k9me3_change`, width, log2 fold change, FDR and overlap in bp) |
 | `enrichment.tsv`, `enrichment.pdf`    | percentages of the more, less and unchanged accessible peaks in the lost and gained regions, Fisher's exact tests against the unchanged peaks (odds ratio, 95% confidence interval, p and adjusted p) |
 | `distribution.pdf`, `distribution_tests.tsv` | cumulative distributions of the shrunken log2 fold changes by H3K9me3 change, Wilcoxon tests against the peaks outside the regions |
-| `scatter.pdf`, `correlation.tsv`      | DiffBind tables only: peak against site log2 fold changes, Spearman correlation and the pairs significant in both per quadrant |
+| `scatter.pdf`, `correlation.tsv`      | DiffBind tables only: peak against site log2 fold changes, Spearman correlation of the peaks (descriptive) and of the sites (with p), and the pairs significant in both per quadrant |
 | `signal_profile.pdf`, `signal_heatmap.pdf`, `signal_profile.matrix.gz` | with `bigwigs`: H3K9me3 signal around the more, less and unchanged accessible peaks, with the deepTools matrix |
 
 In `results/te/integration/h3k9me3/{contrast}/` (TE module):

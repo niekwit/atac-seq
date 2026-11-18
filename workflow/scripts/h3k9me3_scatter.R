@@ -8,9 +8,13 @@ sink(log, type = "message")
 # (h3k9me3_annotate_peaks), for the peaks in a DiffBind site. A site with
 # several peaks contributes one point per peak.
 #
-# - correlation.tsv: Spearman correlation over all peak-site pairs and over
-#   the pairs with a significant change in both, with the number of pairs per
-#   quadrant (significant in both)
+# - correlation.tsv: Spearman correlation of the peak-site pairs
+#   (descriptive: peaks in the same site are not independent, so no p-value)
+#   and of the sites, with the mean shrunken log2 fold change of their peaks
+#   (one value per site, with p-value), over all pairs or sites and over those
+#   with a significant change in both (sites: significant H3K9me3 change and
+#   at least one differential peak), with the number of pairs per quadrant
+#   (significant in both)
 # - scatter.pdf: the pairs, coloured when significant in both
 
 library(ggplot2)
@@ -50,23 +54,52 @@ quadrant <- function(atac, h3k9me3) {
       pairs$h3k9me3_change == h3k9me3
   )
 }
+# One value per site: the mean shrunken log2 fold change of its peaks
+sites <- if (nrow(pairs)) {
+  merge(
+    aggregate(
+      cbind(log2FoldChange_shrunken, significant) ~
+        h3k9me3_region +
+          h3k9me3_log2FoldChange,
+      data = pairs,
+      FUN = mean
+    ),
+    aggregate(significant ~ h3k9me3_region, data = pairs, FUN = any),
+    by = "h3k9me3_region",
+    suffixes = c("_fraction", "")
+  )
+} else {
+  data.frame(
+    h3k9me3_log2FoldChange = numeric(),
+    log2FoldChange_shrunken = numeric(),
+    significant = logical()
+  )
+}
 correlation <- do.call(
   rbind,
-  lapply(c("all", "significant in both"), function(set) {
-    keep <- if (set == "all") rep(TRUE, nrow(pairs)) else pairs$significant
-    result <- spearman(
-      pairs$h3k9me3_log2FoldChange[keep],
-      pairs$log2FoldChange_shrunken[keep]
-    )
-    data.frame(
-      pairs = set,
-      n_pairs = result[["n"]],
-      spearman_rho = result[["rho"]],
-      p = result[["p"]],
-      n_lost_more_accessible = quadrant("more accessible", "lost"),
-      n_lost_less_accessible = quadrant("less accessible", "lost"),
-      n_gained_more_accessible = quadrant("more accessible", "gained"),
-      n_gained_less_accessible = quadrant("less accessible", "gained")
+  lapply(c("peaks", "sites"), function(level) {
+    data <- if (level == "peaks") pairs else sites
+    do.call(
+      rbind,
+      lapply(c("all", "significant in both"), function(set) {
+        keep <- if (set == "all") rep(TRUE, nrow(data)) else data$significant
+        result <- spearman(
+          data$h3k9me3_log2FoldChange[keep],
+          data$log2FoldChange_shrunken[keep]
+        )
+        data.frame(
+          level = level,
+          pairs = set,
+          n = result[["n"]],
+          spearman_rho = result[["rho"]],
+          # Peaks of a site are not independent: no p-value
+          p = if (level == "peaks") NA else result[["p"]],
+          n_lost_more_accessible = quadrant("more accessible", "lost"),
+          n_lost_less_accessible = quadrant("less accessible", "lost"),
+          n_gained_more_accessible = quadrant("more accessible", "gained"),
+          n_gained_less_accessible = quadrant("less accessible", "gained")
+        )
+      })
     )
   })
 )
@@ -103,7 +136,12 @@ if (nrow(pairs) == 0) {
       quadrant("less accessible", "gained")
     )
   )
-  overall <- correlation[correlation$pairs == "all", ]
+  by_peak <- correlation[
+    correlation$level == "peaks" & correlation$pairs == "all",
+  ]
+  by_site <- correlation[
+    correlation$level == "sites" & correlation$pairs == "all",
+  ]
   scatter <- ggplot(
     pairs,
     aes(h3k9me3_log2FoldChange, log2FoldChange_shrunken)
@@ -152,12 +190,15 @@ if (nrow(pairs) == 0) {
       caption = sprintf(
         paste0(
           "%s in DiffBind sites; corners: pairs significant in both\n",
-          "Spearman rho = %.2f (p = %.2g, n = %d)"
+          "Spearman rho = %.2f (%d peaks); per site (mean of its peaks): ",
+          "rho = %.2f (p = %.2g, n = %d)"
         ),
         peak_set,
-        overall$spearman_rho,
-        overall$p,
-        overall$n_pairs
+        by_peak$spearman_rho,
+        by_peak$n,
+        by_site$spearman_rho,
+        by_site$p,
+        by_site$n
       )
     ) +
     theme_cowplot(12) +

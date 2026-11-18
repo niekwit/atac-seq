@@ -1,8 +1,9 @@
 """
 Copies external input files of the config (e.g. te: correlation: datasets),
 unchanged, into a directory of the results, so that the results keep the
-input they were made from. Files keep their names (numbered if names repeat);
-datasets.tsv lists the name in the config, the source and the copy.
+input they were made from. Files keep their names (numbered if names repeat
+or a file is named datasets.tsv); datasets.tsv lists the name in the config,
+the source and the copy.
 """
 
 import logging
@@ -24,7 +25,8 @@ os.makedirs(out_dir, exist_ok=True)
 names = [os.path.basename(path) for path in files.values()]
 rows = ["name\tsource\tcopy"]
 for i, ((name, path), base) in enumerate(zip(files.items(), names), start=1):
-    copy = f"{i}_{base}" if names.count(base) > 1 else base
+    # Numbered if names repeat or the name is that of the manifest
+    copy = f"{i}_{base}" if names.count(base) > 1 or base == "datasets.tsv" else base
     shutil.copy2(path, os.path.join(out_dir, copy))
     rows.append(f"{name}\t{os.path.abspath(path)}\t{copy}")
     logging.info(f"Copied {path} ({name}) to {out_dir}/{copy}")

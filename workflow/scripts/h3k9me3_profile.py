@@ -50,6 +50,12 @@ logging.basicConfig(
 )
 
 table = pd.read_csv(table_file, sep="\t", dtype={"chr": str})
+# Peaks not tested by DESeq2 (padj NA) are left out, as in the other analyses;
+# otherwise they would count as unchanged
+if "padj" in table.columns:
+    untested = table["padj"].isna()
+    logging.info(f"{untested.sum()} regions not tested by DESeq2 left out")
+    table = table[~untested]
 
 # Chromosome names of the BigWig files
 bigwig_chroms = set()
@@ -65,7 +71,9 @@ if not set(table["chr"]) & bigwig_chroms:
     else:
         logging.warning("No chromosome of the regions is in the BigWig files")
 
-tmp = tempfile.mkdtemp(dir=os.path.dirname(out_matrix))
+# Removed at exit, also after an error
+_tmp = tempfile.TemporaryDirectory(dir=os.path.dirname(out_matrix))
+tmp = _tmp.name
 # Heatmap labels without the numbers, which are in the profile
 beds, region_labels, heatmap_labels = [], [], []
 for value, label in groups.items():
@@ -193,4 +201,3 @@ else:
             y_label,
         ]
     )
-subprocess.run(["rm", "-r", tmp], check=True)

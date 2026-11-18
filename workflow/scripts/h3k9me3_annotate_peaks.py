@@ -48,7 +48,9 @@ logging.info(
 peaks = peaks[~untested]
 regions = pd.read_csv(regions_file, sep="\t", dtype={"chr": str})
 
-tmp = tempfile.mkdtemp(dir=os.path.dirname(output))
+# Removed at exit, also after an error
+_tmp = tempfile.TemporaryDirectory(dir=os.path.dirname(output))
+tmp = _tmp.name
 peaks_bed = os.path.join(tmp, "peaks.bed")
 regions_bed = os.path.join(tmp, "regions.bed")
 peaks[["chr", "start", "end", "peak_id"]].to_csv(
@@ -63,7 +65,6 @@ result = subprocess.run(
     capture_output=True,
     text=True,
 ).stdout
-subprocess.run(["rm", "-r", tmp], check=True)
 
 overlaps = pd.read_csv(
     io.StringIO(result),

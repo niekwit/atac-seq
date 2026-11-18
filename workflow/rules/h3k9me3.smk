@@ -295,7 +295,12 @@ rule te_h3k9me3_copies:
     input:
         saf="resources/te/repeats.saf",
         regions=H3K9ME3_REGIONS,
-        full_length="resources/te/full_length_copies.bed",
+        # Only with te: profile: subfamilies (otherwise no full-length copies)
+        full_length=lambda w: (
+            ["resources/te/full_length_copies.bed"]
+            if te_profile_config()["subfamilies"]
+            else []
+        ),
         peaks="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
         chrom_sizes="resources/chrom_sizes.txt",
     output:

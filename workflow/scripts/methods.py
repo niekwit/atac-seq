@@ -55,14 +55,23 @@ EXTRA_NAMES = {
     "plotprofile": "plotProfile",
 }
 profiles = bool(profile["subfamilies"])
+# deepTools profiles: TE profile, TSS profile of the RNA-seq integration (TE
+# module), H3K9me3 profiles (signal around the peaks, with BigWigs; ATAC-seq
+# over the H3K9me3 regions with the TE module)
+deeptools_profiles = (
+    (te and profiles)
+    or (te and bool(params["rnaseq"]))
+    or (te and bool(params["h3k9me3"]))
+    or any(s["bigwigs"] for s in params["h3k9me3"].values())
+)
 EXTRA_RUNS = {
     "markduplicates": not te_only,
     "ataqv": not te_only,
     "featurecounts": (deseq2 and not te_only) or te,
     "bamcoverage": te,
     "bigwigaverage": te,
-    "computematrix": te and profiles,
-    "plotprofile": te and profiles,
+    "computematrix": deeptools_profiles,
+    "plotprofile": deeptools_profiles,
 }
 extras = [
     f"{EXTRA_NAMES.get(key, key)} {code(value)}"

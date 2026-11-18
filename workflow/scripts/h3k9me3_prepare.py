@@ -44,7 +44,12 @@ logging.basicConfig(
     force=True,
 )
 
-chroms = set(pd.read_csv(chrom_sizes, sep="\t", header=None, dtype={0: str})[0])
+lengths = (
+    pd.read_csv(chrom_sizes, sep="\t", header=None, usecols=[0, 1], dtype={0: str})
+    .set_index(0)[1]
+    .astype(int)
+)
+chroms = set(lengths.index)
 
 
 def ensembl_names(chrs):
@@ -122,7 +127,18 @@ if off_genome.any():
         f"{off_genome.sum()} regions on chromosomes not in the genome removed: "
         f"{', '.join(sorted(regions.loc[off_genome, 'chr'].unique()))}"
     )
-regions = regions[~off_genome].sort_values(["chr", "start", "end"])
+regions = regions[~off_genome]
+# Coordinates within the chromosomes (0 <= start < end <= length)
+length = regions["chr"].map(lengths)
+invalid = (regions["start"] < 0) | (regions["start"] >= regions["end"])
+invalid |= regions["end"] > length
+if invalid.any():
+    logging.warning(
+        f"{invalid.sum()} regions outside their chromosome or with start >= end "
+        "removed:\n"
+        + regions.loc[invalid, ["chr", "start", "end"]].head(20).to_string(index=False)
+    )
+regions = regions[~invalid].sort_values(["chr", "start", "end"])
 if regions.empty:
     raise ValueError(f"No H3K9me3 regions of {regions_file} on the genome")
 regions.insert(0, "region_id", [f"h3k9me3_{i}" for i in range(1, len(regions) + 1)])

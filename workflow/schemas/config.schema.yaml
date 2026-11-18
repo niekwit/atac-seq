@@ -279,9 +279,9 @@ properties:
           properties:
             regions:
               type: string
+            # No default: a DiffBind table read as BED would fail later
             diffbind:
               type: boolean
-              default: false
             direction:
               type: string
               enum: ["lost", "gained"]
@@ -327,10 +327,14 @@ properties:
       profile_flank:
         type: integer
         minimum: 100
+        # A multiple of the 50 bp bins of computeMatrix
+        multipleOf: 50
         default: 5000
       profile_body_length:
         type: integer
         minimum: 100
+        # A multiple of the 50 bp bins of computeMatrix
+        multipleOf: 50
         default: 5000
       min_copies:
         type: integer

@@ -5,14 +5,16 @@ Repeat copies in the differential H3K9me3 regions of a contrast (TE module).
   copies of the counted classes), the number of copies and the copies with
   at least half their length in regions that lose and gain H3K9me3
   (bedtools intersect -f 0.5), and the fraction of the genome covered by
-  those regions (the expected fraction of copies, if copies were placed at
-  random).
+  those regions (overlapping regions counted once). The fraction is a
+  reference for the plots, not the expected fraction of copies under random
+  placement, which also depends on the lengths of the copies and regions.
 - full_length.tsv: each full-length copy of the te: profile: subfamilies
   entries (resources/te/full_length_copies.bed) with the H3K9me3 change of
   the region it overlaps most (lost, gained, unchanged or outside) and its
   accessibility: more or less accessible if a differential TE peak overlaps
   it (more accessible if both), unchanged if only unchanged TE peaks do, no
-  peak otherwise. TE peaks not tested by DESeq2 are left out.
+  peak otherwise. TE peaks not tested by DESeq2 are left out. Empty without
+  te: profile: subfamilies.
 """
 
 import io
@@ -25,7 +27,11 @@ import pandas as pd
 
 saf_file = snakemake.input["saf"]
 regions_file = snakemake.input["regions"]
-full_length_file = snakemake.input["full_length"]
+# None without te: profile: subfamilies
+full_length_file = snakemake.input.get("full_length") or None
+if full_length_file is not None and not isinstance(full_length_file, str):
+    # A list of one file, from the input function
+    full_length_file = next(iter(full_length_file), None)
 peaks_file = snakemake.input["peaks"]
 chrom_sizes = snakemake.input["chrom_sizes"]
 out_copies = snakemake.output["copies"]
@@ -40,7 +46,9 @@ logging.basicConfig(
     force=True,
 )
 
-tmp = tempfile.mkdtemp(dir=os.path.dirname(out_copies))
+# Removed at exit, also after an error
+_tmp = tempfile.TemporaryDirectory(dir=os.path.dirname(out_copies))
+tmp = _tmp.name
 
 
 def write_bed(frame, name):
@@ -87,10 +95,19 @@ counts = copies.groupby("subfamily").size().rename("n_copies").to_frame()
 for change in ("lost", "gained"):
     selected = regions[regions["change"] == change]
     counts[f"n_copies_{change}"] = 0
-    counts[f"genome_fraction_{change}"] = selected["width"].sum() / genome_bp
+    counts[f"genome_fraction_{change}"] = 0.0
     if selected.empty:
         continue
     bed = write_bed(selected[["chr", "start", "end", "region_id"]], change)
+    # Bases covered by the regions, overlapping regions counted once
+    merged = subprocess.run(
+        ["bedtools", "merge", "-i", bed], check=True, capture_output=True, text=True
+    ).stdout
+    covered = sum(
+        int(f[2]) - int(f[1])
+        for f in (line.split("\t") for line in merged.splitlines())
+    )
+    counts[f"genome_fraction_{change}"] = covered / genome_bp
     hits = intersect(copies_bed, bed, "-f", "0.5")
     if hits.empty:
         continue
@@ -101,7 +118,7 @@ for change in ("lost", "gained"):
     )
     logging.info(
         f"{len(hits)} of {len(copies)} copies with >= 50% in regions with "
-        f"H3K9me3 {change} ({selected['width'].sum() / genome_bp:.2%} of the genome)"
+        f"H3K9me3 {change} ({covered / genome_bp:.2%} of the genome)"
     )
 counts.reset_index().to_csv(out_copies, sep="\t", index=False)
 
@@ -109,15 +126,17 @@ counts.reset_index().to_csv(out_copies, sep="\t", index=False)
 # -----------------------------------------------------
 # deepTools groups: the copies of an entry are followed by "#<entry> (n=...)"
 rows, pending = [], []
-with open(full_length_file) as fh:
-    for line in fh:
-        if line.startswith("#"):
-            group = line[1:].split("\t")[0].rsplit(" (n=", 1)[0].strip()
-            rows += [(*row, group) for row in pending]
-            pending = []
-        elif line.strip():
-            fields = line.rstrip("\n").split("\t")
-            pending.append((fields[0], int(fields[1]), int(fields[2]), fields[3]))
+lines = open(full_length_file).readlines() if full_length_file else []
+if not full_length_file:
+    logging.info("No te: profile: subfamilies: no full-length copies")
+for line in lines:
+    if line.startswith("#"):
+        group = line[1:].split("\t")[0].rsplit(" (n=", 1)[0].strip()
+        rows += [(*row, group) for row in pending]
+        pending = []
+    elif line.strip():
+        fields = line.rstrip("\n").split("\t")
+        pending.append((fields[0], int(fields[1]), int(fields[2]), fields[3]))
 # Copies after the last group line (none in files of te_full_length_copies)
 rows += [(*row, row[3]) for row in pending]
 full_length = pd.DataFrame(
@@ -156,4 +175,3 @@ if not full_length.empty:
             full_length["accessibility"],
         ).to_string()
     )
-subprocess.run(["rm", "-r", tmp], check=True)
