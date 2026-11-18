@@ -3,7 +3,7 @@ Profile and heatmap of the signal of the control and the treatment of a
 contrast over groups of regions (deepTools computeMatrix, plotProfile and
 plotHeatmap; one panel per group, one line per condition):
 
-- ATAC-seq Tn5 insertions (CPM) over the H3K9me3 regions that are lost,
+- ATAC-seq Tn5 insertions (TE signal tracks, CPM or DESeq2-scaled) over the H3K9me3 regions that are lost,
   gained or unchanged (scale-regions: regions scaled to body_length bp)
 - H3K9me3 signal around the centre of the more, less and unchanged
   accessible peaks (reference-point)

@@ -263,15 +263,15 @@ use rule h3k9me3_signal_profile as te_h3k9me3_signal_profile with:
         "logs/te/integration/h3k9me3/signal_profile_{contrast}.log",
 
 
-# Tn5 insertions (CPM, mean of the replicates) of the control and the
-# treatment over the lost, gained and unchanged H3K9me3 regions (TE module,
-# which has the CPM signal tracks)
+# Tn5 insertions (signal tracks of the TE module, mean of the replicates) of
+# the control and the treatment over the lost, gained and unchanged H3K9me3
+# regions
 # -----------------------------------------------------
 use rule h3k9me3_signal_profile as te_h3k9me3_atac_profile with:
     input:
         table=H3K9ME3_REGIONS,
         bigwigs=lambda w: expand(
-            "results/te/bigwig/mean/{condition}.cpm.bigwig",
+            f"results/te/bigwig/mean/{{condition}}.{TE_BIGWIG}.bigwig",
             condition=h3k9me3_conditions(w.contrast),
         ),
     output:
@@ -290,7 +290,7 @@ use rule h3k9me3_signal_profile as te_h3k9me3_atac_profile with:
         body_length=h3k9me3_config()["profile_body_length"],
         labels=lambda w: h3k9me3_conditions(w.contrast),
         colours=["#999999", "#dd3b3b"],
-        y_label="Tn5 insertions per million",
+        y_label=TE_BIGWIG_LABEL,
         region_name="H3K9me3 regions",
         extra_computematrix=extra("computematrix"),
         extra_plotprofile=extra("plotprofile"),
