@@ -104,7 +104,7 @@ In `results/integration/{contrast}/` (consensus peaks), `results/te/integration/
 | `genes.tsv`             | per tested gene: RNA-seq results, numbers of assigned, more and less accessible peaks, `atac_status`, the most significant peak (ID, distance to the TSS, shrunken log2 fold change, `padj`) and `concordance` (`concordant`: up with a more accessible peak or down with a less accessible peak; `discordant`: the opposite) |
 | `concordant_genes.tsv`  | the concordant genes, by RNA-seq `padj`                         |
 | `cdf.pdf`, `cdf_tests.tsv` | cumulative distributions and Wilcoxon tests                  |
-| `enrichment.tsv`, `enrichment.pdf` | Fisher's exact tests per distance bin: numbers of genes, fractions of the up- or downregulated and the other genes with a differential peak, odds ratio with 95% confidence interval, p and adjusted p |
+| `enrichment.tsv`, `enrichment.pdf` | Fisher's exact tests per distance bin: numbers of genes, fractions of the up- or downregulated and the other genes with a differential peak, odds ratio with 95% confidence interval, p and adjusted p. Tests without up- or downregulated genes or without genes with a differential peak are NA and not plotted; odds ratios of infinity or 0 (no genes in one cell of the table) are drawn as triangles at the top or bottom of the plot |
 | `correlation.tsv`, `scatter.pdf` | Spearman correlation per distance bin, scatter plot of peak against gene log2 fold changes |
 | `subfamilies/subfamilies.tsv` | per subfamily tested in both: ATAC-seq (`atac_*`) and RNA-seq (`rna_*`) results, numbers of TE peaks and `concordance` |
 | `subfamilies/correlation.tsv`, `scatter.pdf`, `cdf.pdf`, `cdf_tests.tsv`, `enrichment.tsv` | as above, for the subfamilies |

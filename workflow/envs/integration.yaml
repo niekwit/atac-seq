@@ -1,0 +1,11 @@
+# Plots of the integration with RNA-seq (ggplot2 with the cowplot theme);
+# R, ggplot2 and ggrepel as in the deseq2 environment
+name: integration
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - conda-forge::r-base=4.5.3
+  - conda-forge::r-ggplot2=4.0.3
+  - conda-forge::r-ggrepel=0.9.8
+  - conda-forge::r-cowplot=1.2.0

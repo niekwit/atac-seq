@@ -10,7 +10,10 @@ tools:
   numpy: {envs: [qc, tss, te]}
   scipy: {envs: [qc]}
   matplotlib: {envs: [qc, tss]}
-  r: {envs: [r, deseq2, eulerr]}
+  r: {envs: [r, deseq2, eulerr, integration]}
+  # Versions of the DESeq2 plots; the integration plots have their own env
+  ggplot2: {envs: [deseq2]}
+  ggrepel: {envs: [deseq2]}
 references:
   # The workflow follows this version of the ENCODE ATAC-seq pipeline
   encode2020:

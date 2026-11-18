@@ -64,7 +64,7 @@ rule rnaseq_genes:
     log:
         "logs/integration/rnaseq_genes_{contrast}.log",
     conda:
-        "../envs/deseq2.yaml"
+        "../envs/integration.yaml"
     script:
         "../scripts/rnaseq_genes.R"
 
@@ -119,6 +119,6 @@ rule te_rnaseq_subfamilies:
     log:
         "logs/te/integration/rnaseq_subfamilies_{contrast}.log",
     conda:
-        "../envs/deseq2.yaml"
+        "../envs/integration.yaml"
     script:
         "../scripts/rnaseq_subfamilies.R"

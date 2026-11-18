@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="c4757afffe41b10b7beb68efd73a082d843ea38c18c007002ab4d16f0c8c1ded"
+LABEL io.github.snakemake.conda_env_hash="ea907ca93728cb18a38b15a535aa7c9e201b82ba927463c0a78a18a03d871adf"
 
 # Step 2: Retrieve conda environments
 
@@ -123,6 +123,23 @@ COPY workflow/envs/gat.yaml /conda-envs/c706002875dacea712684a206a04756c/environ
 #     - bioconda::ucsc-bedclip=482
 RUN mkdir -p /conda-envs/88052609364672bb9c19593ccc476bd9
 COPY workflow/envs/idr.yaml /conda-envs/88052609364672bb9c19593ccc476bd9/environment.yaml
+
+# Conda environment:
+#   source: workflow/envs/integration.yaml
+#   prefix: /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea
+#   # Plots of the integration with RNA-seq (ggplot2 with the cowplot theme);
+#   # R, ggplot2 and ggrepel as in the deseq2 environment
+#   name: integration
+#   channels:
+#     - conda-forge
+#     - nodefaults
+#   dependencies:
+#     - conda-forge::r-base=4.5.3
+#     - conda-forge::r-ggplot2=4.0.3
+#     - conda-forge::r-ggrepel=0.9.8
+#     - conda-forge::r-cowplot=1.2.0
+RUN mkdir -p /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea
+COPY workflow/envs/integration.yaml /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/liftover.yaml
@@ -261,6 +278,7 @@ RUN conda env create --prefix /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c --fil
     conda env create --prefix /conda-envs/97a4ed4484bedf357d14749c7ea21e4b --file /conda-envs/97a4ed4484bedf357d14749c7ea21e4b/environment.yaml && \
     conda env create --prefix /conda-envs/c706002875dacea712684a206a04756c --file /conda-envs/c706002875dacea712684a206a04756c/environment.yaml && \
     conda env create --prefix /conda-envs/88052609364672bb9c19593ccc476bd9 --file /conda-envs/88052609364672bb9c19593ccc476bd9/environment.yaml && \
+    conda env create --prefix /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea --file /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea/environment.yaml && \
     conda env create --prefix /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844 --file /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844/environment.yaml && \
     conda env create --prefix /conda-envs/06ce3aa372654153d9fb942c443e5803 --file /conda-envs/06ce3aa372654153d9fb942c443e5803/environment.yaml && \
     conda env create --prefix /conda-envs/f7d20974e82d452ad6b06c7558708582 --file /conda-envs/f7d20974e82d452ad6b06c7558708582/environment.yaml && \

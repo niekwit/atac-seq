@@ -311,6 +311,7 @@ of the TE peaks overlapping them.
 {% set _ = r_packages.append(tool("ggrepel")) %}
 {% set _ = r_packages.append(tool("pheatmap")) %}
 {% endif %}
+{% if rnaseq %}{% set _ = r_packages.append(tool("cowplot")) %}{% endif %}
 Custom scripts used {{ tool("python") }} with {{ tool("numpy") }},
 {{ tool("pandas") }}, {{ tool("scipy") }} and {{ tool("matplotlib") }}
 {% if r_used %}

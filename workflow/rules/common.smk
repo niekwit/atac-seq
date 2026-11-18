@@ -523,6 +523,9 @@ def methods_envs():
             and te_correlation_config()["datasets"]
         ):
             envs.append("eulerr")
+    # Plots of the integration with RNA-seq
+    if rnaseq_contrasts():
+        envs.append("integration")
     return envs
 
 

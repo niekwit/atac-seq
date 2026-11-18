@@ -20,13 +20,13 @@ sink(log, type = "message")
 #   log2 fold changes, per distance bin
 
 library(ggplot2)
+library(cowplot)
 
 # Load Snakemake parameters
 treatment <- snakemake@params[["treatment"]]
 control <- snakemake@params[["control"]]
 features <- snakemake@params[["features"]]
 bins <- sort(as.numeric(unlist(snakemake@params[["distance_bins"]])))
-title <- paste(treatment, "vs", control)
 
 atac <- read.delim(
   snakemake@input[["atac"]],
@@ -88,7 +88,11 @@ cat(sprintf(
   features,
   kb(max(bins))
 ))
-cat(sprintf("%d %s without gene annotation\n", nrow(atac) - n_annotated, features))
+cat(sprintf(
+  "%d %s without gene annotation\n",
+  nrow(atac) - n_annotated,
+  features
+))
 print(table(peaks$bin, peaks$change))
 
 # Gene-level summary
@@ -169,18 +173,19 @@ status_levels <- c(
   "no peak"
 )
 status_colours <- c(
-  "more accessible" = "#D55E00",
-  "less accessible" = "#0072B2",
-  "both" = "#CC79A7",
-  "unchanged" = "grey40",
-  "no peak" = "grey75"
+  "more accessible" = "#dd3b3b",
+  "less accessible" = "#377EB8",
+  "both" = "#984EA3",
+  "unchanged" = "grey30",
+  "no peak" = "#cccccc"
 )
 reference <- genes$log2FoldChange[genes$atac_status == "unchanged"]
 tests <- do.call(
   rbind,
   lapply(status_levels, function(status) {
     values <- genes$log2FoldChange[genes$atac_status == status]
-    testable <- status != "unchanged" && length(values) > 0 &&
+    testable <- status != "unchanged" &&
+      length(values) > 0 &&
       length(reference) > 0
     data.frame(
       atac_status = status,
@@ -228,8 +233,8 @@ cdf_data <- genes[genes$atac_status %in% present, ]
 cdf_data$atac_status <- factor(cdf_data$atac_status, levels = present)
 limits <- quantile(cdf_data$log2FoldChange, c(0.005, 0.995), na.rm = TRUE)
 cdf <- ggplot(cdf_data, aes(log2FoldChange, colour = atac_status)) +
-  stat_ecdf(geom = "step") +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  stat_ecdf(geom = "step", linewidth = 0.8) +
   coord_cartesian(xlim = limits) +
   scale_colour_manual(
     values = status_colours,
@@ -237,20 +242,25 @@ cdf <- ggplot(cdf_data, aes(log2FoldChange, colour = atac_status)) +
     labels = unname(legend_labels[present])
   ) +
   labs(
-    title = title,
-    subtitle = paste0(
-      "Genes by the accessibility of their ",
-      features,
-      " (nearest TSS within ",
-      kb(max(bins)),
-      "); p: Wilcoxon vs unchanged"
-    ),
     x = "RNA-seq log2 fold change",
     y = "Cumulative fraction of genes",
-    colour = paste0(features, " of the gene")
+    colour = paste0(
+      "Genes by their ",
+      features,
+      "\n(TSS within ",
+      kb(max(bins)),
+      "; p: Wilcoxon\nvs unchanged)"
+    )
   ) +
-  theme_bw(base_size = 12)
-ggsave(snakemake@output[["cdf"]], cdf, width = 8, height = 5, dpi = 300)
+  theme_cowplot(12)
+ggsave(
+  snakemake@output[["cdf"]],
+  cdf,
+  width = 8,
+  height = 5,
+  dpi = 300,
+  bg = "white"
+)
 
 # Enrichment of differential peaks at differentially expressed genes
 # -----------------------------------------------------
@@ -259,10 +269,12 @@ fisher_row <- function(in_rna, in_atac, bin, rna_change, atac_change) {
     factor(in_rna, levels = c(TRUE, FALSE)),
     factor(in_atac, levels = c(TRUE, FALSE))
   )
-  test <- tryCatch(
-    fisher.test(table_2x2),
-    error = function(e) list(estimate = NA, conf.int = c(NA, NA), p.value = NA)
-  )
+  informative <- all(rowSums(table_2x2) > 0) && all(colSums(table_2x2) > 0)
+  test <- if (informative) {
+    fisher.test(table_2x2)
+  } else {
+    list(estimate = NA, conf.int = c(NA, NA), p.value = NA)
+  }
   data.frame(
     distance = bin,
     rna_change = rna_change,
@@ -300,16 +312,21 @@ enrichment <- do.call(
       lapply(c("up", "down"), function(rna_change) {
         do.call(
           rbind,
-          lapply(c("more accessible", "less accessible"), function(atac_change) {
-            with_peak <- unique(peaks$gene_id[in_bin & peaks$change == atac_change])
-            fisher_row(
-              genes$rna_change == rna_change,
-              genes$gene_id %in% with_peak,
-              bin,
-              rna_change,
-              atac_change
-            )
-          })
+          lapply(
+            c("more accessible", "less accessible"),
+            function(atac_change) {
+              with_peak <- unique(peaks$gene_id[
+                in_bin & peaks$change == atac_change
+              ])
+              fisher_row(
+                genes$rna_change == rna_change,
+                genes$gene_id %in% with_peak,
+                bin,
+                rna_change,
+                atac_change
+              )
+            }
+          )
         )
       })
     )
@@ -325,61 +342,123 @@ write.table(
   row.names = FALSE
 )
 
-atac_colours <- c("more accessible" = "#D55E00", "less accessible" = "#0072B2")
-plot_data <- enrichment
-plot_data$distance <- factor(plot_data$distance, levels = names(bin_sets))
-plot_data$rna_change <- factor(
-  paste(plot_data$rna_change, "in RNA-seq"),
-  levels = c("up in RNA-seq", "down in RNA-seq")
-)
-# Odds ratios of 0 or infinity (no or all genes with a peak) are not shown
-finite <- is.finite(log2(plot_data$odds_ratio))
-plot_data$log2_or <- ifelse(finite, log2(plot_data$odds_ratio), NA)
-plot_data$log2_low <- ifelse(finite, pmax(log2(plot_data$ci_low), -10), NA)
-plot_data$log2_high <- ifelse(finite, pmin(log2(plot_data$ci_high), 10), NA)
-plot_data$label <- ifelse(
-  !is.na(plot_data$padj) & plot_data$padj < 0.05,
-  ifelse(plot_data$padj < 0.001, "***", ifelse(plot_data$padj < 0.01, "**", "*")),
-  ""
-)
-dodge <- position_dodge(width = 0.5)
-enrichment_plot <- ggplot(
-  plot_data,
-  aes(distance, log2_or, colour = atac_change, label = label)
-) +
-  geom_hline(yintercept = 0, colour = "grey50") +
-  geom_pointrange(
-    aes(ymin = log2_low, ymax = log2_high),
-    position = dodge,
-    na.rm = TRUE
-  ) +
-  geom_text(
-    aes(y = log2_high),
-    position = dodge,
-    vjust = -0.3,
-    show.legend = FALSE,
-    na.rm = TRUE
-  ) +
-  facet_wrap(~rna_change) +
-  scale_colour_manual(values = atac_colours) +
-  labs(
-    title = title,
-    subtitle = paste0(
-      "Fisher's exact test, all tested genes; * BH-adjusted p < 0.05, ",
-      "** < 0.01, *** < 0.001"
+atac_colours <- status_colours[c("more accessible", "less accessible")]
+feature <- sub("s$", "", features)
+plot_data <- enrichment[!is.na(enrichment$odds_ratio), ]
+if (nrow(plot_data) == 0) {
+  enrichment_plot <- ggplot() +
+    annotate(
+      "text",
+      x = 0,
+      y = 0,
+      label = paste(
+        "No test possible: no up- or downregulated genes, or no genes with a",
+        "differential",
+        feature
+      )
+    ) +
+    theme_void(base_size = 12)
+} else {
+  plot_data$distance <- factor(plot_data$distance, levels = names(bin_sets))
+  plot_data$rna_change <- factor(
+    paste(plot_data$rna_change, "in RNA-seq"),
+    levels = c("up in RNA-seq", "down in RNA-seq")
+  )
+  # Odds ratios of infinity or 0 (no genes in one cell of the table) are
+  # drawn at the edge of the plot as triangles
+  log2_or <- log2(plot_data$odds_ratio)
+  finite <- c(log2_or, log2(plot_data$ci_low), log2(plot_data$ci_high))
+  finite <- finite[is.finite(finite)]
+  cap <- min(10, ceiling(max(c(abs(finite), 2))) + 1)
+  plot_data$estimate <- factor(
+    ifelse(is.finite(log2_or), "finite", ifelse(log2_or > 0, "infinite", "0")),
+    levels = c("finite", "infinite", "0")
+  )
+  plot_data$log2_or <- pmin(pmax(log2_or, -cap), cap)
+  plot_data$log2_low <- pmax(log2(plot_data$ci_low), -cap)
+  plot_data$log2_high <- pmin(log2(plot_data$ci_high), cap)
+  plot_data$label <- ifelse(
+    !is.na(plot_data$padj) & plot_data$padj < 0.05,
+    ifelse(
+      plot_data$padj < 0.001,
+      "***",
+      ifelse(plot_data$padj < 0.01, "**", "*")
     ),
-    x = paste("Distance of the", sub("s$", "", features), "to the TSS"),
-    y = "log2 odds ratio (95% CI)",
-    colour = paste("Gene with a", sub("s$", "", features))
+    ""
+  )
+  plot_data$label_y <- plot_data$log2_high + 0.04 * cap
+  dodge <- position_dodge(width = 0.6)
+  shapes <- c("finite" = 21, "infinite" = 24, "0" = 25)
+  shape_labels <- c(
+    "finite" = "estimate",
+    "infinite" = "infinite (at the top)",
+    "0" = "0 (at the bottom)"
+  )
+  present <- levels(droplevels(plot_data$estimate))
+  enrichment_plot <- ggplot(
+    plot_data,
+    aes(distance, log2_or, group = atac_change)
   ) +
-  theme_bw(base_size = 12) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+    geom_linerange(
+      aes(ymin = log2_low, ymax = log2_high, colour = atac_change),
+      position = dodge,
+      linewidth = 0.8,
+      show.legend = FALSE
+    ) +
+    geom_point(
+      aes(fill = atac_change, shape = estimate),
+      position = dodge,
+      size = 3,
+      colour = "black"
+    ) +
+    geom_text(
+      aes(y = label_y, label = label),
+      position = dodge,
+      vjust = 0,
+      size = 4.5
+    ) +
+    facet_wrap(~rna_change) +
+    scale_colour_manual(values = atac_colours) +
+    scale_fill_manual(values = atac_colours) +
+    scale_shape_manual(
+      values = shapes[present],
+      labels = shape_labels[present],
+      drop = TRUE
+    ) +
+    scale_y_continuous(limits = c(-cap, cap * 1.2)) +
+    guides(
+      fill = guide_legend(order = 1, override.aes = list(shape = 21)),
+      # Explains the triangles; not needed with finite estimates only
+      shape = if (!identical(present, "finite")) {
+        guide_legend(order = 2, override.aes = list(fill = "grey50"))
+      } else {
+        "none"
+      }
+    ) +
+    labs(
+      x = paste("Distance of the", feature, "to the TSS"),
+      y = "log2 odds ratio (95% CI)",
+      fill = paste("Genes with a", feature),
+      shape = "Odds ratio",
+      caption = paste(
+        "Fisher's exact test, all tested genes;",
+        "BH-adjusted p: * < 0.05, ** < 0.01, *** < 0.001"
+      )
+    ) +
+    theme_cowplot(12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.caption = element_text(hjust = 0, size = 10)
+    )
+}
 ggsave(
   snakemake@output[["enrichment_plot"]],
   enrichment_plot,
   width = 9,
   height = 5,
-  dpi = 300
+  dpi = 300,
+  bg = "white"
 )
 
 # Correlation of peak and gene log2 fold changes
@@ -444,14 +523,19 @@ pairs$class[
   (pairs$change == "more accessible" & pairs$rna_change == "down") |
     (pairs$change == "less accessible" & pairs$rna_change == "up")
 ] <- "discordant"
-pairs$class <- factor(pairs$class, levels = c("other", "discordant", "concordant"))
+pairs$class <- factor(
+  pairs$class,
+  levels = c("other", "discordant", "concordant")
+)
 pairs <- pairs[order(pairs$class), ]
 class_colours <- c(
-  "concordant" = "#009E73",
-  "discordant" = "#E69F00",
-  "other" = "grey70"
+  "concordant" = "#4DAF4A",
+  "discordant" = "#FF7F00",
+  "other" = "#cccccc"
 )
-facet_text <- correlation[correlation$peaks == "all" & correlation$distance != all_label, ]
+facet_text <- correlation[
+  correlation$peaks == "all" & correlation$distance != all_label,
+]
 facet_text$bin <- factor(facet_text$distance, levels = bin_labels)
 facet_text$label <- sprintf(
   "rho = %.2f\nn = %d",
@@ -460,11 +544,11 @@ facet_text$label <- sprintf(
 )
 scatter <- ggplot(
   pairs,
-  aes(log2FoldChange_shrunken, log2FoldChange, colour = class)
+  aes(log2FoldChange_shrunken, log2FoldChange, fill = class)
 ) +
-  geom_hline(yintercept = 0, colour = "grey50") +
-  geom_vline(xintercept = 0, colour = "grey50") +
-  geom_point(size = 0.6, alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_point(shape = 21, size = 1.8, colour = "black", stroke = 0.2) +
   geom_text(
     data = facet_text,
     aes(x = -Inf, y = Inf, label = label),
@@ -474,16 +558,26 @@ scatter <- ggplot(
     size = 3.5
   ) +
   facet_wrap(~bin, drop = FALSE) +
-  scale_colour_manual(values = class_colours, drop = FALSE) +
+  # Only the groups with peaks in the legend
+  scale_fill_manual(values = class_colours, drop = TRUE) +
   labs(
-    title = title,
-    subtitle = paste(
-      "Each", sub("s$", "", features),
-      "against its nearest gene, by distance to the TSS; Spearman rho"
-    ),
-    x = paste("ATAC-seq shrunken log2 fold change of the", sub("s$", "", features)),
-    y = "RNA-seq log2 fold change of the gene",
-    colour = "Significant in both"
+    x = paste("ATAC-seq shrunken log2 fold change of the", feature),
+    y = "RNA-seq log2 fold change of the nearest gene",
+    fill = "Significant in both",
+    caption = paste(
+      "Each",
+      feature,
+      "against the gene of its nearest TSS, by distance;",
+      "rho: Spearman"
+    )
   ) +
-  theme_bw(base_size = 12)
-ggsave(snakemake@output[["scatter"]], scatter, width = 9, height = 7, dpi = 300)
+  theme_cowplot(12) +
+  theme(plot.caption = element_text(hjust = 0, size = 10))
+ggsave(
+  snakemake@output[["scatter"]],
+  scatter,
+  width = 9,
+  height = 7,
+  dpi = 300,
+  bg = "white"
+)
