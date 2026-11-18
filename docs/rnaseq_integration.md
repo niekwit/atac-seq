@@ -149,6 +149,98 @@ RNA-seq table, with their up- or downregulation.
 `input_tables/` next to it has unchanged copies of the RNA-seq tables of `rnaseq: tables`, so
 the results keep the input they were made from.
 
+## Example: Morc1 knockout gonocytes
+
+These figures come from the public ATAC-seq and RNA-seq data of P0 *Morc1* knockout and
+heterozygous gonocytes (Uneme et al., 2024; GEO
+[GSE235429](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235429)). MORC1 is needed to
+silence young transposons in the male germline, so its loss should open and derepress TEs. The
+ATAC-seq data (2 knockout, 2 heterozygous replicates) were run with `te: only: true`
+(GRCm39, Ensembl 115). The RNA-seq data (3 + 3 replicates) were aligned with STAR to the same
+genome and annotation, and genes and TEs were counted with TEtranscripts and tested with DESeq2.
+They gave two tables, genes and TEs, both used for the contrast `KO_vs_het`:
+
+```yaml
+rnaseq:
+  tables:
+    KO_vs_het:
+      - /path/to/KO_P0_vs_Het_P0_genes.csv
+      - /path/to/KO_P0_vs_Het_P0_te.csv
+  columns:
+    gene_id: ensembl_gene_id
+```
+
+All 64,061 gene rows matched a gene ID, and 1,174 of the 1,230 TE rows matched a RepeatMasker
+subfamily (`logs/te/integration/rnaseq_prepare_KO_vs_het.log`). DESeq2 tested 42,588 genes
+(4,898 up and 5,460 down in the knockout) and 1,139 subfamilies (772 up, 15 down).
+
+### Genes and TE module peaks
+
+![Morc1: peak-gene pairs with a significant change in both](images/rnaseq_integration/morc1_genes_scatter.png)
+
+**Scatter** (`genes/scatter.pdf`): each point is a peak and the gene of its nearest TSS. Both are
+significant, with an absolute log2 fold change above 1. Most pairs (213 of 254) are concordant up:
+the knockout opens peaks near genes that it upregulates. Many of these genes are unnamed `Gm`
+genes, which may be transcripts that start in derepressed TEs. Only a few peaks lose accessibility, so
+there are few pairs on the left. Spearman's rho of the pairs is low (0.08) because the pairs only
+measure the direction. How strongly a peak opens does not predict how strongly its gene goes up.
+
+![Morc1: distance of the pairs to the TSS](images/rnaseq_integration/morc1_genes_distance.png)
+
+**Distance** (`genes/distance.pdf`): the concordant up pairs are mostly within a few kb of the TSS,
+where the nearest-gene assignment is most reliable. The 28 *more accessible, down* pairs are
+mostly 5–30 kb or more away, where the peak may control another gene.
+
+![Morc1: enrichment of differential peaks at differential genes](images/rnaseq_integration/morc1_genes_enrichment.png)
+
+**Enrichment** (`genes/enrichment.pdf`): odds ratios (log2, 95% confidence interval) of a
+differential peak at up- or downregulated genes, compared with the other tested genes. Within
+1 kb of the TSS, 2.0% of the upregulated genes have a more accessible peak, against 0.16% of the
+other genes: an odds ratio of 13 (log2 of about 3.7). The enrichment gets smaller with distance.
+Downregulated genes have more accessible peaks less often than the other genes, so the effect is
+specific to upregulation. The wide intervals for less accessible peaks come from the few such peaks
+(19 within 1 kb). The triangles are odds ratios of 0, from bins without any gene that is both
+regulated and near a less accessible peak.
+
+![Morc1: Tn5 insertions around the TSS of up-, down- and unchanged genes](images/rnaseq_integration/morc1_genes_tss_profile.png)
+
+**TSS profile** (`genes/tss_profile.pdf`): Tn5 insertions per million around the TSS of each RNA-seq
+group, as the mean of the replicates. Upregulated genes have a broad signal (many are in or near
+repeats), while downregulated and unchanged genes have a sharp promoter peak. In this data set the
+heterozygous signal is higher in all three groups, unchanged genes included. That points to a
+difference between the libraries (e.g. in the fraction of reads in open chromatin) rather than in
+accessibility. Insertions per million are scaled to the total reads only, unlike DESeq2, which
+normalises on the peaks. Compare each group with the unchanged genes, not the two lines directly,
+and use the peak tests above for significance.
+
+### Repeat subfamilies
+
+![Morc1: subfamily log2 fold changes in ATAC-seq and RNA-seq](images/rnaseq_integration/morc1_subfamilies_scatter.png)
+
+**Scatter** (`subfamilies/scatter.pdf`): each point is a subfamily, with the change in insertions in
+all its copies against its change in expression, coloured by class. Subfamilies that are
+significant in both are solid and labelled (the largest changes). Those that open and are
+derepressed are almost all LTR retrotransposons: IAP (IAPLTR1/2, IAPLTR4_I, IAP-d-int), MMERGLN,
+RLTR and MMERVK10C, with L1MdA_II as the LINE. Most subfamilies have no change in accessibility
+(an ATAC-seq log2 fold change near 0) but still vary in expression. Spearman's rho is 0.16 for all
+subfamilies, 0.20 for LTRs and 0.21 for LINEs (`subfamilies/correlation.tsv`).
+
+![Morc1: RNA-seq log2 fold changes of subfamilies per accessibility group](images/rnaseq_integration/morc1_subfamilies_cdf.png)
+
+**Cumulative distributions** (`subfamilies/cdf.pdf`): the RNA-seq log2 fold changes of the
+subfamilies, by accessibility. On the left this is the test of all copies, and on the right the
+differential TE peaks in the subfamily. A curve to the right means higher expression in the
+knockout. The 59 subfamilies that are more accessible over all copies have a median log2 fold
+change of 2.1, against 1.1 for the unchanged ones (Wilcoxon padj < 1e-20). 57 of the 59 are
+upregulated (Fisher's exact test: odds ratio 15). Subfamilies with more accessible TE peaks, or
+with both more and less accessible peaks, are also shifted to the right. Those with only less
+accessible peaks are not.
+
+Even the unchanged subfamilies have a median RNA-seq log2 fold change of about 1 (two-thirds of the
+tested subfamilies are up). This may be widespread derepression in the knockout, or come from the
+normalisation of the TE counts in the RNA-seq analysis. Either way, the comparison between the
+accessibility groups does not depend on it.
+
 ## Caveats
 
 - **Nearest gene:** assigning a peak to the nearest TSS is right for most promoter peaks but
