@@ -143,6 +143,7 @@ In `results/te/`:
 | `peaks/deseq2/{contrast}/differential_peaks.tsv` | differential accessibility of the TE peaks, with gene annotation, repeat and `frac_unique` |
 | `peaks/deseq2/{contrast}/{more,less}_accessible.bed` | differential TE peaks as BED6 (fold changes in `differential_peaks.tsv`) |
 | `correlation/{contrast}/gat.tsv` | per direction and data set: numbers of peaks and regions (each merged within its set), intersections (overlapping pairs), peaks that overlap a region and regions that overlap a peak, GAT observed and expected overlap (bp), fold, p- and q-value |
+| `correlation/input_tables/` | unchanged copies of the BED files of `te: correlation: datasets`, with `datasets.tsv` (name, source path, copy) |
 | `correlation/{contrast}/venn.pdf` | Venn diagrams of the differential peaks and each data set: numbers of peaks and regions, intersections, and the GAT result |
 
 For each sample the `te_{subfamily,family,class}.tsv` tables have:

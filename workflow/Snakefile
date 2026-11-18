@@ -173,6 +173,8 @@ if te_enabled():
                 "results/te/correlation/{contrast}/venn.pdf",
                 contrast=deseq2_contrasts(),
             )
+            # Copies of the data sets
+            TE_TARGETS.append("results/te/correlation/input_tables")
     if te_profile_config()["subfamilies"]:
         TE_TARGETS += expand(
             "results/te/profile/{level}.pdf", level=["conditions", "samples"]
