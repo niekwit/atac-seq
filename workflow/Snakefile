@@ -104,7 +104,13 @@ if not te_only():
             *expand(
                 "results/integration/{contrast}/{file}",
                 contrast=rnaseq_contrasts(),
-                file=["genes.tsv", "cdf.pdf", "enrichment.pdf", "scatter.pdf"],
+                file=[
+                    "genes.tsv",
+                    "enrichment.pdf",
+                    "scatter.pdf",
+                    "volcano.pdf",
+                    "distance.pdf",
+                ],
             ),
         ]
 
@@ -155,9 +161,10 @@ if te_enabled():
             contrast=rnaseq_contrasts(),
             file=[
                 "genes/genes.tsv",
-                "genes/cdf.pdf",
                 "genes/enrichment.pdf",
                 "genes/scatter.pdf",
+                "genes/volcano.pdf",
+                "genes/distance.pdf",
                 "subfamilies/subfamilies.tsv",
                 "subfamilies/scatter.pdf",
                 "subfamilies/cdf.pdf",

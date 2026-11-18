@@ -15,6 +15,16 @@ tools:
   ggplot2: {envs: [deseq2]}
   ggrepel: {envs: [deseq2]}
 references:
+  # Intersection-union test (checked on Crossref, 2026-11-18)
+  berger1982:
+    citation: Berger, 1982
+    authors: [Berger RL]
+    year: 1982
+    title: "Multiparameter hypothesis testing and acceptance sampling"
+    journal: Technometrics
+    volume: 24
+    pages: "295-300"
+    doi: 10.1080/00401706.1982.10487790
   # The workflow follows this version of the ENCODE ATAC-seq pipeline
   encode2020:
     note: "ENCODE ATAC-seq pipeline v2.2.3: https://github.com/ENCODE-DCC/atac-seq-pipeline"

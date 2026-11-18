@@ -59,18 +59,20 @@ rule rnaseq_genes:
     output:
         genes="results/integration/{contrast}/genes.tsv",
         concordant="results/integration/{contrast}/concordant_genes.tsv",
-        cdf="results/integration/{contrast}/cdf.pdf",
-        cdf_tests="results/integration/{contrast}/cdf_tests.tsv",
         enrichment="results/integration/{contrast}/enrichment.tsv",
         enrichment_plot="results/integration/{contrast}/enrichment.pdf",
         correlation="results/integration/{contrast}/correlation.tsv",
+        pairs="results/integration/{contrast}/pairs.tsv",
         scatter="results/integration/{contrast}/scatter.pdf",
+        volcano="results/integration/{contrast}/volcano.pdf",
+        distance="results/integration/{contrast}/distance.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         features="peaks",
         peak_set="ENCODE consensus peaks (uniquely mapped reads)",
         distance_bins=rnaseq_config()["distance_bins"],
+        pair_lfc_threshold=rnaseq_config()["pair_lfc_threshold"],
     threads: 1
     resources:
         runtime=runtime(30),
@@ -95,18 +97,20 @@ use rule rnaseq_genes as te_rnaseq_genes with:
     output:
         genes="results/te/integration/{contrast}/genes/genes.tsv",
         concordant="results/te/integration/{contrast}/genes/concordant_genes.tsv",
-        cdf="results/te/integration/{contrast}/genes/cdf.pdf",
-        cdf_tests="results/te/integration/{contrast}/genes/cdf_tests.tsv",
         enrichment="results/te/integration/{contrast}/genes/enrichment.tsv",
         enrichment_plot="results/te/integration/{contrast}/genes/enrichment.pdf",
         correlation="results/te/integration/{contrast}/genes/correlation.tsv",
+        pairs="results/te/integration/{contrast}/genes/pairs.tsv",
         scatter="results/te/integration/{contrast}/genes/scatter.pdf",
+        volcano="results/te/integration/{contrast}/genes/volcano.pdf",
+        distance="results/te/integration/{contrast}/genes/distance.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         features="peaks",
         peak_set="TE module peaks (alignment keeping multimapping reads)",
         distance_bins=rnaseq_config()["distance_bins"],
+        pair_lfc_threshold=rnaseq_config()["pair_lfc_threshold"],
     log:
         "logs/te/integration/rnaseq_genes_{contrast}.log",
 

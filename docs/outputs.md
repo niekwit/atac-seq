@@ -57,7 +57,7 @@ All files are listed in [Transposable elements](transposable_elements.md#output)
 | file                                                   | content                                                         |
 | ------------------------------------------------------ | --------------------------------------------------------------- |
 | `integration/{contrast}/genes.tsv`                     | per gene: RNA-seq results and the differential peaks assigned to it |
-| `integration/{contrast}/{cdf,enrichment,scatter}.pdf`  | RNA-seq fold changes by peak accessibility, enrichment of differential peaks at up- and downregulated genes, correlation |
+| `integration/{contrast}/{scatter,volcano,distance,enrichment}.pdf` | peak-gene pairs with a significant change in both, enrichment of differential peaks at up- and downregulated genes |
 | `te/integration/{contrast}/genes/`                     | the same for the peaks of the TE module (with `te: enable`, also with `te: only`) |
 | `te/integration/{contrast}/subfamilies/`               | TE subfamily expression against subfamily accessibility (with `te: enable`) |
 

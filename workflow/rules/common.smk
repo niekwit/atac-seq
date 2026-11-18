@@ -445,6 +445,7 @@ def rnaseq_config():
             rnaseq.get("distance_bins", [1000, 10000, 50000, 100000])
         ),
         "te_separator": rnaseq.get("te_separator", ":"),
+        "pair_lfc_threshold": rnaseq.get("pair_lfc_threshold", 1),
     }
 
 

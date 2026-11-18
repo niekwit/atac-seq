@@ -260,6 +260,10 @@ properties:
         minItems: 1
         uniqueItems: true
         default: [1000, 10000, 50000, 100000]
+      pair_lfc_threshold:
+        type: number
+        minimum: 0
+        default: 1
 
   extra:
     type: object

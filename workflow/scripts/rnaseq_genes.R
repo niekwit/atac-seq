@@ -10,17 +10,23 @@ sink(log, type = "message")
 #
 # - genes.tsv: per tested gene, the RNA-seq results and the number of more
 #   and less accessible peaks, with the most significant peak
-# - cdf.pdf, cdf_tests.tsv: cumulative distribution of the RNA log2 fold
-#   changes of genes grouped by the accessibility of their peaks, Wilcoxon
-#   rank-sum test of each group against the genes with only unchanged peaks
 # - enrichment.tsv, enrichment.pdf: Fisher's exact tests of up- and
 #   downregulated genes against genes with more and less accessible peaks,
 #   per distance bin
-# - correlation.tsv, scatter.pdf: Spearman correlation of the peak and gene
-#   log2 fold changes, per distance bin
+# - correlation.tsv: Spearman correlation of the peak and gene log2 fold
+#   changes, per distance bin, of all and of the differential peaks
+# - pairs.tsv, scatter.pdf, volcano.pdf, distance.pdf: the peak-gene pairs
+#   with a significant change in both (padj below the fdr of each data set
+#   and |log2 fold change| > pair_lfc_threshold), by category (concordant
+#   up or down, more accessible but down, less accessible but up): scatter
+#   plot of the two log2 fold changes, "volcano" plot of their product
+#   against the larger of the two adjusted p-values (a p-value for a change
+#   in both, intersection-union test; Berger 1982), and distances of the
+#   peaks to the TSS
 
 library(ggplot2)
 library(cowplot)
+library(ggrepel)
 
 # Load Snakemake parameters
 treatment <- snakemake@params[["treatment"]]
@@ -29,6 +35,9 @@ features <- snakemake@params[["features"]]
 # Named in the captions, e.g. ENCODE consensus peaks or TE module peaks
 peak_set <- snakemake@params[["peak_set"]]
 bins <- sort(as.numeric(unlist(snakemake@params[["distance_bins"]])))
+# Minimum |log2 fold change| of the peak and the gene for the pairs
+pair_lfc <- as.numeric(snakemake@params[["pair_lfc_threshold"]])
+n_labels <- 20
 
 atac <- read.delim(
   snakemake@input[["atac"]],
@@ -180,109 +189,10 @@ write.table(
 cat("Genes by RNA change and accessibility of their peaks:\n")
 print(table(genes$rna_change, genes$atac_status))
 
-# Cumulative distribution of RNA log2 fold changes per accessibility group
-# -----------------------------------------------------
-status_levels <- c(
-  "more accessible",
-  "less accessible",
-  "both",
-  "unchanged",
-  "no peak"
-)
+# Colours of the accessibility of the peaks
 status_colours <- c(
   "more accessible" = "#dd3b3b",
-  "less accessible" = "#377EB8",
-  "both" = "#984EA3",
-  "unchanged" = "grey30",
-  "no peak" = "#cccccc"
-)
-reference <- genes$log2FoldChange[genes$atac_status == "unchanged"]
-tests <- do.call(
-  rbind,
-  lapply(status_levels, function(status) {
-    values <- genes$log2FoldChange[genes$atac_status == status]
-    testable <- status != "unchanged" &&
-      length(values) > 0 &&
-      length(reference) > 0
-    data.frame(
-      atac_status = status,
-      n_genes = length(values),
-      median_log2FoldChange = if (length(values)) median(values) else NA,
-      reference = "unchanged",
-      median_difference = if (testable) {
-        median(values) - median(reference)
-      } else {
-        NA
-      },
-      wilcoxon_p = if (testable) {
-        wilcox.test(values, reference)$p.value
-      } else {
-        NA
-      }
-    )
-  })
-)
-tests$wilcoxon_padj <- p.adjust(tests$wilcoxon_p, method = "BH")
-print(tests)
-write.table(
-  tests,
-  snakemake@output[["cdf_tests"]],
-  quote = FALSE,
-  sep = "\t",
-  row.names = FALSE
-)
-
-present <- status_levels[status_levels %in% genes$atac_status]
-legend_labels <- setNames(
-  sprintf(
-    "%s (n = %d%s)",
-    present,
-    tests$n_genes[match(present, tests$atac_status)],
-    ifelse(
-      is.na(tests$wilcoxon_p[match(present, tests$atac_status)]),
-      "",
-      sprintf(", p = %.2g", tests$wilcoxon_p[match(present, tests$atac_status)])
-    )
-  ),
-  present
-)
-cdf_data <- genes[genes$atac_status %in% present, ]
-cdf_data$atac_status <- factor(cdf_data$atac_status, levels = present)
-limits <- quantile(cdf_data$log2FoldChange, c(0.005, 0.995), na.rm = TRUE)
-cdf <- if (nrow(cdf_data) == 0) {
-  message_plot("No genes tested in the RNA-seq data")
-} else {
-  ggplot(cdf_data, aes(log2FoldChange, colour = atac_status)) +
-    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-    stat_ecdf(geom = "step", linewidth = 0.8) +
-    coord_cartesian(xlim = limits) +
-    scale_colour_manual(
-      values = status_colours,
-      breaks = present,
-      labels = unname(legend_labels[present])
-    ) +
-    labs(
-      x = "RNA-seq log2 fold change",
-      y = "Cumulative fraction of genes",
-      colour = paste0(
-        "Genes by their ",
-        features,
-        "\n(TSS within ",
-        kb(max(bins)),
-        "; p: Wilcoxon\nvs unchanged)"
-      ),
-      caption = peak_set
-    ) +
-    theme_cowplot(12) +
-    theme(plot.caption = element_text(hjust = 0, size = 10))
-}
-ggsave(
-  snakemake@output[["cdf"]],
-  cdf,
-  width = 8,
-  height = 5,
-  dpi = 300,
-  bg = "white"
+  "less accessible" = "#377EB8"
 )
 
 # Enrichment of differential peaks at differentially expressed genes
@@ -365,7 +275,7 @@ write.table(
   row.names = FALSE
 )
 
-atac_colours <- status_colours[c("more accessible", "less accessible")]
+atac_colours <- status_colours
 feature <- sub("s$", "", features)
 plot_data <- enrichment[!is.na(enrichment$odds_ratio), ]
 if (nrow(plot_data) == 0) {
@@ -482,7 +392,13 @@ ggsave(
 # -----------------------------------------------------
 pairs <- merge(
   peaks[!is.na(peaks$log2FoldChange_shrunken), ],
-  rna[, c("gene_id", "log2FoldChange", "rna_change")],
+  data.frame(
+    gene_id = rna$gene_id,
+    gene_name = rna$gene_name,
+    rna_log2FoldChange = rna$log2FoldChange,
+    rna_padj = rna$padj,
+    rna_change = rna$rna_change
+  ),
   by = "gene_id"
 )
 spearman <- function(x, y) {
@@ -508,7 +424,7 @@ correlation <- do.call(
         }
         result <- spearman(
           pairs$log2FoldChange_shrunken[keep],
-          pairs$log2FoldChange[keep]
+          pairs$rna_log2FoldChange[keep]
         )
         data.frame(
           peaks = which_peaks,
@@ -531,80 +447,211 @@ write.table(
   row.names = FALSE
 )
 
-pairs$class <- rep("other", nrow(pairs))
-pairs$class[
-  (pairs$change == "more accessible" & pairs$rna_change == "up") |
-    (pairs$change == "less accessible" & pairs$rna_change == "down")
-] <- "concordant"
-pairs$class[
-  (pairs$change == "more accessible" & pairs$rna_change == "down") |
-    (pairs$change == "less accessible" & pairs$rna_change == "up")
-] <- "discordant"
-pairs$class <- factor(
-  pairs$class,
-  levels = c("other", "discordant", "concordant")
-)
-pairs <- pairs[order(pairs$class), ]
-class_colours <- c(
-  "concordant" = "#4DAF4A",
-  "discordant" = "#FF7F00",
-  "other" = "#cccccc"
-)
-facet_text <- correlation[
-  correlation$peaks == "all" & correlation$distance != all_label,
+# Peak-gene pairs with a significant change in both
+# -----------------------------------------------------
+sig <- pairs[
+  pairs$change != "unchanged" &
+    abs(pairs$log2FoldChange_shrunken) > pair_lfc &
+    pairs$rna_change %in% c("up", "down") &
+    abs(pairs$rna_log2FoldChange) > pair_lfc,
 ]
-facet_text$bin <- factor(facet_text$distance, levels = bin_labels)
-facet_text$label <- sprintf(
-  "rho = %.2f\nn = %d",
-  facet_text$spearman_rho,
-  facet_text$n_peaks
+category_colours <- c(
+  "concordant up" = "#dd3b3b",
+  "concordant down" = "#377EB8",
+  "more accessible, down" = "#FF7F00",
+  "less accessible, up" = "#984EA3"
 )
-scatter <- if (nrow(pairs) == 0) {
-  message_plot(paste0(
-    "No ",
-    features,
-    " within ",
-    kb(max(bins)),
-    " of the TSS of a gene tested in the RNA-seq data"
-  ))
+sig$category <- factor(
+  ifelse(
+    sig$change == "more accessible",
+    ifelse(sig$rna_change == "up", "concordant up", "more accessible, down"),
+    ifelse(sig$rna_change == "down", "concordant down", "less accessible, up")
+  ),
+  levels = names(category_colours)
+)
+sig$combined_score <- sig$log2FoldChange_shrunken * sig$rna_log2FoldChange
+# A p-value for a change in both: the larger of the two adjusted p-values
+# (intersection-union test, Berger 1982)
+sig$padj_both <- pmax(sig$padj, sig$rna_padj)
+sig <- sig[order(sig$padj_both, -abs(sig$combined_score)), ]
+pairs_out <- data.frame(
+  peak_id = sig$peak_id,
+  gene_id = sig$gene_id,
+  gene_name = sig$gene_name,
+  distanceToTSS = sig$distanceToTSS,
+  distance_bin = sig$bin,
+  atac_log2FoldChange_shrunken = sig$log2FoldChange_shrunken,
+  atac_padj = sig$padj,
+  rna_log2FoldChange = sig$rna_log2FoldChange,
+  rna_padj = sig$rna_padj,
+  category = sig$category,
+  combined_score = sig$combined_score,
+  padj_both = sig$padj_both
+)
+write.table(
+  pairs_out,
+  snakemake@output[["pairs"]],
+  quote = FALSE,
+  sep = "\t",
+  row.names = FALSE
+)
+counts <- table(sig$category)
+cat(sprintf(
+  "%d %s-gene pairs significant in both (|log2 fold change| > %g):\n",
+  nrow(sig),
+  feature,
+  pair_lfc
+))
+print(counts)
+
+# Legend labels with the numbers of pairs; only the categories present
+present <- names(counts)[counts > 0]
+category_labels <- setNames(
+  sprintf("%s (n = %d)", present, as.integer(counts[present])),
+  present
+)
+category_scale <- function(aesthetic) {
+  scale_fill_manual(
+    values = category_colours[present],
+    breaks = present,
+    labels = unname(category_labels),
+    aesthetics = aesthetic
+  )
+}
+empty_message <- paste0(
+  "No ",
+  feature,
+  "-gene pairs with a significant change in both\n(within ",
+  kb(max(bins)),
+  " of the TSS, |log2 fold change| > ",
+  pair_lfc,
+  ")"
+)
+save_plot <- function(name, plot, width, height) {
+  ggsave(
+    snakemake@output[[name]],
+    plot,
+    width = width,
+    height = height,
+    dpi = 300,
+    bg = "white"
+  )
+}
+# The genes with the smallest padj_both (one label per gene)
+labelled <- head(unique(sig$gene_name[!is.na(sig$gene_name)]), n_labels)
+label_data <- sig[!duplicated(sig$gene_name) & sig$gene_name %in% labelled, ]
+
+# Scatter plot of the two log2 fold changes
+if (nrow(sig) == 0) {
+  scatter <- message_plot(empty_message)
 } else {
-  ggplot(
-    pairs,
-    aes(log2FoldChange_shrunken, log2FoldChange, fill = class)
+  rho <- spearman(sig$log2FoldChange_shrunken, sig$rna_log2FoldChange)
+  scatter <- ggplot(
+    sig,
+    aes(log2FoldChange_shrunken, rna_log2FoldChange)
   ) +
     geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
     geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-    geom_point(shape = 21, size = 1.8, colour = "black", stroke = 0.2) +
-    geom_text(
-      data = facet_text,
-      aes(x = -Inf, y = Inf, label = label),
-      inherit.aes = FALSE,
-      hjust = -0.1,
-      vjust = 1.2,
-      size = 3.5
+    geom_point(
+      aes(fill = category),
+      shape = 21,
+      size = 1.8,
+      colour = "black",
+      stroke = 0.2,
+      alpha = 0.8
     ) +
-    facet_wrap(~bin, drop = FALSE) +
-    # Only the groups with peaks in the legend
-    scale_fill_manual(values = class_colours, drop = TRUE) +
+    category_scale("fill") +
     labs(
       x = paste("ATAC-seq shrunken log2 fold change of the", feature),
-      y = "RNA-seq log2 fold change of the nearest gene",
-      fill = "Significant in both",
-      caption = paste0(
+      y = "RNA-seq log2 fold change of the gene",
+      fill = NULL,
+      caption = sprintf(
+        paste0(
+          "%s\n%s-gene pairs (nearest TSS within %s) with a significant ",
+          "change in both; Spearman rho = %.2f (p = %.2g)"
+        ),
         peak_set,
-        "\nEach ",
-        feature,
-        " against the gene of its nearest TSS, by distance; rho: Spearman"
+        sub("^(.)", "\\U\\1", feature, perl = TRUE),
+        kb(max(bins)),
+        rho[["rho"]],
+        rho[["p"]]
       )
     ) +
     theme_cowplot(12) +
     theme(plot.caption = element_text(hjust = 0, size = 10))
 }
-ggsave(
-  snakemake@output[["scatter"]],
-  scatter,
-  width = 9,
-  height = 7,
-  dpi = 300,
-  bg = "white"
-)
+save_plot("scatter", scatter, 8, 6)
+
+# "Volcano" plot: product of the log2 fold changes (positive: concordant)
+# against the larger of the two adjusted p-values
+if (nrow(sig) == 0) {
+  volcano <- message_plot(empty_message)
+} else {
+  # padj of 0 (below the smallest double) at the top of the plot
+  floor_p <- function(p) pmax(p, .Machine$double.xmin)
+  volcano <- ggplot(
+    sig,
+    aes(combined_score, -log10(floor_p(padj_both)))
+  ) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+    geom_point(
+      aes(fill = category),
+      shape = 21,
+      size = 1.8,
+      colour = "black",
+      stroke = 0.2,
+      alpha = 0.8
+    ) +
+    geom_text_repel(
+      data = label_data,
+      aes(label = gene_name),
+      size = 3,
+      max.overlaps = Inf,
+      min.segment.length = 0
+    ) +
+    category_scale("fill") +
+    labs(
+      x = "ATAC-seq × RNA-seq log2 fold change (> 0: concordant)",
+      y = "-log10 adjusted p-value (larger of the two)",
+      fill = NULL,
+      caption = paste0(
+        peak_set,
+        "\nPairs with a significant change in both; y: the larger of the ",
+        "two adjusted p-values (intersection-union test)"
+      )
+    ) +
+    theme_cowplot(12) +
+    theme(plot.caption = element_text(hjust = 0, size = 10))
+}
+save_plot("volcano", volcano, 8, 6)
+
+# Distances of the peaks to the TSS, per category
+if (nrow(sig) == 0) {
+  distance_plot <- message_plot(empty_message)
+} else {
+  sig$distance_kb <- sig$distance / 1000
+  distance_plot <- ggplot(sig, aes(distance_kb, fill = category)) +
+    geom_histogram(
+      binwidth = max(bins) / 1000 / 40,
+      boundary = 0,
+      colour = "black",
+      linewidth = 0.2
+    ) +
+    facet_wrap(~category, scales = "free_y", drop = TRUE) +
+    category_scale("fill") +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+    labs(
+      x = paste("Distance of the", feature, "to the TSS (kb)"),
+      y = "Pairs",
+      caption = paste0(
+        peak_set,
+        "\nPairs with a significant change in both"
+      )
+    ) +
+    theme_cowplot(12) +
+    theme(
+      legend.position = "none",
+      plot.caption = element_text(hjust = 0, size = 10)
+    )
+}
+save_plot("distance", distance_plot, 8, 6)
