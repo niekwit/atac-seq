@@ -450,22 +450,29 @@ def rnaseq_config():
 
 def rnaseq_contrasts():
     """
-    Returns the DESeq2 contrasts with an RNA-seq DESeq2 results table
-    ({contrast: table}, rnaseq: tables); empty without deseq2: enable
+    Returns the DESeq2 contrasts with RNA-seq DESeq2 results tables
+    ({contrast: [tables]}, rnaseq: tables: a path or a list of paths, e.g.
+    genes and TEs in separate files); empty without deseq2: enable
     """
     tables = rnaseq_config()["tables"]
     if not tables or not deseq2_enabled():
         return {}
     contrasts = deseq2_contrasts()
-    for name, path in tables.items():
+    result = {}
+    for name, paths in tables.items():
         if name not in contrasts:
             raise ValueError(
                 f"rnaseq: tables: {name} is not a DESeq2 contrast "
                 f"(contrasts: {', '.join(contrasts) or 'none'})"
             )
-        if not os.path.isfile(path):
-            raise ValueError(f"rnaseq: tables: {name}: no file {path}")
-    return tables
+        paths = [paths] if isinstance(paths, str) else list(paths)
+        if not paths:
+            raise ValueError(f"rnaseq: tables: {name}: no table")
+        for path in paths:
+            if not os.path.isfile(path):
+                raise ValueError(f"rnaseq: tables: {name}: no file {path}")
+        result[name] = paths
+    return result
 
 
 def te_only():

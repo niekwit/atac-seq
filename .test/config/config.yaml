@@ -138,7 +138,8 @@ te:
 # (results/te/integration/{contrast}/subfamilies/)
 rnaseq:
   # DESeq2 contrast name ({treatment}_vs_{control}): RNA-seq DESeq2 results
-  # table (tab-separated, or .csv); empty: no integration
+  # table (tab-separated, or .csv), or a list of tables (e.g. genes and TEs in
+  # separate files); empty: no integration
   tables:
     ko_vs_wt: config/rnaseq/ko_vs_wt_deseq2.csv
   # Columns of the tables; gene_id "": the first column (e.g. the row names

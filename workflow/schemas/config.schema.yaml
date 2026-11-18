@@ -214,8 +214,12 @@ properties:
     properties:
       tables:
         type: [object, "null"]
+        # A path, or a list of paths (e.g. genes and TEs in separate files)
         additionalProperties:
-          type: string
+          type: [string, array]
+          items:
+            type: string
+          minItems: 1
         default: {}
       columns:
         type: object

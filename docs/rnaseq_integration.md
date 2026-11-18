@@ -13,6 +13,8 @@ rnaseq:
   tables:
     # DESeq2 contrast of this workflow ({treatment}_vs_{control}): RNA-seq table
     ko_vs_wt: /path/to/rnaseq/ko_vs_wt_deseq2.tsv
+    # or several tables, e.g. genes and TEs in separate files (combined)
+    # ko_vs_wt: [/path/to/ko_vs_wt_genes.csv, /path/to/ko_vs_wt_te.csv]
   columns:
     gene_id: ""              # "": the first column (row names written by write.csv)
     log2fc: log2FoldChange
@@ -35,7 +37,9 @@ rnaseq:
 - **TEs** (TE module only): rows whose ID, up to the first `te_separator`, is a RepeatMasker
   subfamily, e.g. `L1MdTf_I:L1:LINE` as written by
   [TEtranscripts](https://doi.org/10.1093/bioinformatics/btv422) and TEcount, or `L1MdTf_I`. A
-  table can have both genes and TEs. Locus-level tables (one row per copy) are not supported.
+  table can have both genes and TEs, or they can be in separate tables (a list of paths, with the
+  same columns). Gene rows are only used for the peak figures, TE rows only for the subfamily
+  figures. Locus-level tables (one row per copy) are not supported.
 - Rows that match no gene or subfamily are left out and listed in
   `logs/integration/rnaseq_prepare_{contrast}.log`, with the numbers of matched rows. Check this
   log first if the results look empty. A gene or subfamily that is in the table more than once

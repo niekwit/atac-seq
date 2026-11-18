@@ -87,7 +87,7 @@ ENCODE pipeline.
 | correlation: datasets             | data sets to compare with the differential TE peaks with GAT, as name: BED file (e.g. EM-seq DMRs; UCSC or Ensembl chromosome names) | {} |
 | correlation: gat_samples          | number of random placements of the peaks in GAT                            | 10000 |
 | **rnaseq**                        | integration with RNA-seq (needs `deseq2: enable`), see [Integration with RNA-seq](https://atac-seq.readthedocs.io/en/latest/rnaseq_integration.html) | |
-| tables                            | RNA-seq DESeq2 results table per contrast, as `{treatment}_vs_{control}`: path (tab-separated, or `.csv`); genes and, for the TE module, TE subfamilies | {} |
+| tables                            | RNA-seq DESeq2 results table per contrast, as `{treatment}_vs_{control}`: path (tab-separated, or `.csv`) or a list of paths (e.g. genes and TEs in separate tables, which are combined); genes and, for the TE module, TE subfamilies | {} |
 | columns: gene_id                  | column with the gene (or TE) IDs; "": the first column                      | ""             |
 | columns: log2fc, padj, base_mean  | columns with the log2 fold change, adjusted p-value and mean count          | log2FoldChange, padj, baseMean |
 | id_type                           | gene identifiers: `ensembl`, `symbol` or `auto` (whichever matches more rows) | auto        |

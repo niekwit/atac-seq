@@ -1,5 +1,7 @@
 """
-Reads an RNA-seq DESeq2 results table (rnaseq: tables) and matches its rows
+Reads the RNA-seq DESeq2 results tables of a contrast (rnaseq: tables: one
+table, or several, e.g. genes and TEs in separate files, which are combined)
+and matches their rows
 to the genes of the GTF annotation and, with the TE module, to the repeat
 subfamilies:
 
@@ -28,7 +30,10 @@ import numpy as np
 import pandas as pd
 
 # Load Snakemake variables
-table_file = snakemake.input["rnaseq"]
+# One table (a string) or several (a list)
+table_files = snakemake.input["rnaseq"]
+table_files = [table_files] if isinstance(table_files, str) else list(table_files)
+table_file = ", ".join(table_files)
 gtf_file = snakemake.input["gtf"]
 # A list (empty without the TE module)
 subfamilies_file = next(iter(snakemake.input.get("subfamilies", [])), None)
@@ -78,35 +83,40 @@ def read_genes(path):
     return genes.dropna(subset=["gene_id"]).drop_duplicates("gene_id")
 
 
-# RNA-seq table
+# RNA-seq tables
 # -----------------------------------------------------
-table = read_table(table_file)
-logging.info(f"{len(table)} rows in {table_file}")
-id_column = columns["gene_id"] or table.columns[0]
-required = {
-    "gene_id": id_column,
-    "log2fc": columns["log2fc"],
-    "padj": columns["padj"],
-}
-missing = [f"{key} ({col})" for key, col in required.items() if col not in table]
-if missing:
-    raise ValueError(
-        f"Columns not found in {table_file}: {', '.join(missing)}. "
-        f"Columns of the table: {', '.join(map(str, table.columns))}. "
-        "Set them in rnaseq: columns"
-    )
-rna = pd.DataFrame(
-    {
-        "id": table[id_column].astype(str).str.strip(),
-        "baseMean": (
-            pd.to_numeric(table[columns["base_mean"]], errors="coerce")
-            if columns["base_mean"] in table
-            else np.nan
-        ),
-        "log2FoldChange": pd.to_numeric(table[columns["log2fc"]], errors="coerce"),
-        "padj": pd.to_numeric(table[columns["padj"]], errors="coerce"),
+def read_rna(path):
+    """The ID, baseMean, log2FoldChange and padj columns of one table"""
+    table = read_table(path)
+    logging.info(f"{len(table)} rows in {path}")
+    id_column = columns["gene_id"] or table.columns[0]
+    required = {
+        "gene_id": id_column,
+        "log2fc": columns["log2fc"],
+        "padj": columns["padj"],
     }
-)
+    missing = [f"{key} ({col})" for key, col in required.items() if col not in table]
+    if missing:
+        raise ValueError(
+            f"Columns not found in {path}: {', '.join(missing)}. "
+            f"Columns of the table: {', '.join(map(str, table.columns))}. "
+            "Set them in rnaseq: columns"
+        )
+    return pd.DataFrame(
+        {
+            "id": table[id_column].astype(str).str.strip(),
+            "baseMean": (
+                pd.to_numeric(table[columns["base_mean"]], errors="coerce")
+                if columns["base_mean"] in table
+                else np.nan
+            ),
+            "log2FoldChange": pd.to_numeric(table[columns["log2fc"]], errors="coerce"),
+            "padj": pd.to_numeric(table[columns["padj"]], errors="coerce"),
+        }
+    )
+
+
+rna = pd.concat([read_rna(path) for path in table_files], ignore_index=True)
 
 # Genes
 # -----------------------------------------------------
