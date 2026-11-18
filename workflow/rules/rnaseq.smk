@@ -55,6 +55,7 @@ rule rnaseq_genes:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         features="peaks",
+        peak_set="ENCODE consensus peaks (uniquely mapped reads)",
         distance_bins=rnaseq_config()["distance_bins"],
     threads: 1
     resources:
@@ -69,26 +70,28 @@ rule rnaseq_genes:
         "../scripts/rnaseq_genes.R"
 
 
-# Differential expression of genes against the differential accessibility of
-# the TE peaks (TE module)
+# Differential expression of genes (non-TE rows of the RNA-seq table) against
+# the differential accessibility of the peaks of the TE module (genome-wide
+# peaks of the alignment that keeps multimapping reads, not only on TEs)
 # -----------------------------------------------------
 use rule rnaseq_genes as te_rnaseq_genes with:
     input:
         atac="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
         rnaseq="results/integration/rnaseq/{contrast}.tsv",
     output:
-        genes="results/te/integration/{contrast}/peaks/genes.tsv",
-        concordant="results/te/integration/{contrast}/peaks/concordant_genes.tsv",
-        cdf="results/te/integration/{contrast}/peaks/cdf.pdf",
-        cdf_tests="results/te/integration/{contrast}/peaks/cdf_tests.tsv",
-        enrichment="results/te/integration/{contrast}/peaks/enrichment.tsv",
-        enrichment_plot="results/te/integration/{contrast}/peaks/enrichment.pdf",
-        correlation="results/te/integration/{contrast}/peaks/correlation.tsv",
-        scatter="results/te/integration/{contrast}/peaks/scatter.pdf",
+        genes="results/te/integration/{contrast}/genes/genes.tsv",
+        concordant="results/te/integration/{contrast}/genes/concordant_genes.tsv",
+        cdf="results/te/integration/{contrast}/genes/cdf.pdf",
+        cdf_tests="results/te/integration/{contrast}/genes/cdf_tests.tsv",
+        enrichment="results/te/integration/{contrast}/genes/enrichment.tsv",
+        enrichment_plot="results/te/integration/{contrast}/genes/enrichment.pdf",
+        correlation="results/te/integration/{contrast}/genes/correlation.tsv",
+        scatter="results/te/integration/{contrast}/genes/scatter.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
-        features="TE peaks",
+        features="peaks",
+        peak_set="TE module peaks (alignment keeping multimapping reads)",
         distance_bins=rnaseq_config()["distance_bins"],
     log:
         "logs/te/integration/rnaseq_genes_{contrast}.log",

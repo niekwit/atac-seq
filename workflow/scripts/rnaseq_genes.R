@@ -26,6 +26,8 @@ library(cowplot)
 treatment <- snakemake@params[["treatment"]]
 control <- snakemake@params[["control"]]
 features <- snakemake@params[["features"]]
+# Named in the captions, e.g. ENCODE consensus peaks or TE module peaks
+peak_set <- snakemake@params[["peak_set"]]
 bins <- sort(as.numeric(unlist(snakemake@params[["distance_bins"]])))
 
 atac <- read.delim(
@@ -268,9 +270,11 @@ cdf <- if (nrow(cdf_data) == 0) {
         "\n(TSS within ",
         kb(max(bins)),
         "; p: Wilcoxon\nvs unchanged)"
-      )
+      ),
+      caption = peak_set
     ) +
-    theme_cowplot(12)
+    theme_cowplot(12) +
+    theme(plot.caption = element_text(hjust = 0, size = 10))
 }
 ggsave(
   snakemake@output[["cdf"]],
@@ -453,8 +457,9 @@ if (nrow(plot_data) == 0) {
       y = "log2 odds ratio (95% CI)",
       fill = paste("Genes with a", feature),
       shape = "Odds ratio",
-      caption = paste(
-        "Fisher's exact test, all tested genes;",
+      caption = paste0(
+        peak_set,
+        "\nFisher's exact test, all tested genes; ",
         "BH-adjusted p: * < 0.05, ** < 0.01, *** < 0.001"
       )
     ) +
@@ -585,11 +590,11 @@ scatter <- if (nrow(pairs) == 0) {
       x = paste("ATAC-seq shrunken log2 fold change of the", feature),
       y = "RNA-seq log2 fold change of the nearest gene",
       fill = "Significant in both",
-      caption = paste(
-        "Each",
+      caption = paste0(
+        peak_set,
+        "\nEach ",
         feature,
-        "against the gene of its nearest TSS, by distance;",
-        "rho: Spearman"
+        " against the gene of its nearest TSS, by distance; rho: Spearman"
       )
     ) +
     theme_cowplot(12) +

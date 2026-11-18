@@ -281,15 +281,18 @@ contrast ({{ rnaseq | join_and }}). Genes were matched to the genome annotation
 by gene ID or name, and genes with adjusted p < {{ rnaseq_fdr }} and
 {{ rnaseq_lfc_text }} were called up- or downregulated; genes without adjusted
 p-value were left out.
+Gene rows of the RNA-seq results were compared with the
 {% if not te_only %}
-Consensus peaks
+consensus peaks
 {% if te %}
-and TE peaks
+and, separately, with the peaks of the TE module (genome-wide peaks of the
+alignment keeping multimapping reads)
 {% endif %}
 {% else %}
-TE peaks
+peaks of the TE module (genome-wide peaks of the alignment keeping
+multimapping reads)
 {% endif %}
-were assigned to the gene of their nearest TSS (ChIPseeker) within
+; peaks were assigned to the gene of their nearest TSS (ChIPseeker) within
 {{ rnaseq_max }}; peaks without adjusted p-value (not tested by DESeq2) were
 left out. RNA-seq log2 fold changes of genes with more accessible, less
 accessible, both or only unchanged peaks were compared (Wilcoxon rank-sum test

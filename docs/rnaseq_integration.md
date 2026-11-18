@@ -4,7 +4,16 @@ The differential accessibility of a contrast can be compared with RNA-seq differ
 of the same contrast: are upregulated genes more accessible, and downregulated genes less? This
 needs `deseq2: enable: true` and an RNA-seq DESeq2 results table per contrast in
 `rnaseq: tables`. It runs for the ENCODE consensus peaks and, with `te: enable: true`, separately
-for the TE peaks and the repeat subfamilies.
+for the peaks of the TE module and the repeat subfamilies (also with `te: only: true`).
+
+The RNA-seq rows are used in two separate groups:
+
+- **Genes (non-TE):** compared with the peaks near their TSS. Without `te: only`, with the
+  ENCODE consensus peaks (uniquely mapped reads); with the TE module, also with the peaks of the
+  TE module. These are genome-wide peaks of the alignment that keeps multimapping reads, not
+  only peaks on TEs (most are at promoters or outside repeats), so they cover genes as well.
+- **TE subfamilies:** compared with the accessibility of the subfamily (all copies) and of the
+  peaks overlapping it.
 
 ## Configuration
 
@@ -100,8 +109,9 @@ these tests have less power than those of the genes.
 
 ## Output
 
-In `results/integration/{contrast}/` (consensus peaks), `results/te/integration/{contrast}/peaks/`
-(TE peaks) and `results/te/integration/{contrast}/subfamilies/`:
+In `results/integration/{contrast}/` (genes against the ENCODE consensus peaks),
+`results/te/integration/{contrast}/genes/` (genes against the peaks of the TE module) and
+`results/te/integration/{contrast}/subfamilies/` (TE subfamilies):
 
 | file                    | content                                                         |
 | ----------------------- | --------------------------------------------------------------- |
