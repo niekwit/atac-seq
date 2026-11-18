@@ -66,7 +66,8 @@ if not set(table["chr"]) & bigwig_chroms:
         logging.warning("No chromosome of the regions is in the BigWig files")
 
 tmp = tempfile.mkdtemp(dir=os.path.dirname(out_matrix))
-beds, region_labels = [], []
+# Heatmap labels without the numbers, which are in the profile
+beds, region_labels, heatmap_labels = [], [], []
 for value, label in groups.items():
     selected = table[table[group_column] == value]
     logging.info(f"{label}: {len(selected)} regions")
@@ -78,6 +79,7 @@ for value, label in groups.items():
     )
     beds.append(path)
     region_labels.append(f"{label} (n = {len(selected)})")
+    heatmap_labels.append(label)
 
 
 def run(command):
@@ -172,7 +174,7 @@ else:
             "-o",
             out_heatmap,
             "--regionsLabel",
-            *region_labels,
+            *heatmap_labels,
             *point_labels,
             "--colorMap",
             "Reds",
