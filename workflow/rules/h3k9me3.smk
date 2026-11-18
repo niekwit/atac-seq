@@ -11,28 +11,37 @@
 
 # Prepared H3K9me3 regions of a contrast: with te: only, in the TE module
 # results, so that all output is in results/te/integration/
-H3K9ME3_DIR = (
-    "results/te/integration/h3k9me3/{contrast}"
+H3K9ME3_REGIONS = (
+    "results/te/integration/h3k9me3/{contrast}/regions.tsv"
     if te_only()
-    else "results/integration/h3k9me3/{contrast}"
+    else "results/integration/h3k9me3/{contrast}/regions.tsv"
 )
-H3K9ME3_REGIONS = H3K9ME3_DIR + "/regions.tsv"
-H3K9ME3_INPUTS = H3K9ME3_DIR + "/input_tables"
-H3K9ME3_LOGS = (
-    "logs/te/integration/h3k9me3" if te_only() else "logs/integration/h3k9me3"
+H3K9ME3_LOST = (
+    "results/te/integration/h3k9me3/{contrast}/lost.bed"
+    if te_only()
+    else "results/integration/h3k9me3/{contrast}/lost.bed"
 )
-
-
-def h3k9me3_changes(contrast):
-    """Changes of H3K9me3 in the data of a contrast"""
-    settings = h3k9me3_contrasts()[contrast]
-    return ["lost", "gained"] if settings["diffbind"] else [settings["direction"]]
-
-
-def h3k9me3_conditions(contrast):
-    """[control, treatment] of a contrast"""
-    treatment, control = deseq2_contrasts()[contrast]
-    return [control, treatment]
+H3K9ME3_GAINED = (
+    "results/te/integration/h3k9me3/{contrast}/gained.bed"
+    if te_only()
+    else "results/integration/h3k9me3/{contrast}/gained.bed"
+)
+# Copy of the regions file of the contrast (h3k9me3: contrasts: regions)
+H3K9ME3_INPUTS = (
+    "results/te/integration/h3k9me3/{contrast}/input_tables"
+    if te_only()
+    else "results/integration/h3k9me3/{contrast}/input_tables"
+)
+H3K9ME3_PREPARE_LOG = (
+    "logs/te/integration/h3k9me3/prepare_{contrast}.log"
+    if te_only()
+    else "logs/integration/h3k9me3/prepare_{contrast}.log"
+)
+H3K9ME3_INPUTS_LOG = (
+    "logs/te/integration/h3k9me3/input_tables_{contrast}.log"
+    if te_only()
+    else "logs/integration/h3k9me3/input_tables_{contrast}.log"
+)
 
 
 # Lost, gained and unchanged H3K9me3 regions of the contrast
@@ -43,8 +52,8 @@ rule h3k9me3_prepare:
         chrom_sizes="resources/chrom_sizes.txt",
     output:
         table=H3K9ME3_REGIONS,
-        lost=H3K9ME3_DIR + "/lost.bed",
-        gained=H3K9ME3_DIR + "/gained.bed",
+        lost=H3K9ME3_LOST,
+        gained=H3K9ME3_GAINED,
     params:
         diffbind=lambda w: h3k9me3_contrasts()[w.contrast]["diffbind"],
         direction=lambda w: h3k9me3_contrasts()[w.contrast]["direction"],
@@ -56,7 +65,7 @@ rule h3k9me3_prepare:
         runtime=runtime(15),
         mem_mb=4000,
     log:
-        H3K9ME3_LOGS + "/prepare_{contrast}.log",
+        H3K9ME3_PREPARE_LOG,
     conda:
         "../envs/gat.yaml"
     script:
@@ -78,7 +87,7 @@ rule h3k9me3_inputs:
         runtime=runtime(10),
         mem_mb=1000,
     log:
-        H3K9ME3_LOGS + "/input_tables_{contrast}.log",
+        H3K9ME3_INPUTS_LOG,
     script:
         "../scripts/copy_inputs.py"
 

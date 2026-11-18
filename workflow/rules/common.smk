@@ -555,6 +555,18 @@ def h3k9me3_diffbind_contrasts():
     return [c for c, s in h3k9me3_contrasts().items() if s["diffbind"]]
 
 
+def h3k9me3_changes(contrast):
+    """Changes of H3K9me3 in the data of a contrast"""
+    settings = h3k9me3_contrasts()[contrast]
+    return ["lost", "gained"] if settings["diffbind"] else [settings["direction"]]
+
+
+def h3k9me3_conditions(contrast):
+    """[control, treatment] of a contrast"""
+    treatment, control = deseq2_contrasts()[contrast]
+    return [control, treatment]
+
+
 def te_only():
     """
     With te: only, the workflow runs the TE module only (and the read trimming,
