@@ -489,53 +489,131 @@ def rnaseq_contrasts():
     return result
 
 
-def h3k9me3_config():
+# Integrations with differential epigenomic data (not part of the ENCODE
+# pipeline): the settings of each section of the config ("mark"), the change
+# codes for a decrease and an increase in the treatment, and plot labels
+# ({treatment} is replaced by the treatment of the contrast)
+EPI_MARKS = {
+    "h3k9me3": {
+        "name": "H3K9me3",
+        # Key of the boolean that marks a results table (instead of a BED file)
+        "table_key": "diffbind",
+        "table_name": "DiffBind",
+        "down": "lost",
+        "up": "gained",
+        "columns": {
+            "chr": "seqnames",
+            "start": "start",
+            "end": "end",
+            "effect": "Fold",
+            "fdr": "FDR",
+        },
+        # Config key of the effect column
+        "effect_key": "log2fc",
+        "fdr": 0.05,
+        "min_effect": 0,
+        "effect_name": "log2FoldChange",
+        "labels": {
+            "down": "H3K9me3 lost in {treatment}",
+            "up": "H3K9me3 gained in {treatment}",
+            "down_short": "H3K9me3 lost",
+            "up_short": "H3K9me3 gained",
+            "unchanged": "H3K9me3 unchanged",
+            "outside": "outside H3K9me3 regions",
+            "regions": "H3K9me3 regions",
+            "effect": "H3K9me3 log2 fold change",
+            "signal": "H3K9me3 signal",
+            "sites": "DiffBind sites",
+        },
+        # Coverage signal: bins without signal are 0
+        "missing_as_zero": True,
+    },
+    "methylation": {
+        "name": "DNA methylation",
+        "table_key": "methylkit",
+        "table_name": "methylKit",
+        "down": "hypo",
+        "up": "hyper",
+        "columns": {
+            "chr": "chr",
+            "start": "start",
+            "end": "end",
+            "effect": "meth.diff",
+            "fdr": "qvalue",
+        },
+        "effect_key": "diff",
+        "fdr": 0.01,
+        "min_effect": 25,
+        "effect_name": "meth_diff",
+        "labels": {
+            "down": "Hypomethylated in {treatment}",
+            "up": "Hypermethylated in {treatment}",
+            "down_short": "Hypomethylated",
+            "up_short": "Hypermethylated",
+            "unchanged": "Methylation unchanged",
+            "outside": "outside the methylation regions",
+            "regions": "methylation regions",
+            "effect": "Methylation difference (percentage points)",
+            "signal": "CpG methylation (%)",
+            "sites": "tested regions",
+        },
+        # Methylation per CpG: bins without a CpG are missing, not 0%
+        "missing_as_zero": False,
+    },
+}
+
+
+def epi_config(mark):
     """
-    Returns the settings of the integration with differential H3K9me3
-    (h3k9me3: in the config), with defaults
+    Returns the settings of an integration with differential epigenomic data
+    (h3k9me3: or methylation: in the config), with defaults. The effect
+    column is under columns: effect (h3k9me3: columns: log2fc, methylation:
+    columns: diff in the config)
     """
-    h3k9me3 = config.get("h3k9me3") or {}
-    columns = h3k9me3.get("columns") or {}
-    defaults = {
-        "chr": "seqnames",
-        "start": "start",
-        "end": "end",
-        "log2fc": "Fold",
-        "fdr": "FDR",
-    }
+    defaults = EPI_MARKS[mark]
+    section = config.get(mark) or {}
+    columns = dict(section.get("columns") or {})
+    if defaults["effect_key"] in columns:
+        columns["effect"] = columns.pop(defaults["effect_key"])
     return {
-        "contrasts": h3k9me3.get("contrasts") or {},
-        "columns": {k: columns.get(k) or v for k, v in defaults.items()},
-        "flip_fold": h3k9me3.get("flip_fold", False),
-        "fdr": h3k9me3.get("fdr", 0.05),
-        "profile_flank": h3k9me3.get("profile_flank", 5000),
-        "profile_body_length": h3k9me3.get("profile_body_length", 5000),
-        "min_copies": h3k9me3.get("min_copies", 20),
+        "contrasts": section.get("contrasts") or {},
+        "columns": {k: columns.get(k) or v for k, v in defaults["columns"].items()},
+        "flip": section.get("flip_fold", section.get("flip_diff", False)),
+        "fdr": section.get("fdr", defaults["fdr"]),
+        "min_effect": section.get("min_diff", defaults["min_effect"]),
+        "profile_flank": section.get("profile_flank", 5000),
+        "profile_body_length": section.get("profile_body_length", 5000),
+        "min_copies": section.get("min_copies", 20),
     }
 
 
-def h3k9me3_contrasts():
+def epi_contrasts(mark):
     """
-    Returns the DESeq2 contrasts with H3K9me3 data ({contrast: settings}:
-    regions, diffbind, direction and bigwigs, None without); empty without
-    deseq2: enable
+    Returns the DESeq2 contrasts with data of an epigenomic mark
+    ({contrast: settings}: regions, table (a results table, not a BED file),
+    direction (the change code of a BED file) and bigwigs, None without);
+    empty without deseq2: enable
     """
-    contrasts = h3k9me3_config()["contrasts"]
+    defaults = EPI_MARKS[mark]
+    settings_all = epi_config(mark)
+    contrasts = settings_all["contrasts"]
     if not contrasts or not deseq2_enabled():
         return {}
     deseq2 = deseq2_contrasts()
     # deepTools needs the profile lengths to be multiples of the bin size
     bin_size = computematrix_bin_size()
     for setting in ("profile_flank", "profile_body_length"):
-        value = h3k9me3_config()[setting]
+        value = settings_all[setting]
         if value % bin_size:
             raise ValueError(
-                f"h3k9me3: {setting} ({value}) must be a multiple of the "
+                f"{mark}: {setting} ({value}) must be a multiple of the "
                 f"computeMatrix bin size ({bin_size} bp)"
             )
+    codes = (defaults["down"], defaults["up"])
+    table_key = defaults["table_key"]
     result = {}
     for name, settings in contrasts.items():
-        key = f"h3k9me3: contrasts: {name}"
+        key = f"{mark}: contrasts: {name}"
         if name not in deseq2:
             raise ValueError(
                 f"{key} is not a DESeq2 contrast "
@@ -545,12 +623,12 @@ def h3k9me3_contrasts():
         regions = settings.get("regions")
         if not regions or not os.path.isfile(regions):
             raise ValueError(f"{key}: regions: no file {regions}")
-        diffbind = settings.get("diffbind")
-        if not isinstance(diffbind, bool):
-            raise ValueError(f"{key}: diffbind must be true or false")
-        direction = settings.get("direction", "lost")
-        if direction not in ("lost", "gained"):
-            raise ValueError(f"{key}: direction must be lost or gained")
+        table = settings.get(table_key)
+        if not isinstance(table, bool):
+            raise ValueError(f"{key}: {table_key} must be true or false")
+        direction = settings.get("direction", codes[0])
+        if direction not in codes:
+            raise ValueError(f"{key}: direction must be {' or '.join(codes)}")
         bigwigs = settings.get("bigwigs") or None
         if bigwigs:
             for condition in ("control", "treatment"):
@@ -559,11 +637,16 @@ def h3k9me3_contrasts():
                     raise ValueError(f"{key}: bigwigs: {condition}: no file {path}")
         result[name] = {
             "regions": regions,
-            "diffbind": diffbind,
+            "table": table,
             "direction": direction,
             "bigwigs": bigwigs,
         }
     return result
+
+
+def epi_marks():
+    """The epigenomic marks with at least one contrast"""
+    return [mark for mark in EPI_MARKS if epi_contrasts(mark)]
 
 
 def computematrix_bin_size():
@@ -575,23 +658,55 @@ def computematrix_bin_size():
     return int(found[-1]) if found else 50
 
 
-def h3k9me3_bigwig_contrasts():
-    """The contrasts of h3k9me3_contrasts() with H3K9me3 signal (bigwigs)"""
-    return [c for c, s in h3k9me3_contrasts().items() if s["bigwigs"]]
+def epi_changes(mark, contrast):
+    """Change codes of a mark in the data of a contrast (decrease first)"""
+    settings = epi_contrasts(mark)[contrast]
+    defaults = EPI_MARKS[mark]
+    if settings["table"]:
+        return [defaults["down"], defaults["up"]]
+    return [settings["direction"]]
 
 
-def h3k9me3_diffbind_contrasts():
-    """The contrasts of h3k9me3_contrasts() with a DiffBind table"""
-    return [c for c, s in h3k9me3_contrasts().items() if s["diffbind"]]
+def epi_labels(mark, contrast):
+    """Plot labels of a mark, with the treatment of the contrast"""
+    treatment = deseq2_contrasts()[contrast][0]
+    labels = EPI_MARKS[mark]["labels"]
+    return {k: v.format(treatment=treatment) for k, v in labels.items()}
 
 
-def h3k9me3_changes(contrast):
-    """Changes of H3K9me3 in the data of a contrast"""
-    settings = h3k9me3_contrasts()[contrast]
-    return ["lost", "gained"] if settings["diffbind"] else [settings["direction"]]
+def epi_targets(mark, te_module):
+    """
+    Output files of the integration with a mark: of the consensus peaks
+    (te_module False) or of the TE module (te_module True)
+    """
+    contrasts = epi_contrasts(mark)
+    tables = [c for c, s in contrasts.items() if s["table"]]
+    bigwigs = [c for c, s in contrasts.items() if s["bigwigs"]]
+    if te_module:
+        base = "results/te/integration/{mark}/{contrast}/"
+        files = [
+            "peaks/enrichment.pdf",
+            "peaks/distribution.pdf",
+            "atac_profile.pdf",
+            "subfamilies/scatter.pdf",
+            "subfamilies/full_length.pdf",
+        ]
+        table_files, bigwig_files = ["peaks/scatter.pdf"], ["peaks/signal_profile.pdf"]
+    else:
+        base = "results/integration/{mark}/{contrast}/"
+        files = ["enrichment.pdf", "distribution.pdf"]
+        table_files, bigwig_files = ["scatter.pdf"], ["signal_profile.pdf"]
+    targets = []
+    for selected, names in (
+        (list(contrasts), files),
+        (tables, table_files),
+        (bigwigs, bigwig_files),
+    ):
+        targets += expand([base + f for f in names], mark=mark, contrast=selected)
+    return targets
 
 
-def h3k9me3_conditions(contrast):
+def epi_conditions(contrast):
     """[control, treatment] of a contrast"""
     treatment, control = deseq2_contrasts()[contrast]
     return [control, treatment]
@@ -655,8 +770,8 @@ def methods_envs():
     # Plots of the integration with RNA-seq
     if rnaseq_contrasts():
         envs.append("integration")
-    # Integration with H3K9me3: overlaps (bedtools) and plots
-    if h3k9me3_contrasts():
+    # Integration with H3K9me3 and DNA methylation: overlaps (bedtools), plots
+    if epi_marks():
         envs += [e for e in ("integration", "gat") if e not in envs]
     return envs
 

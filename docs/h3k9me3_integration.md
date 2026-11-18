@@ -1,5 +1,8 @@
 # Integration with H3K9me3
 
+The same analyses are available for DNA methylation; see
+[Integration with DNA methylation](methylation_integration.md).
+
 The differential accessibility of a contrast can be compared with the H3K9me3 regions that change
 in the same contrast (e.g. CUT&RUN or ChIP-seq of the same conditions). The main question: do
 regions that lose H3K9me3 become more accessible, and do the repeats in them open up? This needs
@@ -149,7 +152,8 @@ In `results/te/integration/h3k9me3/{contrast}/` (TE module):
 | `subfamilies/full_length_copies.tsv`  | each full-length copy of the profile subfamilies with its H3K9me3 change and accessibility (`more accessible`, `less accessible`, `unchanged` or `no peak`, from the TE peaks overlapping it) |
 | `subfamilies/full_length.tsv`, `full_length.pdf` | per profile entry: copies by H3K9me3 change and accessibility, Fisher's exact test |
 
-`regions.tsv` (the prepared regions with their change), `lost.bed` and `gained.bed` are in
+`regions.tsv` (the prepared regions with their change), `decreased.bed` (lost) and
+`increased.bed` (gained) are in
 `results/integration/h3k9me3/{contrast}/` (in `results/te/integration/h3k9me3/{contrast}/` with
 `te: only`). `input_tables/` next to them has an unchanged copy of the `regions` file, so the
 results keep the input they were made from. The BigWig files are not copied.

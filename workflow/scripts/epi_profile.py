@@ -3,10 +3,15 @@ Profile and heatmap of the signal of the control and the treatment of a
 contrast over groups of regions (deepTools computeMatrix, plotProfile and
 plotHeatmap; one panel per group, one line per condition):
 
-- ATAC-seq Tn5 insertions (TE signal tracks, CPM or DESeq2-scaled) over the H3K9me3 regions that are lost,
-  gained or unchanged (scale-regions: regions scaled to body_length bp)
-- H3K9me3 signal around the centre of the more, less and unchanged
-  accessible peaks (reference-point)
+- ATAC-seq Tn5 insertions (TE signal tracks, CPM or DESeq2-scaled) over the
+  regions where an epigenomic mark (H3K9me3, DNA methylation) decreases,
+  increases or does not change
+  (scale-regions: regions scaled to body_length bp)
+- signal of the mark (e.g. H3K9me3 coverage, CpG methylation) around the
+  centre of the more, less and unchanged accessible peaks (reference-point)
+
+Bins without signal are 0 for coverage signal (missing_as_zero), and missing
+(left out of the mean) for methylation, which is only defined at CpGs.
 
 Regions come from a table with chr, start and end columns, grouped by
 group_column. If the chromosomes of the BigWig files are UCSC names (chr1),
@@ -35,6 +40,7 @@ labels = list(snakemake.params["labels"])
 colours = list(snakemake.params["colours"])
 y_label = snakemake.params["y_label"]
 region_name = snakemake.params["region_name"]
+missing_as_zero = snakemake.params.get("missing_as_zero", True)
 extra_matrix = snakemake.params["extra_computematrix"]
 extra_plot = snakemake.params["extra_plotprofile"]
 out_matrix = snakemake.output["matrix"]
@@ -142,7 +148,7 @@ else:
             str(flank),
             "--binSize",
             "50",
-            "--missingDataAsZero",
+            *(["--missingDataAsZero"] if missing_as_zero else []),
             "-p",
             str(snakemake.threads),
             "-o",

@@ -246,6 +246,54 @@ h3k9me3:
   # compared (subfamilies/)
   min_copies: 20
 
+# Integration with DNA methylation (not part of the ENCODE pipeline; needs
+# deseq2: enable): as h3k9me3:, with the differentially methylated regions
+# (DMRs) of the same contrast (e.g. EM-seq, bisulfite sequencing).
+# Consensus peaks: results/integration/methylation/{contrast}/; with the TE
+# module (also with te: only): results/te/integration/methylation/{contrast}/
+methylation:
+  # DESeq2 contrast name ({treatment}_vs_{control}): methylation data of the
+  # same contrast; empty: no integration
+  contrasts: {}
+  # contrasts:
+  #   ko_vs_wt:
+  #     # DMRs: a methylKit results table of all tested regions, or a BED file
+  #     # of DMRs of one direction (e.g. hypomethylated tiles, adjacent tiles
+  #     # merged)
+  #     regions: /path/to/ko_vs_wt_hypomethylated_dmrs.bed
+  #     # true: regions is a methylKit table (tab-separated, or .csv) of all
+  #     # tested regions, e.g. getData(calculateDiffMeth(...)), with the
+  #     # methylation difference (percentage points) and q-value; false: a
+  #     # BED file
+  #     methylkit: false
+  #     # BED file only: the DMRs are hypo- or hypermethylated in the
+  #     # treatment
+  #     direction: hypo
+  #     # Optional: CpG methylation (%, BigWig) of the control and the
+  #     # treatment; profile of the methylation around the differential peaks
+  #     # and over the DMRs
+  #     bigwigs:
+  #       control: /path/to/wt_methylation.bw
+  #       treatment: /path/to/ko_methylation.bw
+  # Columns of the methylKit tables; diff: methylation difference of the
+  # treatment minus the control (flip_diff: true if control minus treatment)
+  columns:
+    chr: chr
+    start: start
+    end: end
+    diff: meth.diff
+    fdr: qvalue
+  flip_diff: false
+  # Regions with q-value below fdr and |methylation difference| above
+  # min_diff (percentage points) are hypo- (below 0) or hypermethylated
+  fdr: 0.01
+  min_diff: 25
+  # Profiles (multiples of the 50 bp bins, or of --binSize in extra:
+  # computematrix), and TE subfamilies with at least min_copies copies
+  profile_flank: 5000
+  profile_body_length: 5000
+  min_copies: 20
+
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
 # workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;

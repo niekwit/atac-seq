@@ -3,16 +3,17 @@ log <- file(snakemake@log[[1]], open = "wt")
 sink(log, type = "output")
 sink(log, type = "message")
 
-# Correlation of the ATAC-seq log2 fold changes of the peaks with the H3K9me3
-# log2 fold changes (DiffBind) of the region each peak overlaps most
-# (h3k9me3_annotate_peaks), for the peaks in a DiffBind site. A site with
-# several peaks contributes one point per peak.
+# Correlation of the ATAC-seq log2 fold changes of the peaks with the effect
+# sizes of an epigenomic mark (results table: H3K9me3 log2 fold changes from
+# DiffBind, methylation differences from methylKit) of the region each peak
+# overlaps most (epi_annotate_peaks), for the peaks in a tested region (site).
+# A site with several peaks contributes one point per peak.
 #
 # - correlation.tsv: Spearman correlation of the peak-site pairs
 #   (descriptive: peaks in the same site are not independent, so no p-value)
 #   and of the sites, with the mean shrunken log2 fold change of their peaks
 #   (one value per site, with p-value), over all pairs or sites and over those
-#   with a significant change in both (sites: significant H3K9me3 change and
+#   with a significant change in both (sites: significant change of the mark and
 #   at least one differential peak), with the number of pairs per quadrant
 #   (significant in both)
 # - scatter.pdf: the pairs, coloured when significant in both
@@ -23,19 +24,29 @@ library(cowplot)
 treatment <- snakemake@params[["treatment"]]
 control <- snakemake@params[["control"]]
 peak_set <- snakemake@params[["peak_set"]]
+# Mark (h3k9me3, methylation): prefix of its columns; effect size column
+prefix <- snakemake@params[["prefix"]]
+effect_name <- snakemake@params[["effect_name"]]
+# Change codes of a decrease and an increase in the treatment, plot labels
+down <- snakemake@params[["down"]]
+up <- snakemake@params[["up"]]
+labels <- snakemake@params[["labels"]]
 
 peaks <- read.delim(
   snakemake@input[["peaks"]],
   colClasses = c(chr = "character")
 )
+# Generic names of the columns of the mark (mark_change, mark_effect, ...)
+names(peaks)[names(peaks) == paste0(prefix, "_", effect_name)] <- "mark_effect"
+names(peaks) <- sub(paste0("^", prefix, "_"), "mark_", names(peaks))
 pairs <- peaks[
-  peaks$h3k9me3_change != "outside" &
-    !is.na(peaks$h3k9me3_log2FoldChange),
+  peaks$mark_change != "outside" &
+    !is.na(peaks$mark_effect),
 ]
 pairs$significant <- pairs$change != "unchanged" &
-  pairs$h3k9me3_change != "unchanged"
+  pairs$mark_change != "unchanged"
 cat(sprintf(
-  "%d peaks in a DiffBind site, %d significant in both\n",
+  "%d peaks in a tested region, %d significant in both\n",
   nrow(pairs),
   sum(pairs$significant)
 ))
@@ -47,11 +58,11 @@ spearman <- function(x, y) {
   test <- suppressWarnings(cor.test(x, y, method = "spearman", exact = FALSE))
   c(rho = unname(test$estimate), p = test$p.value, n = length(x))
 }
-quadrant <- function(atac, h3k9me3) {
+quadrant <- function(atac, mark) {
   sum(
     pairs$significant &
       pairs$change == atac &
-      pairs$h3k9me3_change == h3k9me3
+      pairs$mark_change == mark
   )
 }
 # One value per site: the mean shrunken log2 fold change of its peaks
@@ -59,18 +70,18 @@ sites <- if (nrow(pairs)) {
   merge(
     aggregate(
       cbind(log2FoldChange_shrunken, significant) ~
-        h3k9me3_region +
-          h3k9me3_log2FoldChange,
+        mark_region +
+          mark_effect,
       data = pairs,
       FUN = mean
     ),
-    aggregate(significant ~ h3k9me3_region, data = pairs, FUN = any),
-    by = "h3k9me3_region",
+    aggregate(significant ~ mark_region, data = pairs, FUN = any),
+    by = "mark_region",
     suffixes = c("_fraction", "")
   )
 } else {
   data.frame(
-    h3k9me3_log2FoldChange = numeric(),
+    mark_effect = numeric(),
     log2FoldChange_shrunken = numeric(),
     significant = logical()
   )
@@ -84,7 +95,7 @@ correlation <- do.call(
       lapply(c("all", "significant in both"), function(set) {
         keep <- if (set == "all") rep(TRUE, nrow(data)) else data$significant
         result <- spearman(
-          data$h3k9me3_log2FoldChange[keep],
+          data$mark_effect[keep],
           data$log2FoldChange_shrunken[keep]
         )
         data.frame(
@@ -94,10 +105,20 @@ correlation <- do.call(
           spearman_rho = result[["rho"]],
           # Peaks of a site are not independent: no p-value
           p = if (level == "peaks") NA else result[["p"]],
-          n_lost_more_accessible = quadrant("more accessible", "lost"),
-          n_lost_less_accessible = quadrant("less accessible", "lost"),
-          n_gained_more_accessible = quadrant("more accessible", "gained"),
-          n_gained_less_accessible = quadrant("less accessible", "gained")
+          # Pairs significant in both per quadrant, e.g. n_lost_more_accessible
+          setNames(
+            as.list(c(
+              quadrant("more accessible", down),
+              quadrant("less accessible", down),
+              quadrant("more accessible", up),
+              quadrant("less accessible", up)
+            )),
+            paste0(
+              "n_",
+              rep(c(down, up), each = 2),
+              c("_more_accessible", "_less_accessible")
+            )
+          )
         )
       })
     )
@@ -114,7 +135,12 @@ write.table(
 
 if (nrow(pairs) == 0) {
   scatter <- ggplot() +
-    annotate("text", x = 0, y = 0, label = "No peaks in DiffBind sites") +
+    annotate(
+      "text",
+      x = 0,
+      y = 0,
+      label = paste("No peaks in", labels[["sites"]])
+    ) +
     theme_void(base_size = 12)
 } else {
   pairs$colour <- ifelse(pairs$significant, pairs$change, "other")
@@ -130,10 +156,10 @@ if (nrow(pairs) == 0) {
     hjust = c(-0.2, -0.2, 1.2, 1.2),
     vjust = c(1.5, -0.5, 1.5, -0.5),
     label = c(
-      quadrant("more accessible", "lost"),
-      quadrant("less accessible", "lost"),
-      quadrant("more accessible", "gained"),
-      quadrant("less accessible", "gained")
+      quadrant("more accessible", down),
+      quadrant("less accessible", down),
+      quadrant("more accessible", up),
+      quadrant("less accessible", up)
     )
   )
   by_peak <- correlation[
@@ -144,7 +170,7 @@ if (nrow(pairs) == 0) {
   ]
   scatter <- ggplot(
     pairs,
-    aes(h3k9me3_log2FoldChange, log2FoldChange_shrunken)
+    aes(mark_effect, log2FoldChange_shrunken)
   ) +
     geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
     geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
@@ -178,7 +204,7 @@ if (nrow(pairs) == 0) {
       drop = TRUE
     ) +
     labs(
-      x = paste("H3K9me3 log2 fold change,", treatment, "vs", control),
+      x = paste0(labels[["effect"]], ", ", treatment, " vs ", control),
       y = paste(
         "ATAC-seq shrunken log2 fold change,",
         treatment,
@@ -189,11 +215,12 @@ if (nrow(pairs) == 0) {
       alpha = "Significant in both",
       caption = sprintf(
         paste0(
-          "%s in DiffBind sites; corners: pairs significant in both\n",
+          "%s in %s; corners: pairs significant in both\n",
           "Spearman rho = %.2f (%d peaks); per site (mean of its peaks): ",
           "rho = %.2f (p = %.2g, n = %d)"
         ),
         peak_set,
+        labels[["sites"]],
         by_peak$spearman_rho,
         by_peak$n,
         by_site$spearman_rho,

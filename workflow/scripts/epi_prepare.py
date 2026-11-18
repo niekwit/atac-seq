@@ -1,21 +1,26 @@
 """
-Prepares the differential H3K9me3 regions of a contrast (h3k9me3: contrasts)
-for the integration with the differential accessibility.
+Prepares the differential regions of an epigenomic mark of a contrast
+({mark}: contrasts: H3K9me3, DNA methylation) for the integration with the
+differential accessibility.
 
-- DiffBind table (diffbind: true): every site with its log2 fold change and
-  FDR; sites with FDR below h3k9me3: fdr are lost (log2 fold change < 0) or
-  gained (> 0) in the treatment, the others unchanged. DiffBind reports
-  1-based starts (GRanges), which are converted to BED (0-based) starts.
-- BED file (diffbind: false): regions that change in one direction
-  (direction: lost or gained), e.g. MACS2 peaks of the control called with
-  the treatment as control sample. Overlapping regions (e.g. consensus peaks
-  of replicates) are merged; there is no log2 fold change or FDR.
+- Results table (h3k9me3: diffbind: true, methylation: methylkit: true): every
+  tested region with its effect size (log2 fold change, or methylation
+  difference in percentage points) and FDR (q-value); regions with FDR below
+  {mark}: fdr and |effect| above min_effect decrease (lost, hypo) or increase
+  (gained, hyper) in the treatment, the others are unchanged. DiffBind and
+  methylKit report 1-based starts, which are converted to BED (0-based).
+- BED file: regions that change in one direction (direction), e.g. MACS2
+  peaks of the control called with the treatment as control sample, or the
+  DMRs of one direction. Overlapping regions (e.g. consensus peaks of
+  replicates) are merged; there is no effect size or FDR.
 
 Chromosome names are converted to Ensembl names (chr1 -> 1, chrM -> MT), and
-regions on chromosomes that are not in the genome are removed.
+regions on chromosomes that are not in the genome, or outside their
+chromosome, are removed.
 
-Writes regions.tsv (region_id, chr, start, end, width, log2FoldChange, FDR,
-change) and BED files of the lost and gained regions (empty if none).
+Writes regions.tsv (region_id, chr, start, end, width, the effect, FDR,
+change) and BED files of the regions where the mark decreases and increases
+(empty if none).
 """
 
 import logging
@@ -27,13 +32,20 @@ import pandas as pd
 
 regions_file = snakemake.input["regions"]
 chrom_sizes = snakemake.input["chrom_sizes"]
-diffbind = snakemake.params["diffbind"]
+name = snakemake.params["name"]
+# Mark (h3k9me3, methylation), the prefix of the region IDs
+prefix = snakemake.params["prefix"]
+is_table = snakemake.params["table"]
 direction = snakemake.params["direction"]
+down = snakemake.params["down"]
+up = snakemake.params["up"]
+effect_name = snakemake.params["effect_name"]
 columns = snakemake.params["columns"]
-flip_fold = snakemake.params["flip_fold"]
+flip = snakemake.params["flip"]
 fdr = float(snakemake.params["fdr"])
+min_effect = float(snakemake.params["min_effect"])
 out_table = snakemake.output["table"]
-out_beds = {"lost": snakemake.output["lost"], "gained": snakemake.output["gained"]}
+out_beds = {down: snakemake.output["decreased"], up: snakemake.output["increased"]}
 log = snakemake.log[0]
 
 logging.basicConfig(
@@ -83,13 +95,13 @@ def on_genome(regions):
     return regions[~invalid]
 
 
-if diffbind:
+if is_table:
     sep = "," if regions_file.lower().endswith(".csv") else "\t"
     table = pd.read_csv(regions_file, sep=sep)
     missing = [c for c in columns.values() if c not in table.columns]
     if missing:
         raise ValueError(
-            f"Columns {missing} (h3k9me3: columns) not in {regions_file} "
+            f"Columns {missing} (columns of the config) not in {regions_file} "
             f"(columns: {', '.join(table.columns)})"
         )
     regions = pd.DataFrame(
@@ -98,17 +110,17 @@ if diffbind:
             # GRanges (1-based) to BED (0-based) start
             "start": table[columns["start"]].astype(int) - 1,
             "end": table[columns["end"]].astype(int),
-            "log2FoldChange": table[columns["log2fc"]].astype(float),
+            effect_name: table[columns["effect"]].astype(float),
             "FDR": table[columns["fdr"]].astype(float),
         }
     )
-    if flip_fold:
-        regions["log2FoldChange"] = -regions["log2FoldChange"]
-    significant = regions["FDR"] < fdr
+    if flip:
+        regions[effect_name] = -regions[effect_name]
+    significant = (regions["FDR"] < fdr) & (regions[effect_name].abs() > min_effect)
     regions["change"] = "unchanged"
-    regions.loc[significant & (regions["log2FoldChange"] < 0), "change"] = "lost"
-    regions.loc[significant & (regions["log2FoldChange"] > 0), "change"] = "gained"
-    logging.info(f"{len(regions)} DiffBind sites in {regions_file}")
+    regions.loc[significant & (regions[effect_name] < 0), "change"] = down
+    regions.loc[significant & (regions[effect_name] > 0), "change"] = up
+    logging.info(f"{len(regions)} tested {name} regions in {regions_file}")
 else:
     bed = pd.read_csv(
         regions_file,
@@ -145,14 +157,14 @@ else:
         columns=["chr", "start", "end"],
     ).astype({"start": int, "end": int})
     logging.info(f"{len(regions)} regions after merging overlapping regions")
-    regions["log2FoldChange"] = float("nan")
+    regions[effect_name] = float("nan")
     regions["FDR"] = float("nan")
     regions["change"] = direction
 
 regions = on_genome(regions).sort_values(["chr", "start", "end"])
 if regions.empty:
-    raise ValueError(f"No H3K9me3 regions of {regions_file} on the genome")
-regions.insert(0, "region_id", [f"h3k9me3_{i}" for i in range(1, len(regions) + 1)])
+    raise ValueError(f"No {name} regions of {regions_file} on the genome")
+regions.insert(0, "region_id", [f"{prefix}_{i}" for i in range(1, len(regions) + 1)])
 regions.insert(4, "width", regions["end"] - regions["start"])
 regions.to_csv(out_table, sep="\t", index=False)
 

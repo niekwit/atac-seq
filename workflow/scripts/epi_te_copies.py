@@ -1,15 +1,17 @@
 """
-Repeat copies in the differential H3K9me3 regions of a contrast (TE module).
+Repeat copies in the differential regions of an epigenomic mark (H3K9me3, DNA
+methylation) of a contrast (TE module).
 
 - copies.tsv: per subfamily (resources/te/repeats.saf, all RepeatMasker
   copies of the counted classes), the number of copies and the copies with
-  at least half their length in regions that lose and gain H3K9me3
+  at least half their length in regions where the mark decreases and
+  increases (n_copies_lost/gained, n_copies_hypo/hyper)
   (bedtools intersect -f 0.5), and the fraction of the genome covered by
   those regions (overlapping regions counted once). The fraction is a
   reference for the plots, not the expected fraction of copies under random
   placement, which also depends on the lengths of the copies and regions.
 - full_length.tsv: each full-length copy of the te: profile: subfamilies
-  entries (resources/te/full_length_copies.bed) with the H3K9me3 change of
+  entries (resources/te/full_length_copies.bed) with the change of the mark in
   the region it overlaps most (lost, gained, unchanged or outside) and its
   accessibility: more or less accessible if a differential TE peak overlaps
   it (more accessible if both), unchanged if only unchanged TE peaks do, no
@@ -36,6 +38,10 @@ peaks_file = snakemake.input["peaks"]
 chrom_sizes = snakemake.input["chrom_sizes"]
 out_copies = snakemake.output["copies"]
 out_full_length = snakemake.output["full_length"]
+# Mark (h3k9me3, methylation) and its change codes (decrease, increase)
+prefix = snakemake.params["prefix"]
+down = snakemake.params["down"]
+up = snakemake.params["up"]
 log = snakemake.log[0]
 
 logging.basicConfig(
@@ -77,7 +83,7 @@ genome_bp = (
     pd.read_csv(chrom_sizes, sep="\t", header=None, usecols=[1])[1].astype(int).sum()
 )
 
-# Copies per subfamily in regions that lose or gain H3K9me3
+# Copies per subfamily in regions where the mark decreases or increases
 # -----------------------------------------------------
 # SAF: 1-based starts
 saf = pd.read_csv(saf_file, sep="\t", dtype={"Chr": str})
@@ -92,7 +98,7 @@ copies = pd.DataFrame(
 )
 copies_bed = write_bed(copies, "copies")
 counts = copies.groupby("subfamily").size().rename("n_copies").to_frame()
-for change in ("lost", "gained"):
+for change in (down, up):
     selected = regions[regions["change"] == change]
     counts[f"n_copies_{change}"] = 0
     counts[f"genome_fraction_{change}"] = 0.0
@@ -118,11 +124,11 @@ for change in ("lost", "gained"):
     )
     logging.info(
         f"{len(hits)} of {len(copies)} copies with >= 50% in regions with "
-        f"H3K9me3 {change} ({covered / genome_bp:.2%} of the genome)"
+        f"{prefix} {change} ({covered / genome_bp:.2%} of the genome)"
     )
 counts.reset_index().to_csv(out_copies, sep="\t", index=False)
 
-# Full-length copies: H3K9me3 change and accessibility
+# Full-length copies: change of the mark and accessibility
 # -----------------------------------------------------
 # deepTools groups: the copies of an entry are followed by "#<entry> (n=...)"
 rows, pending = [], []
@@ -143,7 +149,7 @@ full_length = pd.DataFrame(
     rows, columns=["chr", "start", "end", "subfamily", "group"]
 ).astype({"chr": str})
 full_length["copy"] = range(len(full_length))
-full_length["h3k9me3_change"] = "outside"
+full_length[f"{prefix}_change"] = "outside"
 full_length["accessibility"] = "no peak"
 if not full_length.empty:
     fl_bed = write_bed(full_length[["chr", "start", "end", "copy"]], "full_length")
@@ -154,7 +160,7 @@ if not full_length.empty:
     if not hits.empty:
         # Region with the largest overlap of each copy
         hits = hits.sort_values(9, ascending=False).drop_duplicates(3)
-        full_length.loc[hits[3].values, "h3k9me3_change"] = hits[8].values
+        full_length.loc[hits[3].values, f"{prefix}_change"] = hits[8].values
 
     peaks = pd.read_csv(peaks_file, sep="\t", dtype={"chr": str})
     peaks = peaks[peaks["padj"].notna()]
@@ -169,9 +175,9 @@ full_length = full_length.drop(columns="copy")
 full_length.to_csv(out_full_length, sep="\t", index=False)
 if not full_length.empty:
     logging.info(
-        "Full-length copies by H3K9me3 change and accessibility:\n"
+        f"Full-length copies by {prefix} change and accessibility:\n"
         + pd.crosstab(
-            [full_length["group"], full_length["h3k9me3_change"]],
+            [full_length["group"], full_length[f"{prefix}_change"]],
             full_length["accessibility"],
         ).to_string()
     )
