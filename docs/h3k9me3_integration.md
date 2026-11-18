@@ -29,8 +29,8 @@ h3k9me3:
     fdr: FDR
   flip_fold: false
   fdr: 0.05
-  profile_flank: 5000         # multiple of 50 (computeMatrix bins)
-  profile_body_length: 5000   # multiple of 50
+  profile_flank: 5000         # multiple of the bin size (50 bp, or extra: computematrix --binSize)
+  profile_body_length: 5000   # multiple of the bin size
   min_copies: 20
 ```
 
@@ -38,11 +38,18 @@ h3k9me3:
 
 - **DiffBind table** (`diffbind: true`): all sites with their log2 fold change and FDR, written
   for example with
-  `write.csv(as.data.frame(dba.report(db, th = 1, precision = 0)), "ko_vs_wt_h3k9me3.csv")`
-  (`th = 1` reports all sites, not only the significant ones, which are needed as the unchanged
-  background; `precision = 0` keeps the FDR and fold changes unrounded, so that a site with FDR
-  0.0496 is not written as 0.05). The
-  table is tab-separated, or comma-separated if the name ends in `.csv`. The starts are 1-based
+
+  ```r
+  dba.show(db, bContrasts = TRUE)  # the number of the KO vs WT contrast, here 1
+  report <- dba.report(db, contrast = 1, th = 1, precision = 0)
+  write.csv(as.data.frame(report), "ko_vs_wt_h3k9me3.csv")
+  ```
+
+  `contrast` selects the contrast that matches the workflow's contrast (without it, DiffBind
+  reports the first contrast of `db`). `th = 1` reports all sites, not only the significant ones,
+  which are needed as the unchanged background. `precision = 0` keeps the FDR and fold changes
+  unrounded, so that a site with FDR 0.0496 is not written as 0.05. The table is tab-separated,
+  or comma-separated if the name ends in `.csv`. The starts are 1-based
   (as in DiffBind's GRanges) and are converted to BED. `Fold` must be the log2 fold change of the
   treatment over the control. DiffBind divides the first group of its contrast by the second,
   so set `flip_fold: true` if that was the control. Sites with `FDR < fdr` are **lost** (log2

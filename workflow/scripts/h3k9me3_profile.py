@@ -15,6 +15,7 @@ message if no group has regions.
 """
 
 import gzip
+import json
 import logging
 import os
 import subprocess
@@ -74,8 +75,8 @@ if not set(table["chr"]) & bigwig_chroms:
 # Removed at exit, also after an error
 _tmp = tempfile.TemporaryDirectory(dir=os.path.dirname(out_matrix))
 tmp = _tmp.name
-# Heatmap labels without the numbers, which are in the profile
-beds, region_labels, heatmap_labels = [], [], []
+# BED files of the groups, and the label of each (by file name)
+beds, names = [], {}
 for value, label in groups.items():
     selected = table[table[group_column] == value]
     logging.info(f"{label}: {len(selected)} regions")
@@ -86,8 +87,7 @@ for value, label in groups.items():
         path, sep="\t", header=False, index=False
     )
     beds.append(path)
-    region_labels.append(f"{label} (n = {len(selected)})")
-    heatmap_labels.append(label)
+    names[os.path.basename(path)] = label
 
 
 def run(command):
@@ -150,6 +150,19 @@ else:
             *extra_matrix.split(),
         ]
     )
+    # Regions in the matrix per group: fewer than in the BED files with, e.g.,
+    # --skipZeros in extra: computematrix; groups without regions are dropped
+    with gzip.open(out_matrix, "rt") as fh:
+        header = json.loads(fh.readline()[1:])
+    boundaries = header["group_boundaries"]
+    region_labels, heatmap_labels = [], []
+    for i, group in enumerate(header["group_labels"]):
+        label = names.get(group, group)
+        n = boundaries[i + 1] - boundaries[i]
+        logging.info(f"{label}: {n} regions in the matrix")
+        region_labels.append(f"{label} (n = {n})")
+        # Heatmap labels without the numbers, which are in the profile
+        heatmap_labels.append(label)
     run(
         [
             "plotProfile",
@@ -164,7 +177,7 @@ else:
             *colours,
             *point_labels,
             "--numPlotsPerRow",
-            str(len(beds)),
+            str(len(region_labels)),
             "--plotHeight",
             "7",
             "--plotWidth",

@@ -512,6 +512,15 @@ def h3k9me3_contrasts():
     if not contrasts or not deseq2_enabled():
         return {}
     deseq2 = deseq2_contrasts()
+    # deepTools needs the profile lengths to be multiples of the bin size
+    bin_size = computematrix_bin_size()
+    for setting in ("profile_flank", "profile_body_length"):
+        value = h3k9me3_config()[setting]
+        if value % bin_size:
+            raise ValueError(
+                f"h3k9me3: {setting} ({value}) must be a multiple of the "
+                f"computeMatrix bin size ({bin_size} bp)"
+            )
     result = {}
     for name, settings in contrasts.items():
         key = f"h3k9me3: contrasts: {name}"
@@ -543,6 +552,15 @@ def h3k9me3_contrasts():
             "bigwigs": bigwigs,
         }
     return result
+
+
+def computematrix_bin_size():
+    """
+    Bin size (bp) of the computeMatrix profiles of the integrations: 50, or
+    --binSize/-bs of extra: computematrix (later arguments override earlier)
+    """
+    found = re.findall(r"(?:--binSize|-bs)[ =](\d+)", extra("computematrix"))
+    return int(found[-1]) if found else 50
 
 
 def h3k9me3_bigwig_contrasts():

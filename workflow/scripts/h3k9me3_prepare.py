@@ -57,6 +57,32 @@ def ensembl_names(chrs):
     return chrs.astype(str).str.removeprefix("chr").replace({"M": "MT"})
 
 
+def on_genome(regions):
+    """
+    Removes regions on chromosomes not in the genome, outside their
+    chromosome or with start >= end (0 <= start < end <= length); logs them
+    """
+    off_genome = ~regions["chr"].isin(chroms)
+    if off_genome.any():
+        logging.warning(
+            f"{off_genome.sum()} regions on chromosomes not in the genome removed: "
+            f"{', '.join(sorted(regions.loc[off_genome, 'chr'].unique()))}"
+        )
+    regions = regions[~off_genome]
+    length = regions["chr"].map(lengths)
+    invalid = (regions["start"] < 0) | (regions["start"] >= regions["end"])
+    invalid |= regions["end"] > length
+    if invalid.any():
+        logging.warning(
+            f"{invalid.sum()} regions outside their chromosome or with start >= "
+            "end removed:\n"
+            + regions.loc[invalid, ["chr", "start", "end"]]
+            .head(20)
+            .to_string(index=False)
+        )
+    return regions[~invalid]
+
+
 if diffbind:
     sep = "," if regions_file.lower().endswith(".csv") else "\t"
     table = pd.read_csv(regions_file, sep=sep)
@@ -97,6 +123,8 @@ else:
     bed["chr"] = ensembl_names(bed["chr"])
     bed = bed.astype({"start": int, "end": int})
     logging.info(f"{len(bed)} regions in {regions_file}")
+    # Before merging, so that an invalid record does not remove valid ones
+    bed = on_genome(bed)
     # Merge overlapping regions (>= 1 bp; adjacent regions stay separate)
     with tempfile.NamedTemporaryFile(
         "w", suffix=".bed", dir=os.path.dirname(out_table), delete=False
@@ -121,24 +149,7 @@ else:
     regions["FDR"] = float("nan")
     regions["change"] = direction
 
-off_genome = ~regions["chr"].isin(chroms)
-if off_genome.any():
-    logging.warning(
-        f"{off_genome.sum()} regions on chromosomes not in the genome removed: "
-        f"{', '.join(sorted(regions.loc[off_genome, 'chr'].unique()))}"
-    )
-regions = regions[~off_genome]
-# Coordinates within the chromosomes (0 <= start < end <= length)
-length = regions["chr"].map(lengths)
-invalid = (regions["start"] < 0) | (regions["start"] >= regions["end"])
-invalid |= regions["end"] > length
-if invalid.any():
-    logging.warning(
-        f"{invalid.sum()} regions outside their chromosome or with start >= end "
-        "removed:\n"
-        + regions.loc[invalid, ["chr", "start", "end"]].head(20).to_string(index=False)
-    )
-regions = regions[~invalid].sort_values(["chr", "start", "end"])
+regions = on_genome(regions).sort_values(["chr", "start", "end"])
 if regions.empty:
     raise ValueError(f"No H3K9me3 regions of {regions_file} on the genome")
 regions.insert(0, "region_id", [f"h3k9me3_{i}" for i in range(1, len(regions) + 1)])

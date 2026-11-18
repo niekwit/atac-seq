@@ -327,14 +327,10 @@ properties:
       profile_flank:
         type: integer
         minimum: 100
-        # A multiple of the 50 bp bins of computeMatrix
-        multipleOf: 50
         default: 5000
       profile_body_length:
         type: integer
         minimum: 100
-        # A multiple of the 50 bp bins of computeMatrix
-        multipleOf: 50
         default: 5000
       min_copies:
         type: integer

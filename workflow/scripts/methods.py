@@ -147,6 +147,7 @@ context = {
     "h3k9me3_flank": params["h3k9me3_config"]["profile_flank"],
     "h3k9me3_body": params["h3k9me3_config"]["profile_body_length"],
     "h3k9me3_min_copies": params["h3k9me3_config"]["min_copies"],
+    "h3k9me3_bin": params["computematrix_bin_size"],
     "annotation": annotation,
     "r_used": annotation or reference["blacklist"]["source"] == "annotationhub",
 }

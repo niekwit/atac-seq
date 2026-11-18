@@ -347,8 +347,8 @@ with the mean shrunken log2 fold change of the peaks in each site.
 {% endif %}
 {% if h3k9me3_bigwigs %}
 The H3K9me3 signal of the control and the treatment around the centre of the
-more, less and unchanged accessible peaks (± {{ h3k9me3_flank }} bp, 50 bp
-bins) was calculated with computeMatrix reference-point and plotted with
+more, less and unchanged accessible peaks (± {{ h3k9me3_flank }} bp,
+{{ h3k9me3_bin }} bp bins) was calculated with computeMatrix reference-point and plotted with
 plotProfile and plotHeatmap.
 {% endif %}
 {% if te %}
@@ -356,8 +356,8 @@ plotProfile and plotHeatmap.
 The same analyses were run for the peaks of the TE module.
 {% endif %}
 Tn5 insertions per million (mean of the replicates of each condition) over the
-H3K9me3 regions (scaled to {{ h3k9me3_body }} bp, ± {{ h3k9me3_flank }}
-bp) were calculated with computeMatrix scale-regions. For each repeat subfamily
+H3K9me3 regions (scaled to {{ h3k9me3_body }} bp, ± {{ h3k9me3_flank }} bp,
+{{ h3k9me3_bin }} bp bins) were calculated with computeMatrix scale-regions. For each repeat subfamily
 with at least {{ h3k9me3_min_copies }} copies, the percentage of copies with at
 least half their length in the H3K9me3 regions was correlated with the
 subfamily's shrunken log2 fold change (Spearman). Full-length copies of the
