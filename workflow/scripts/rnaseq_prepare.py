@@ -30,7 +30,8 @@ import pandas as pd
 # Load Snakemake variables
 table_file = snakemake.input["rnaseq"]
 gtf_file = snakemake.input["gtf"]
-subfamilies_file = snakemake.input.get("subfamilies", None)
+# A list (empty without the TE module)
+subfamilies_file = next(iter(snakemake.input.get("subfamilies", [])), None)
 columns = snakemake.params["columns"]
 id_type = snakemake.params["id_type"]
 fdr = snakemake.params["fdr"]
