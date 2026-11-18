@@ -273,6 +273,55 @@ and SAMtools stats) was done as above and combined with MultiQC.
 {% endif %}
 {% endif %}
 
+{% if rnaseq %}
+## Integration with RNA-seq
+
+Differential accessibility was compared with RNA-seq DESeq2 results of the same
+contrast ({{ rnaseq | join_and }}). Genes were matched to the genome annotation
+by gene ID or name, and genes with adjusted p < {{ rnaseq_fdr }} and
+{{ rnaseq_lfc_text }} were called up- or downregulated; genes without adjusted
+p-value were left out.
+Gene rows of the RNA-seq results were compared with the
+{% if not te_only %}
+consensus peaks
+{% if te %}
+and, separately, with the peaks of the TE module (genome-wide peaks of the
+alignment keeping multimapping reads)
+{% endif %}
+{% else %}
+peaks of the TE module (genome-wide peaks of the alignment keeping
+multimapping reads)
+{% endif %}
+; peaks were assigned to the gene of their nearest TSS (ChIPseeker) within
+{{ rnaseq_max }}; peaks without adjusted p-value (not tested by DESeq2) were
+left out. Enrichment of differential peaks at up- and downregulated genes was
+tested with Fisher's exact test (all tested genes as background; per distance
+bin, with bins ending at {{ rnaseq_bins }}), and peak and gene log2 fold changes
+were correlated (Spearman). Peak-gene pairs with a significant change in both
+(|log2 fold change| > {{ rnaseq_pair_lfc }} in both) were classified as
+concordant (more accessible and up, or less accessible and down) or
+discordant; the larger of the two adjusted p-values was used as the p-value of
+a change in both (intersection-union test {{ cite("berger1982") }}).
+{% if te %}
+Tn5 insertions per million (mean of the replicates of each condition) around
+the TSS (± {{ rnaseq_tss_flank }} bp, 50 bp bins) of the up-, down- and
+unchanged genes were calculated with computeMatrix reference-point and plotted
+with plotProfile.
+Repeat subfamilies in the RNA-seq results (e.g. TEtranscripts) were compared
+with the differential accessibility of their insertions and of the TE peaks
+overlapping them (Spearman correlation, Fisher's exact tests, and Wilcoxon
+rank-sum tests of the RNA-seq log2 fold changes against unchanged
+subfamilies), leaving out subfamilies without adjusted p-value in either data
+set.
+{% endif %}
+P-values of the
+{% if te %}
+Wilcoxon and
+{% endif %}
+Fisher's exact tests were adjusted with the
+Benjamini–Hochberg method {{ cite("benjamini1995") }}.
+{% endif %}
+
 {% set r_packages = [] %}
 {% if annotation %}{% set _ = r_packages.append(tool("tidyverse")) %}{% endif %}
 {% if deseq2 %}
@@ -280,6 +329,7 @@ and SAMtools stats) was done as above and combined with MultiQC.
 {% set _ = r_packages.append(tool("ggrepel")) %}
 {% set _ = r_packages.append(tool("pheatmap")) %}
 {% endif %}
+{% if rnaseq %}{% set _ = r_packages.append(tool("cowplot")) %}{% endif %}
 Custom scripts used {{ tool("python") }} with {{ tool("numpy") }},
 {{ tool("pandas") }}, {{ tool("scipy") }} and {{ tool("matplotlib") }}
 {% if r_used %}

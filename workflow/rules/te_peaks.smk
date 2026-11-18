@@ -254,6 +254,26 @@ rule te_gat:
         "../scripts/te_gat.py"
 
 
+# Copies of the data sets (te: correlation: datasets), unchanged, so that the
+# results keep the input they were made from
+# -----------------------------------------------------
+rule te_correlation_inputs:
+    input:
+        datasets=lambda w: list(te_correlation_config()["datasets"].values()),
+    output:
+        directory("results/te/correlation/input_tables"),
+    params:
+        files=lambda w: te_correlation_config()["datasets"],
+    threads: 1
+    resources:
+        runtime=runtime(10),
+        mem_mb=1000,
+    log:
+        "logs/te/correlation/input_tables.log",
+    script:
+        "../scripts/copy_inputs.py"
+
+
 # Area-proportional Venn diagrams of the differential peaks and each data set,
 # with the GAT results
 # -----------------------------------------------------

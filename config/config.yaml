@@ -144,6 +144,53 @@ te:
     #   EM-seq hypermethylated DMRs: /path/to/hyper_dmrs.bed
     gat_samples: 10000
 
+# Integration with RNA-seq (not part of the ENCODE pipeline; needs deseq2:
+# enable): the differential accessibility of a contrast is compared with an
+# RNA-seq DESeq2 results table of the same contrast (same treatment and
+# control). Genes (non-TE rows) are compared with the consensus peaks
+# (results/integration/rna-seq/{contrast}/) and, with the TE module (also
+# with te: only), with the genome-wide peaks of the TE module
+# (results/te/integration/rna-seq/{contrast}/genes/); repeat subfamilies (TE
+# rows of the table, e.g. from TEtranscripts) with the subfamily counts and
+# TE peaks (results/te/integration/rna-seq/{contrast}/subfamilies/)
+rnaseq:
+  # DESeq2 contrast name ({treatment}_vs_{control}): RNA-seq DESeq2 results
+  # table (tab-separated, or .csv), or a list of tables (e.g. genes and TEs in
+  # separate files); empty: no integration
+  tables: {}
+  # tables:
+  #   ko_vs_wt: /path/to/rnaseq/ko_vs_wt_deseq2.tsv
+  #   # or genes and TEs in separate tables
+  #   ko_vs_wt: [/path/to/ko_vs_wt_genes.csv, /path/to/ko_vs_wt_te.csv]
+  # Columns of the tables; gene_id "": the first column (e.g. the row names
+  # written by write.csv(as.data.frame(res)))
+  columns:
+    gene_id: ""
+    log2fc: log2FoldChange
+    padj: padj
+    base_mean: baseMean
+  # Gene identifiers: ensembl (gene IDs, a version suffix is removed), symbol
+  # (gene names) or auto (whichever matches more rows to the genome annotation)
+  id_type: auto
+  # TE module: rows whose ID, up to the first te_separator, is a RepeatMasker
+  # subfamily are TEs, e.g. "L1MdTf_I:L1:LINE" (TEtranscripts) or "L1MdTf_I"
+  te_separator: ":"
+  # Genes (and subfamilies) with padj below fdr and |log2 fold change| above
+  # lfc_threshold are up- or downregulated
+  fdr: 0.05
+  lfc_threshold: 0
+  # Peaks are assigned to the gene of their nearest TSS, if it is within the
+  # largest distance (bp); the enrichment and correlation are given per
+  # distance bin (0-1 kb, 1-10 kb, ...) and for all distances
+  distance_bins: [1000, 10000, 50000, 100000]
+  # Peak-gene pairs with a significant change in both (padj below the fdr of
+  # each data set) and |log2 fold change| above this in both: scatter and
+  # distance plots (pairs.tsv)
+  pair_lfc_threshold: 1
+  # TE module: profile of the Tn5 insertions (CPM) around the TSS of the up-,
+  # down- and unchanged genes, this many bp up- and downstream
+  tss_profile_flank: 3000
+
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
 # workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;

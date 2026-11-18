@@ -423,6 +423,60 @@ def te_correlation_config():
     }
 
 
+def rnaseq_config():
+    """
+    Returns the settings of the integration with RNA-seq (rnaseq: in the
+    config), with defaults
+    """
+    rnaseq = config.get("rnaseq") or {}
+    columns = rnaseq.get("columns") or {}
+    return {
+        "tables": rnaseq.get("tables") or {},
+        "columns": {
+            "gene_id": columns.get("gene_id") or "",
+            "log2fc": columns.get("log2fc") or "log2FoldChange",
+            "padj": columns.get("padj") or "padj",
+            "base_mean": columns.get("base_mean") or "baseMean",
+        },
+        "id_type": rnaseq.get("id_type", "auto"),
+        "fdr": rnaseq.get("fdr", 0.05),
+        "lfc_threshold": rnaseq.get("lfc_threshold", 0),
+        "distance_bins": sorted(
+            rnaseq.get("distance_bins", [1000, 10000, 50000, 100000])
+        ),
+        "te_separator": rnaseq.get("te_separator", ":"),
+        "pair_lfc_threshold": rnaseq.get("pair_lfc_threshold", 1),
+        "tss_profile_flank": rnaseq.get("tss_profile_flank", 3000),
+    }
+
+
+def rnaseq_contrasts():
+    """
+    Returns the DESeq2 contrasts with RNA-seq DESeq2 results tables
+    ({contrast: [tables]}, rnaseq: tables: a path or a list of paths, e.g.
+    genes and TEs in separate files); empty without deseq2: enable
+    """
+    tables = rnaseq_config()["tables"]
+    if not tables or not deseq2_enabled():
+        return {}
+    contrasts = deseq2_contrasts()
+    result = {}
+    for name, paths in tables.items():
+        if name not in contrasts:
+            raise ValueError(
+                f"rnaseq: tables: {name} is not a DESeq2 contrast "
+                f"(contrasts: {', '.join(contrasts) or 'none'})"
+            )
+        paths = [paths] if isinstance(paths, str) else list(paths)
+        if not paths:
+            raise ValueError(f"rnaseq: tables: {name}: no table")
+        for path in paths:
+            if not os.path.isfile(path):
+                raise ValueError(f"rnaseq: tables: {name}: no file {path}")
+        result[name] = paths
+    return result
+
+
 def te_only():
     """
     With te: only, the workflow runs the TE module only (and the read trimming,
@@ -478,6 +532,9 @@ def methods_envs():
             and te_correlation_config()["datasets"]
         ):
             envs.append("eulerr")
+    # Plots of the integration with RNA-seq
+    if rnaseq_contrasts():
+        envs.append("integration")
     return envs
 
 

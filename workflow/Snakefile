@@ -49,6 +49,7 @@ include: "rules/deseq2.smk"
 include: "rules/te.smk"
 include: "rules/te_peaks.smk"
 include: "rules/te_qc.smk"
+include: "rules/rnaseq.smk"
 include: "rules/methods.smk"
 
 
@@ -99,6 +100,17 @@ if not te_only():
                 "results/deseq2/{contrast}/differential_peaks.tsv",
                 contrast=deseq2_contrasts(),
             ),
+            # Integration with RNA-seq (contrasts in rnaseq: tables)
+            *expand(
+                "results/integration/rna-seq/{contrast}/{file}",
+                contrast=rnaseq_contrasts(),
+                file=[
+                    "genes.tsv",
+                    "enrichment.pdf",
+                    "scatter.pdf",
+                    "distance.pdf",
+                ],
+            ),
         ]
 
 # Optional TE module
@@ -142,11 +154,28 @@ if te_enabled():
                 ],
             ),
         ]
+        # Integration with RNA-seq (contrasts in rnaseq: tables)
+        TE_TARGETS += expand(
+            "results/te/integration/rna-seq/{contrast}/{file}",
+            contrast=rnaseq_contrasts(),
+            file=[
+                "genes/genes.tsv",
+                "genes/enrichment.pdf",
+                "genes/scatter.pdf",
+                "genes/distance.pdf",
+                "genes/tss_profile.pdf",
+                "subfamilies/subfamilies.tsv",
+                "subfamilies/scatter.pdf",
+                "subfamilies/cdf.pdf",
+            ],
+        )
         if te_correlation_config()["datasets"]:
             TE_TARGETS += expand(
                 "results/te/correlation/{contrast}/venn.pdf",
                 contrast=deseq2_contrasts(),
             )
+            # Copies of the data sets
+            TE_TARGETS.append("results/te/correlation/input_tables")
     if te_profile_config()["subfamilies"]:
         TE_TARGETS += expand(
             "results/te/profile/{level}.pdf", level=["conditions", "samples"]
@@ -163,5 +192,7 @@ rule all:
     input:
         ENCODE_TARGETS,
         TE_TARGETS,
+        # Copies of the RNA-seq tables (also for analyses that ran before)
+        expand(RNASEQ_INPUTS, contrast=rnaseq_contrasts()),
         # Methods section of the steps that were run (after all other targets)
         "methods/methods.md",
