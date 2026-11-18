@@ -396,10 +396,10 @@ overlapped ({{ tool("bedtools") }} merge).
 {% endif %}
 {% if te_only %}Peaks of the TE module{% else %}Consensus peaks{% endif %} tested by DESeq2
 (with adjusted p-value) were assigned the DMR they overlapped most (bedtools
-intersect), and analysed as for H3K9me3: Fisher's exact tests of the
-percentages of more and less accessible peaks in the DMRs against the
-unchanged peaks, and Wilcoxon rank-sum tests of the shrunken log2 fold
-changes of the peaks in the DMRs against those outside.
+intersect). The percentages of more and less accessible peaks in the DMRs
+were compared with those of the unchanged peaks (Fisher's exact test), and the
+shrunken log2 fold changes of the peaks in the DMRs with those of the peaks
+outside (Wilcoxon rank-sum test).
 {% if methylation_table %}
 Methylation differences of the tested regions were correlated (Spearman) with
 the mean shrunken log2 fold change of the peaks in each region.
