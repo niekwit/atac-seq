@@ -1,6 +1,6 @@
 """
-Profile of the Tn5 insertions (CPM, mean of the replicates of each
-condition) around the TSS of the up-, down- and unchanged genes of the
+Profile of the Tn5 insertions (signal tracks of the TE module, CPM or
+DESeq2-scaled, mean of the replicates of each condition) around the TSS of the up-, down- and unchanged genes of the
 RNA-seq data of a contrast (deepTools computeMatrix reference-point and
 plotProfile, one panel per group of genes, one line per condition).
 
@@ -22,6 +22,7 @@ bigwigs = list(snakemake.input["bigwigs"])
 labels = list(snakemake.params["labels"])
 colours = list(snakemake.params["colours"])
 flank = int(snakemake.params["flank"])
+ylabel = snakemake.params["ylabel"]
 extra_matrix = snakemake.params["extra_computematrix"]
 extra_plot = snakemake.params["extra_plotprofile"]
 out_beds = {
@@ -150,7 +151,7 @@ else:
             "--plotWidth",
             "8",
             "--yAxisLabel",
-            "Tn5 insertions per million",
+            ylabel,
             *extra_plot.split(),
         ]
     )

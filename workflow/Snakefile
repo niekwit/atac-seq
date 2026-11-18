@@ -27,6 +27,13 @@ containerized: f"docker://niekwit/atac-seq:{VERSION}"
 resources = GenomeFiles(config["genome"]["ensembl"], config["genome"]["release"])
 SAMPLES = samples()
 CONDITIONS = conditions()
+# File name part of the TE signal tracks (results/te/bigwig/{sample}.{TE_BIGWIG}.bigwig)
+# and y-axis label of the profiles made from them
+TE_BIGWIG = te_bigwig_normalisation()
+TE_BIGWIG_LABEL = {
+    "cpm": "Tn5 insertions per million",
+    "deseq2": "Tn5 insertions per million (DESeq2)",
+}[TE_BIGWIG]
 
 
 wildcard_constraints:
@@ -138,8 +145,11 @@ if te_enabled():
         "results/te/te_library_stats.tsv",
         "results/te/qc/te_qc_summary.tsv",
         "results/te/multiqc/multiqc_report.html",
-        *expand("results/te/bigwig/{sample}.cpm.bigwig", sample=SAMPLES),
-        *expand("results/te/bigwig/mean/{condition}.cpm.bigwig", condition=CONDITIONS),
+        *expand(f"results/te/bigwig/{{sample}}.{TE_BIGWIG}.bigwig", sample=SAMPLES),
+        *expand(
+            f"results/te/bigwig/mean/{{condition}}.{TE_BIGWIG}.bigwig",
+            condition=CONDITIONS,
+        ),
         "results/te/peaks/consensus_peaks_repeats.tsv",
         "results/te/peaks/consensus_peaks_frac_unique.bed",
         *expand(
@@ -155,6 +165,7 @@ if te_enabled():
                 level=["deseq2", "peaks/deseq2"],
                 file=["pca.pdf", "sample_correlation.pdf"],
             ),
+            "results/te/peaks/deseq2/size_factors.tsv",
             *expand(
                 "results/te/deseq2/{contrast}/differential_subfamilies.tsv",
                 contrast=deseq2_contrasts(),

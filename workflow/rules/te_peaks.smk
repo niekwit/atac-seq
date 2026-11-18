@@ -181,6 +181,27 @@ use rule deseq2_fit as te_peaks_deseq2_fit with:
         "logs/te/peaks/deseq2_fit.log",
 
 
+# Size factors of the TE peaks, for the signal tracks with
+# te: bigwig_normalisation: deseq2 (and to compare with the library sizes)
+# -----------------------------------------------------
+rule te_peaks_size_factors:
+    input:
+        dds="results/te/peaks/deseq2/dds.rds",
+        stats="results/te/te_library_stats.tsv",
+    output:
+        "results/te/peaks/deseq2/size_factors.tsv",
+    threads: 1
+    resources:
+        runtime=runtime(10),
+        mem_mb=4000,
+    log:
+        "logs/te/peaks/size_factors.log",
+    conda:
+        "../envs/deseq2.yaml"
+    script:
+        "../scripts/te_size_factors.R"
+
+
 use rule deseq2_contrast as te_peaks_deseq2_contrast with:
     input:
         dds="results/te/peaks/deseq2/dds.rds",

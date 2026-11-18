@@ -99,6 +99,10 @@ te:
   normalisation: deseq2
   # Bin size (bp) of the TE signal tracks (results/te/bigwig/)
   bigwig_bin_size: 10
+  # Scaling of the TE signal tracks: cpm (per million kept insertions) or
+  # deseq2 (DESeq2 size factors of the TE consensus peaks, needs deseq2:
+  # enable); see docs/transposable_elements.md for which to use
+  bigwig_normalisation: cpm
   # Heatmap per DESeq2 contrast (results/te/deseq2/{contrast}/heatmap_classes.pdf),
   # faceted by class. Lists; ["all"] selects every class or subfamily
   heatmap:

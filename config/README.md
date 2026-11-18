@@ -77,6 +77,7 @@ ENCODE pipeline.
 | classes                           | RepeatMasker classes to count (empty: all repeats)                         | LINE, SINE, LTR, DNA, Retroposon, RC, Satellite |
 | normalisation                     | library size for the DESeq2 comparison of subfamilies: `deseq2` (median-of-ratios over the subfamilies) or `insertions` (all kept insertions of a sample) | deseq2 |
 | bigwig_bin_size                   | bin size (bp) of the TE signal tracks                                      | 10             |
+| bigwig_normalisation              | scaling of the TE signal tracks: `cpm` (per million kept insertions) or `deseq2` (DESeq2 size factors of the TE consensus peaks, needs `deseq2: enable`); see [Transposable elements](../docs/transposable_elements.md#scaling-of-the-signal-tracks) | cpm |
 | heatmap: classes                  | list of classes in the heatmap of each contrast; `["all"]` for every class | ["LINE", "SINE", "LTR", "DNA"] |
 | heatmap: subfamilies              | list of subfamilies in the heatmap; `["all"]` for the significant subfamilies of the selected classes. Named subfamilies are plotted whether significant or not (significant ones marked with *) | ["all"] |
 | heatmap: max_per_class            | most significant subfamilies per class in the heatmap (with `subfamilies: ["all"]`) | 25 |
