@@ -136,6 +136,8 @@ In `results/integration/rna-seq/{contrast}/` (genes against the ENCODE consensus
 `results/te/integration/rna-seq/{contrast}/` with `te: only`, so that all output is in
 `results/te/`) has the matched genes and subfamilies of the
 RNA-seq table, with their up- or downregulation.
+`input_tables/` next to it has unchanged copies of the RNA-seq tables of `rnaseq: tables`, so
+the results keep the input they were made from.
 
 ## Caveats
 

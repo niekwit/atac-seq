@@ -13,6 +13,13 @@ RNASEQ_TABLE = (
     if te_only()
     else "results/integration/rna-seq/{contrast}/rnaseq_table.tsv"
 )
+# Copies of the RNA-seq tables of the contrast (rnaseq: tables), as given, so
+# that the results keep the input they were made from
+RNASEQ_INPUTS = (
+    "results/te/integration/rna-seq/{contrast}/input_tables"
+    if te_only()
+    else "results/integration/rna-seq/{contrast}/input_tables"
+)
 RNASEQ_LOG = (
     "logs/te/integration/rnaseq_prepare_{contrast}.log"
     if te_only()
@@ -31,6 +38,7 @@ rule rnaseq_prepare:
         subfamilies=lambda w: (["resources/te/subfamilies.tsv"] if te_enabled() else []),
     output:
         table=RNASEQ_TABLE,
+        inputs=directory(RNASEQ_INPUTS),
     params:
         columns=rnaseq_config()["columns"],
         id_type=rnaseq_config()["id_type"],

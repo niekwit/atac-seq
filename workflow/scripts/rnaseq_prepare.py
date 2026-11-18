@@ -24,7 +24,9 @@ filtering by DESeq2).
 """
 
 import logging
+import os
 import re
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -43,6 +45,7 @@ fdr = snakemake.params["fdr"]
 lfc_threshold = snakemake.params["lfc_threshold"]
 separator = snakemake.params["te_separator"]
 output = snakemake.output["table"]
+inputs_dir = snakemake.output["inputs"]
 log = snakemake.log[0]
 
 # Set up logging
@@ -53,6 +56,17 @@ logging.basicConfig(
     handlers=[logging.FileHandler(log)],
     force=True,
 )
+
+
+# Copies of the input tables, unchanged (numbered if file names repeat)
+# -----------------------------------------------------
+os.makedirs(inputs_dir, exist_ok=True)
+names = [os.path.basename(path) for path in table_files]
+for i, (path, name) in enumerate(zip(table_files, names), start=1):
+    if names.count(name) > 1:
+        name = f"{i}_{name}"
+    shutil.copy2(path, os.path.join(inputs_dir, name))
+    logging.info(f"Copied {path} to {inputs_dir}/{name}")
 
 
 def read_table(path):

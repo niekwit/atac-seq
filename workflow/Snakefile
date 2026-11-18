@@ -189,5 +189,7 @@ rule all:
     input:
         ENCODE_TARGETS,
         TE_TARGETS,
+        # Copies of the RNA-seq tables (also for analyses that ran before)
+        expand(RNASEQ_INPUTS, contrast=rnaseq_contrasts()),
         # Methods section of the steps that were run (after all other targets)
         "methods/methods.md",
