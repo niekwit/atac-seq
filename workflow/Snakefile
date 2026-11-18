@@ -102,7 +102,7 @@ if not te_only():
             ),
             # Integration with RNA-seq (contrasts in rnaseq: tables)
             *expand(
-                "results/integration/{contrast}/{file}",
+                "results/integration/rna-seq/{contrast}/{file}",
                 contrast=rnaseq_contrasts(),
                 file=[
                     "genes.tsv",
@@ -156,7 +156,7 @@ if te_enabled():
         ]
         # Integration with RNA-seq (contrasts in rnaseq: tables)
         TE_TARGETS += expand(
-            "results/te/integration/{contrast}/{file}",
+            "results/te/integration/rna-seq/{contrast}/{file}",
             contrast=rnaseq_contrasts(),
             file=[
                 "genes/genes.tsv",

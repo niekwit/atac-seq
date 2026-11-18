@@ -148,11 +148,11 @@ te:
 # enable): the differential accessibility of a contrast is compared with an
 # RNA-seq DESeq2 results table of the same contrast (same treatment and
 # control). Genes (non-TE rows) are compared with the consensus peaks
-# (results/integration/{contrast}/) and, with the TE module (also with te:
-# only), with the genome-wide peaks of the TE module
-# (results/te/integration/{contrast}/genes/); repeat subfamilies (TE rows of
-# the table, e.g. from TEtranscripts) with the subfamily counts and TE peaks
-# (results/te/integration/{contrast}/subfamilies/)
+# (results/integration/rna-seq/{contrast}/) and, with the TE module (also
+# with te: only), with the genome-wide peaks of the TE module
+# (results/te/integration/rna-seq/{contrast}/genes/); repeat subfamilies (TE
+# rows of the table, e.g. from TEtranscripts) with the subfamily counts and
+# TE peaks (results/te/integration/rna-seq/{contrast}/subfamilies/)
 rnaseq:
   # DESeq2 contrast name ({treatment}_vs_{control}): RNA-seq DESeq2 results
   # table (tab-separated, or .csv), or a list of tables (e.g. genes and TEs in

@@ -115,7 +115,7 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
     subfamilies (e.g. from TEtranscripts), gene expression is compared with the TE peaks (in
     `genes/`; these are genome-wide peaks, so they cover genes as well) and subfamily expression
     with the subfamily counts and TE peaks (in `subfamilies/`), in
-    `results/te/integration/{contrast}/` (see [Integration with RNA-seq](rnaseq_integration.md)).
+    `results/te/integration/rna-seq/{contrast}/` (see [Integration with RNA-seq](rnaseq_integration.md)).
 
 ## Output
 

@@ -117,9 +117,9 @@ these tests have less power than those of the genes.
 
 ## Output
 
-In `results/integration/{contrast}/` (genes against the ENCODE consensus peaks),
-`results/te/integration/{contrast}/genes/` (genes against the peaks of the TE module) and
-`results/te/integration/{contrast}/subfamilies/` (TE subfamilies):
+In `results/integration/rna-seq/{contrast}/` (genes against the ENCODE consensus peaks),
+`results/te/integration/rna-seq/{contrast}/genes/` (genes against the peaks of the TE module) and
+`results/te/integration/rna-seq/{contrast}/subfamilies/` (TE subfamilies):
 
 | file                    | content                                                         |
 | ----------------------- | --------------------------------------------------------------- |
@@ -132,8 +132,9 @@ In `results/integration/{contrast}/` (genes against the ENCODE consensus peaks),
 | `subfamilies/subfamilies.tsv` | per subfamily tested in both: ATAC-seq (`atac_*`) and RNA-seq (`rna_*`) results, numbers of TE peaks and `concordance` |
 | `subfamilies/correlation.tsv`, `scatter.pdf`, `cdf.pdf`, `cdf_tests.tsv`, `enrichment.tsv` | correlation, scatter plot, cumulative distributions of the RNA-seq log2 fold changes per accessibility group with Wilcoxon tests, and Fisher's exact tests, for the subfamilies |
 
-`results/integration/rnaseq/{contrast}.tsv` (`results/te/integration/rnaseq/` with `te: only`, so
-that all output is in `results/te/integration/`) has the matched genes and subfamilies of the
+`rnaseq_table.tsv` in `results/integration/rna-seq/{contrast}/` (in
+`results/te/integration/rna-seq/{contrast}/` with `te: only`, so that all output is in
+`results/te/`) has the matched genes and subfamilies of the
 RNA-seq table, with their up- or downregulation.
 
 ## Caveats

@@ -6,12 +6,12 @@
 # subfamily counts and TE peaks. Not part of the ENCODE pipeline.
 
 
-# Prepared RNA-seq table: with te: only, next to the TE module results, so
-# that all integration output is in results/te/integration/
+# Prepared RNA-seq table, next to the figures of the contrast: with te: only,
+# in the TE module results, so that all output is in results/te/integration/
 RNASEQ_TABLE = (
-    "results/te/integration/rnaseq/{contrast}.tsv"
+    "results/te/integration/rna-seq/{contrast}/rnaseq_table.tsv"
     if te_only()
-    else "results/integration/rnaseq/{contrast}.tsv"
+    else "results/integration/rna-seq/{contrast}/rnaseq_table.tsv"
 )
 RNASEQ_LOG = (
     "logs/te/integration/rnaseq_prepare_{contrast}.log"
@@ -57,14 +57,14 @@ rule rnaseq_genes:
         atac="results/deseq2/{contrast}/differential_peaks.tsv",
         rnaseq=RNASEQ_TABLE,
     output:
-        genes="results/integration/{contrast}/genes.tsv",
-        concordant="results/integration/{contrast}/concordant_genes.tsv",
-        enrichment="results/integration/{contrast}/enrichment.tsv",
-        enrichment_plot="results/integration/{contrast}/enrichment.pdf",
-        correlation="results/integration/{contrast}/correlation.tsv",
-        pairs="results/integration/{contrast}/pairs.tsv",
-        scatter="results/integration/{contrast}/scatter.pdf",
-        distance="results/integration/{contrast}/distance.pdf",
+        genes="results/integration/rna-seq/{contrast}/genes.tsv",
+        concordant="results/integration/rna-seq/{contrast}/concordant_genes.tsv",
+        enrichment="results/integration/rna-seq/{contrast}/enrichment.tsv",
+        enrichment_plot="results/integration/rna-seq/{contrast}/enrichment.pdf",
+        correlation="results/integration/rna-seq/{contrast}/correlation.tsv",
+        pairs="results/integration/rna-seq/{contrast}/pairs.tsv",
+        scatter="results/integration/rna-seq/{contrast}/scatter.pdf",
+        distance="results/integration/rna-seq/{contrast}/distance.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
@@ -94,14 +94,14 @@ use rule rnaseq_genes as te_rnaseq_genes with:
         atac="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
         rnaseq=RNASEQ_TABLE,
     output:
-        genes="results/te/integration/{contrast}/genes/genes.tsv",
-        concordant="results/te/integration/{contrast}/genes/concordant_genes.tsv",
-        enrichment="results/te/integration/{contrast}/genes/enrichment.tsv",
-        enrichment_plot="results/te/integration/{contrast}/genes/enrichment.pdf",
-        correlation="results/te/integration/{contrast}/genes/correlation.tsv",
-        pairs="results/te/integration/{contrast}/genes/pairs.tsv",
-        scatter="results/te/integration/{contrast}/genes/scatter.pdf",
-        distance="results/te/integration/{contrast}/genes/distance.pdf",
+        genes="results/te/integration/rna-seq/{contrast}/genes/genes.tsv",
+        concordant="results/te/integration/rna-seq/{contrast}/genes/concordant_genes.tsv",
+        enrichment="results/te/integration/rna-seq/{contrast}/genes/enrichment.tsv",
+        enrichment_plot="results/te/integration/rna-seq/{contrast}/genes/enrichment.pdf",
+        correlation="results/te/integration/rna-seq/{contrast}/genes/correlation.tsv",
+        pairs="results/te/integration/rna-seq/{contrast}/genes/pairs.tsv",
+        scatter="results/te/integration/rna-seq/{contrast}/genes/scatter.pdf",
+        distance="results/te/integration/rna-seq/{contrast}/genes/distance.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
@@ -122,12 +122,12 @@ rule te_rnaseq_subfamilies:
         peaks="results/te/peaks/deseq2/{contrast}/differential_peaks.tsv",
         rnaseq=RNASEQ_TABLE,
     output:
-        subfamilies="results/te/integration/{contrast}/subfamilies/subfamilies.tsv",
-        correlation="results/te/integration/{contrast}/subfamilies/correlation.tsv",
-        scatter="results/te/integration/{contrast}/subfamilies/scatter.pdf",
-        cdf="results/te/integration/{contrast}/subfamilies/cdf.pdf",
-        cdf_tests="results/te/integration/{contrast}/subfamilies/cdf_tests.tsv",
-        enrichment="results/te/integration/{contrast}/subfamilies/enrichment.tsv",
+        subfamilies="results/te/integration/rna-seq/{contrast}/subfamilies/subfamilies.tsv",
+        correlation="results/te/integration/rna-seq/{contrast}/subfamilies/correlation.tsv",
+        scatter="results/te/integration/rna-seq/{contrast}/subfamilies/scatter.pdf",
+        cdf="results/te/integration/rna-seq/{contrast}/subfamilies/cdf.pdf",
+        cdf_tests="results/te/integration/rna-seq/{contrast}/subfamilies/cdf_tests.tsv",
+        enrichment="results/te/integration/rna-seq/{contrast}/subfamilies/enrichment.tsv",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],

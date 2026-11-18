@@ -56,10 +56,10 @@ All files are listed in [Transposable elements](transposable_elements.md#output)
 
 | file                                                   | content                                                         |
 | ------------------------------------------------------ | --------------------------------------------------------------- |
-| `integration/{contrast}/genes.tsv`                     | per gene: RNA-seq results and the differential peaks assigned to it |
-| `integration/{contrast}/{scatter,distance,enrichment}.pdf` | peak-gene pairs with a significant change in both, enrichment of differential peaks at up- and downregulated genes |
-| `te/integration/{contrast}/genes/`                     | the same for the peaks of the TE module (with `te: enable`, also with `te: only`) |
-| `te/integration/{contrast}/subfamilies/`               | TE subfamily expression against subfamily accessibility (with `te: enable`) |
+| `integration/rna-seq/{contrast}/genes.tsv`             | per gene: RNA-seq results and the differential peaks assigned to it |
+| `integration/rna-seq/{contrast}/{scatter,distance,enrichment}.pdf` | peak-gene pairs with a significant change in both, enrichment of differential peaks at up- and downregulated genes |
+| `te/integration/rna-seq/{contrast}/genes/`             | the same for the peaks of the TE module (with `te: enable`, also with `te: only`) |
+| `te/integration/rna-seq/{contrast}/subfamilies/`       | TE subfamily expression against subfamily accessibility (with `te: enable`) |
 
 All files are listed in [Integration with RNA-seq](rnaseq_integration.md#output).
 
