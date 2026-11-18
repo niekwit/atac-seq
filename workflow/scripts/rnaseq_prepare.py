@@ -130,12 +130,6 @@ if id_type == "auto":
     logging.info(f"Gene identifiers: {id_type}")
 rna["gene_id"] = by_id if id_type == "ensembl" else by_name
 rna["gene_name"] = rna["gene_id"].map(id_to_name)
-if rna["gene_id"].notna().sum() == 0:
-    raise ValueError(
-        f"No rows of {table_file} match a gene of {gtf_file} by {id_type}. "
-        "Check rnaseq: columns: gene_id and rnaseq: id_type, and that the "
-        "RNA-seq data used the same genome annotation"
-    )
 
 # TE subfamilies (TE module)
 # -----------------------------------------------------
@@ -161,6 +155,14 @@ rna["type"] = np.where(
     np.where(rna["gene_id"].notna(), "gene", "unmatched"),
 )
 unmatched = rna.loc[rna["type"] == "unmatched", "id"]
+# A table of TE rows only (TE module) is valid
+if len(unmatched) == len(rna):
+    raise ValueError(
+        f"No rows of {table_file} match a gene of {gtf_file} by {id_type}"
+        + (" or a repeat subfamily" if subfamilies_file else "")
+        + ". Check rnaseq: columns: gene_id and rnaseq: id_type, and that the "
+        "RNA-seq data used the same genome annotation"
+    )
 logging.info(
     f"Rows matching no gene or subfamily (left out): {len(unmatched)}"
     + (f", e.g. {', '.join(unmatched.head(10))}" if len(unmatched) else "")

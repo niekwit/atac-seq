@@ -59,9 +59,24 @@ bin_labels <- paste0(kb(c(0, head(bins, -1))), "-", kb(bins))
 bin_labels[1] <- paste0("<= ", kb(bins[1]))
 all_label <- paste0("all (<= ", kb(max(bins)), ")")
 
-# Peaks of tested genes, within the largest distance bin of their TSS
+# Plot with a message only, when there is nothing to plot
+message_plot <- function(message) {
+  ggplot() +
+    annotate("text", x = 0, y = 0, label = message) +
+    theme_void(base_size = 12)
+}
+
+# Peaks tested by DESeq2 (padj not NA: not removed by independent filtering
+# or as outliers), of tested genes, within the largest distance bin of their
+# TSS
+n_untested <- sum(is.na(atac$padj))
+cat(sprintf(
+  "%d %s not tested by DESeq2 (padj NA) left out\n",
+  n_untested,
+  features
+))
 peaks <- atac[
-  !is.na(atac$geneId) & !is.na(atac$distanceToTSS),
+  !is.na(atac$padj) & !is.na(atac$geneId) & !is.na(atac$distanceToTSS),
   c(
     "peak_id",
     "geneId",
@@ -232,27 +247,31 @@ legend_labels <- setNames(
 cdf_data <- genes[genes$atac_status %in% present, ]
 cdf_data$atac_status <- factor(cdf_data$atac_status, levels = present)
 limits <- quantile(cdf_data$log2FoldChange, c(0.005, 0.995), na.rm = TRUE)
-cdf <- ggplot(cdf_data, aes(log2FoldChange, colour = atac_status)) +
-  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-  stat_ecdf(geom = "step", linewidth = 0.8) +
-  coord_cartesian(xlim = limits) +
-  scale_colour_manual(
-    values = status_colours,
-    breaks = present,
-    labels = unname(legend_labels[present])
-  ) +
-  labs(
-    x = "RNA-seq log2 fold change",
-    y = "Cumulative fraction of genes",
-    colour = paste0(
-      "Genes by their ",
-      features,
-      "\n(TSS within ",
-      kb(max(bins)),
-      "; p: Wilcoxon\nvs unchanged)"
-    )
-  ) +
-  theme_cowplot(12)
+cdf <- if (nrow(cdf_data) == 0) {
+  message_plot("No genes tested in the RNA-seq data")
+} else {
+  ggplot(cdf_data, aes(log2FoldChange, colour = atac_status)) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+    stat_ecdf(geom = "step", linewidth = 0.8) +
+    coord_cartesian(xlim = limits) +
+    scale_colour_manual(
+      values = status_colours,
+      breaks = present,
+      labels = unname(legend_labels[present])
+    ) +
+    labs(
+      x = "RNA-seq log2 fold change",
+      y = "Cumulative fraction of genes",
+      colour = paste0(
+        "Genes by their ",
+        features,
+        "\n(TSS within ",
+        kb(max(bins)),
+        "; p: Wilcoxon\nvs unchanged)"
+      )
+    ) +
+    theme_cowplot(12)
+}
 ggsave(
   snakemake@output[["cdf"]],
   cdf,
@@ -346,18 +365,11 @@ atac_colours <- status_colours[c("more accessible", "less accessible")]
 feature <- sub("s$", "", features)
 plot_data <- enrichment[!is.na(enrichment$odds_ratio), ]
 if (nrow(plot_data) == 0) {
-  enrichment_plot <- ggplot() +
-    annotate(
-      "text",
-      x = 0,
-      y = 0,
-      label = paste(
-        "No test possible: no up- or downregulated genes, or no genes with a",
-        "differential",
-        feature
-      )
-    ) +
-    theme_void(base_size = 12)
+  enrichment_plot <- message_plot(paste(
+    "No test possible: no up- or downregulated genes,\nor no genes with a",
+    "differential",
+    feature
+  ))
 } else {
   plot_data$distance <- factor(plot_data$distance, levels = names(bin_sets))
   plot_data$rna_change <- factor(
@@ -514,7 +526,7 @@ write.table(
   row.names = FALSE
 )
 
-pairs$class <- "other"
+pairs$class <- rep("other", nrow(pairs))
 pairs$class[
   (pairs$change == "more accessible" & pairs$rna_change == "up") |
     (pairs$change == "less accessible" & pairs$rna_change == "down")
@@ -542,37 +554,47 @@ facet_text$label <- sprintf(
   facet_text$spearman_rho,
   facet_text$n_peaks
 )
-scatter <- ggplot(
-  pairs,
-  aes(log2FoldChange_shrunken, log2FoldChange, fill = class)
-) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
-  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-  geom_point(shape = 21, size = 1.8, colour = "black", stroke = 0.2) +
-  geom_text(
-    data = facet_text,
-    aes(x = -Inf, y = Inf, label = label),
-    inherit.aes = FALSE,
-    hjust = -0.1,
-    vjust = 1.2,
-    size = 3.5
+scatter <- if (nrow(pairs) == 0) {
+  message_plot(paste0(
+    "No ",
+    features,
+    " within ",
+    kb(max(bins)),
+    " of the TSS of a gene tested in the RNA-seq data"
+  ))
+} else {
+  ggplot(
+    pairs,
+    aes(log2FoldChange_shrunken, log2FoldChange, fill = class)
   ) +
-  facet_wrap(~bin, drop = FALSE) +
-  # Only the groups with peaks in the legend
-  scale_fill_manual(values = class_colours, drop = TRUE) +
-  labs(
-    x = paste("ATAC-seq shrunken log2 fold change of the", feature),
-    y = "RNA-seq log2 fold change of the nearest gene",
-    fill = "Significant in both",
-    caption = paste(
-      "Each",
-      feature,
-      "against the gene of its nearest TSS, by distance;",
-      "rho: Spearman"
-    )
-  ) +
-  theme_cowplot(12) +
-  theme(plot.caption = element_text(hjust = 0, size = 10))
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+    geom_point(shape = 21, size = 1.8, colour = "black", stroke = 0.2) +
+    geom_text(
+      data = facet_text,
+      aes(x = -Inf, y = Inf, label = label),
+      inherit.aes = FALSE,
+      hjust = -0.1,
+      vjust = 1.2,
+      size = 3.5
+    ) +
+    facet_wrap(~bin, drop = FALSE) +
+    # Only the groups with peaks in the legend
+    scale_fill_manual(values = class_colours, drop = TRUE) +
+    labs(
+      x = paste("ATAC-seq shrunken log2 fold change of the", feature),
+      y = "RNA-seq log2 fold change of the nearest gene",
+      fill = "Significant in both",
+      caption = paste(
+        "Each",
+        feature,
+        "against the gene of its nearest TSS, by distance;",
+        "rho: Spearman"
+      )
+    ) +
+    theme_cowplot(12) +
+    theme(plot.caption = element_text(hjust = 0, size = 10))
+}
 ggsave(
   snakemake@output[["scatter"]],
   scatter,

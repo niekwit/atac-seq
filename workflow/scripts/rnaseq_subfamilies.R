@@ -42,6 +42,16 @@ rna <- read.delim(
 rna <- rna[rna$type == "te" & rna$rna_change != "not tested", ]
 cat(sprintf("%d subfamilies tested in the RNA-seq data\n", nrow(rna)))
 
+# Subfamilies and TE peaks tested by DESeq2 (padj not NA), as for the RNA-seq
+# data; otherwise they would count as unchanged
+cat(sprintf(
+  "%d subfamilies and %d TE peaks not tested by DESeq2 (padj NA) left out\n",
+  sum(is.na(atac$padj)),
+  sum(is.na(te_peaks$padj))
+))
+atac <- atac[!is.na(atac$padj), ]
+te_peaks <- te_peaks[!is.na(te_peaks$padj), ]
+
 # Subfamilies tested in both data sets
 subfamilies <- merge(
   atac[, c(

@@ -290,18 +290,21 @@ and TE peaks
 TE peaks
 {% endif %}
 were assigned to the gene of their nearest TSS (ChIPseeker) within
-{{ rnaseq_max }}. RNA-seq log2 fold changes of genes with more accessible, less
+{{ rnaseq_max }}; peaks without adjusted p-value (not tested by DESeq2) were
+left out. RNA-seq log2 fold changes of genes with more accessible, less
 accessible, both or only unchanged peaks were compared (Wilcoxon rank-sum test
 against genes with only unchanged peaks), enrichment of differential peaks at
 up- and downregulated genes was tested with Fisher's exact test (all tested
-genes as background; per distance bin, with bins ending at {{ rnaseq_bins }},
-and Benjamini-Hochberg adjustment), and peak and gene log2 fold changes were
-correlated (Spearman).
+genes as background; per distance bin, with bins ending at {{ rnaseq_bins }}),
+and peak and gene log2 fold changes were correlated (Spearman).
 {% if te %}
 Repeat subfamilies in the RNA-seq results (e.g. TEtranscripts) were compared
 in the same way with the differential accessibility of their insertions and
-of the TE peaks overlapping them.
+of the TE peaks overlapping them, leaving out subfamilies without adjusted
+p-value in either data set.
 {% endif %}
+P-values of the Wilcoxon and Fisher's exact tests were adjusted with the
+Benjamini–Hochberg method {{ cite("benjamini1995") }}.
 {% endif %}
 
 {% set r_packages = [] %}
