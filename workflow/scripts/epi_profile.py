@@ -163,7 +163,14 @@ else:
     boundaries = header["group_boundaries"]
     region_labels, heatmap_labels = [], []
     for i, group in enumerate(header["group_labels"]):
-        label = names.get(group, group)
+        # By file name; by position if deepTools renamed the groups (a single
+        # group is "genes") and no group was dropped
+        if group in names:
+            label = names[group]
+        elif len(header["group_labels"]) == len(beds):
+            label = list(names.values())[i]
+        else:
+            label = group
         n = boundaries[i + 1] - boundaries[i]
         logging.info(f"{label}: {n} regions in the matrix")
         region_labels.append(f"{label} (n = {n})")
