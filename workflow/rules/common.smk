@@ -477,6 +477,114 @@ def rnaseq_contrasts():
     return result
 
 
+def h3k9me3_config():
+    """
+    Returns the settings of the integration with differential H3K9me3
+    (h3k9me3: in the config), with defaults
+    """
+    h3k9me3 = config.get("h3k9me3") or {}
+    columns = h3k9me3.get("columns") or {}
+    defaults = {
+        "chr": "seqnames",
+        "start": "start",
+        "end": "end",
+        "log2fc": "Fold",
+        "fdr": "FDR",
+    }
+    return {
+        "contrasts": h3k9me3.get("contrasts") or {},
+        "columns": {k: columns.get(k) or v for k, v in defaults.items()},
+        "flip_fold": h3k9me3.get("flip_fold", False),
+        "fdr": h3k9me3.get("fdr", 0.05),
+        "profile_flank": h3k9me3.get("profile_flank", 5000),
+        "profile_body_length": h3k9me3.get("profile_body_length", 5000),
+        "min_copies": h3k9me3.get("min_copies", 20),
+    }
+
+
+def h3k9me3_contrasts():
+    """
+    Returns the DESeq2 contrasts with H3K9me3 data ({contrast: settings}:
+    regions, diffbind, direction and bigwigs, None without); empty without
+    deseq2: enable
+    """
+    contrasts = h3k9me3_config()["contrasts"]
+    if not contrasts or not deseq2_enabled():
+        return {}
+    deseq2 = deseq2_contrasts()
+    # deepTools needs the profile lengths to be multiples of the bin size
+    bin_size = computematrix_bin_size()
+    for setting in ("profile_flank", "profile_body_length"):
+        value = h3k9me3_config()[setting]
+        if value % bin_size:
+            raise ValueError(
+                f"h3k9me3: {setting} ({value}) must be a multiple of the "
+                f"computeMatrix bin size ({bin_size} bp)"
+            )
+    result = {}
+    for name, settings in contrasts.items():
+        key = f"h3k9me3: contrasts: {name}"
+        if name not in deseq2:
+            raise ValueError(
+                f"{key} is not a DESeq2 contrast "
+                f"(contrasts: {', '.join(deseq2) or 'none'})"
+            )
+        settings = settings or {}
+        regions = settings.get("regions")
+        if not regions or not os.path.isfile(regions):
+            raise ValueError(f"{key}: regions: no file {regions}")
+        diffbind = settings.get("diffbind")
+        if not isinstance(diffbind, bool):
+            raise ValueError(f"{key}: diffbind must be true or false")
+        direction = settings.get("direction", "lost")
+        if direction not in ("lost", "gained"):
+            raise ValueError(f"{key}: direction must be lost or gained")
+        bigwigs = settings.get("bigwigs") or None
+        if bigwigs:
+            for condition in ("control", "treatment"):
+                path = bigwigs.get(condition)
+                if not path or not os.path.isfile(path):
+                    raise ValueError(f"{key}: bigwigs: {condition}: no file {path}")
+        result[name] = {
+            "regions": regions,
+            "diffbind": diffbind,
+            "direction": direction,
+            "bigwigs": bigwigs,
+        }
+    return result
+
+
+def computematrix_bin_size():
+    """
+    Bin size (bp) of the computeMatrix profiles of the integrations: 50, or
+    --binSize/-bs of extra: computematrix (later arguments override earlier)
+    """
+    found = re.findall(r"(?:--binSize|-bs)[ =](\d+)", extra("computematrix"))
+    return int(found[-1]) if found else 50
+
+
+def h3k9me3_bigwig_contrasts():
+    """The contrasts of h3k9me3_contrasts() with H3K9me3 signal (bigwigs)"""
+    return [c for c, s in h3k9me3_contrasts().items() if s["bigwigs"]]
+
+
+def h3k9me3_diffbind_contrasts():
+    """The contrasts of h3k9me3_contrasts() with a DiffBind table"""
+    return [c for c, s in h3k9me3_contrasts().items() if s["diffbind"]]
+
+
+def h3k9me3_changes(contrast):
+    """Changes of H3K9me3 in the data of a contrast"""
+    settings = h3k9me3_contrasts()[contrast]
+    return ["lost", "gained"] if settings["diffbind"] else [settings["direction"]]
+
+
+def h3k9me3_conditions(contrast):
+    """[control, treatment] of a contrast"""
+    treatment, control = deseq2_contrasts()[contrast]
+    return [control, treatment]
+
+
 def te_only():
     """
     With te: only, the workflow runs the TE module only (and the read trimming,
@@ -535,6 +643,9 @@ def methods_envs():
     # Plots of the integration with RNA-seq
     if rnaseq_contrasts():
         envs.append("integration")
+    # Integration with H3K9me3: overlaps (bedtools) and plots
+    if h3k9me3_contrasts():
+        envs += [e for e in ("integration", "gat") if e not in envs]
     return envs
 
 

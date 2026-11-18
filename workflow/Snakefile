@@ -50,6 +50,7 @@ include: "rules/te.smk"
 include: "rules/te_peaks.smk"
 include: "rules/te_qc.smk"
 include: "rules/rnaseq.smk"
+include: "rules/h3k9me3.smk"
 include: "rules/methods.smk"
 
 
@@ -111,6 +112,20 @@ if not te_only():
                     "distance.pdf",
                 ],
             ),
+            # Integration with H3K9me3 (contrasts in h3k9me3: contrasts)
+            *expand(
+                "results/integration/h3k9me3/{contrast}/{file}",
+                contrast=h3k9me3_contrasts(),
+                file=["enrichment.pdf", "distribution.pdf"],
+            ),
+            *expand(
+                "results/integration/h3k9me3/{contrast}/scatter.pdf",
+                contrast=h3k9me3_diffbind_contrasts(),
+            ),
+            *expand(
+                "results/integration/h3k9me3/{contrast}/signal_profile.pdf",
+                contrast=h3k9me3_bigwig_contrasts(),
+            ),
         ]
 
 # Optional TE module
@@ -169,6 +184,26 @@ if te_enabled():
                 "subfamilies/cdf.pdf",
             ],
         )
+        # Integration with H3K9me3 (contrasts in h3k9me3: contrasts)
+        TE_TARGETS += expand(
+            "results/te/integration/h3k9me3/{contrast}/{file}",
+            contrast=h3k9me3_contrasts(),
+            file=[
+                "peaks/enrichment.pdf",
+                "peaks/distribution.pdf",
+                "atac_profile.pdf",
+                "subfamilies/scatter.pdf",
+                "subfamilies/full_length.pdf",
+            ],
+        )
+        TE_TARGETS += expand(
+            "results/te/integration/h3k9me3/{contrast}/peaks/scatter.pdf",
+            contrast=h3k9me3_diffbind_contrasts(),
+        )
+        TE_TARGETS += expand(
+            "results/te/integration/h3k9me3/{contrast}/peaks/signal_profile.pdf",
+            contrast=h3k9me3_bigwig_contrasts(),
+        )
         if te_correlation_config()["datasets"]:
             TE_TARGETS += expand(
                 "results/te/correlation/{contrast}/venn.pdf",
@@ -194,5 +229,7 @@ rule all:
         TE_TARGETS,
         # Copies of the RNA-seq tables (also for analyses that ran before)
         expand(RNASEQ_INPUTS, contrast=rnaseq_contrasts()),
+        # Copies of the H3K9me3 regions files
+        expand(H3K9ME3_INPUTS, contrast=h3k9me3_contrasts()),
         # Methods section of the steps that were run (after all other targets)
         "methods/methods.md",

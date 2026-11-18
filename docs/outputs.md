@@ -63,6 +63,19 @@ All files are listed in [Transposable elements](transposable_elements.md#output)
 
 All files are listed in [Integration with RNA-seq](rnaseq_integration.md#output).
 
+## Integration with H3K9me3 (`h3k9me3: contrasts`)
+
+| file                                                   | content                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------- |
+| `integration/h3k9me3/{contrast}/{enrichment,distribution}.pdf` | differential peaks in regions that lose or gain H3K9me3, log2 fold changes by H3K9me3 change |
+| `integration/h3k9me3/{contrast}/scatter.pdf`           | peak against H3K9me3 log2 fold changes (DiffBind tables)        |
+| `integration/h3k9me3/{contrast}/signal_profile.pdf`    | H3K9me3 signal around the differential peaks (with `bigwigs`)   |
+| `te/integration/h3k9me3/{contrast}/peaks/`             | the same for the peaks of the TE module (with `te: enable`, also with `te: only`) |
+| `te/integration/h3k9me3/{contrast}/atac_profile.pdf`   | Tn5 insertions over the lost, gained and unchanged H3K9me3 regions |
+| `te/integration/h3k9me3/{contrast}/subfamilies/`       | repeat subfamilies and full-length copies in the H3K9me3 regions against their accessibility |
+
+All files are listed in [Integration with H3K9me3](h3k9me3_integration.md#output).
+
 ## Methods
 
 `methods/methods.md` (in the analysis directory, not `results/`) is a methods section of the

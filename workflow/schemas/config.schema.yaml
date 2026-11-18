@@ -269,6 +269,74 @@ properties:
         minimum: 100
         default: 3000
 
+  h3k9me3:
+    type: object
+    properties:
+      contrasts:
+        type: [object, "null"]
+        additionalProperties:
+          type: object
+          properties:
+            regions:
+              type: string
+            # No default: a DiffBind table read as BED would fail later
+            diffbind:
+              type: boolean
+            direction:
+              type: string
+              enum: ["lost", "gained"]
+              default: lost
+            bigwigs:
+              type: [object, "null"]
+              properties:
+                control:
+                  type: string
+                treatment:
+                  type: string
+              required: ["control", "treatment"]
+              additionalProperties: false
+          required: ["regions", "diffbind"]
+          additionalProperties: false
+        default: {}
+      columns:
+        type: object
+        properties:
+          chr:
+            type: string
+            default: seqnames
+          start:
+            type: string
+            default: start
+          end:
+            type: string
+            default: end
+          log2fc:
+            type: string
+            default: Fold
+          fdr:
+            type: string
+            default: FDR
+      flip_fold:
+        type: boolean
+        default: false
+      fdr:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+        default: 0.05
+      profile_flank:
+        type: integer
+        minimum: 100
+        default: 5000
+      profile_body_length:
+        type: integer
+        minimum: 100
+        default: 5000
+      min_copies:
+        type: integer
+        minimum: 1
+        default: 20
+
   extra:
     type: object
     properties:

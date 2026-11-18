@@ -15,7 +15,9 @@ On top of the ENCODE steps, the workflow can:
 - measure the accessibility of transposable elements, including young repeats whose reads
   align to many places ([Transposable elements](transposable_elements.md));
 - compare differential accessibility with RNA-seq differential expression of genes and TE
-  subfamilies ([Integration with RNA-seq](rnaseq_integration.md)).
+  subfamilies ([Integration with RNA-seq](rnaseq_integration.md));
+- compare differential accessibility with differential H3K9me3 regions, including the repeats
+  in them ([Integration with H3K9me3](h3k9me3_integration.md)).
 
 The peaks, signal tracks and QC metrics match ENCODE's own processing of the same data
 ([Validation](validation.md)).
@@ -55,6 +57,7 @@ qc
 comparing_samples
 transposable_elements
 rnaseq_integration
+h3k9me3_integration
 ```
 
 ```{toctree}
