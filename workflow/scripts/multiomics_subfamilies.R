@@ -256,7 +256,7 @@ plot_heatmap <- function(data, file, empty) {
       show_row_names = FALSE,
       column_names_rot = 90,
       column_names_gp = gpar(fontsize = 10),
-      rect_gp = gpar(col = "white", lwd = 0.5),
+      rect_gp = gpar(col = "black", lwd = 0.5),
       cell_fun = if (is.null(significant)) NULL else star(significant),
       heatmap_legend_param = list(title = title, title_gp = gpar(fontsize = 9))
     )
@@ -308,7 +308,7 @@ plot_heatmap <- function(data, file, empty) {
     show_row_names = FALSE,
     column_names_rot = 90,
     column_names_gp = gpar(fontsize = 10),
-    rect_gp = gpar(col = "white", lwd = 0.5),
+    rect_gp = gpar(col = "black", lwd = 0.5),
     cell_fun = star(
       data$atac_change %in% c("more accessible", "less accessible")
     ),
@@ -345,7 +345,7 @@ plot_heatmap <- function(data, file, empty) {
       cluster_columns = FALSE,
       column_names_rot = 90,
       column_names_gp = gpar(fontsize = 10),
-      rect_gp = gpar(col = "white", lwd = 0.5),
+      rect_gp = gpar(col = "black", lwd = 0.5),
       right_annotation = right,
       show_row_names = TRUE,
       row_names_gp = gpar(
