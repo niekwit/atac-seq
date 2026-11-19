@@ -201,6 +201,9 @@ rule methods:
         epi=lambda w: {mark: epi_contrasts(mark) for mark in EPI_MARKS},
         epi_config={mark: epi_config(mark) for mark in EPI_MARKS},
         computematrix_bin_size=computematrix_bin_size(),
+        # Contrasts of the integration of all data sets, and its settings
+        multiomics=lambda w: multiomics_contrasts(),
+        multiomics_config=multiomics_config(),
         # From the config, so the data set files are not checked without TE
         gat_samples=config.get("te", {})
         .get("correlation", {})

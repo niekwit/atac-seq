@@ -417,6 +417,25 @@ properties:
         minimum: 1
         default: 20
 
+  multiomics:
+    type: object
+    properties:
+      enable:
+        type: boolean
+        default: false
+      min_copies:
+        type: integer
+        minimum: 1
+        default: 20
+      max_subfamilies:
+        type: integer
+        minimum: 1
+        default: 60
+      max_combinations:
+        type: integer
+        minimum: 1
+        default: 25
+
   extra:
     type: object
     properties:

@@ -19,7 +19,9 @@ On top of the ENCODE steps, the workflow can:
 - compare differential accessibility with differential H3K9me3 regions, including the repeats
   in them ([Integration with H3K9me3](h3k9me3_integration.md));
 - compare differential accessibility with differentially methylated regions (DMRs) from EM-seq
-  or bisulfite sequencing ([Integration with DNA methylation](methylation_integration.md)).
+  or bisulfite sequencing ([Integration with DNA methylation](methylation_integration.md));
+- compare accessibility, expression, H3K9me3 and DNA methylation together, per repeat subfamily,
+  TE peak and full-length copy ([Integration of all data sets](multiomics_integration.md)).
 
 The peaks, signal tracks and QC metrics match ENCODE's own processing of the same data
 ([Validation](validation.md)).
@@ -61,6 +63,7 @@ transposable_elements
 rnaseq_integration
 h3k9me3_integration
 methylation_integration
+multiomics_integration
 ```
 
 ```{toctree}

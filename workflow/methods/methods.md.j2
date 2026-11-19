@@ -450,6 +450,45 @@ P-values of the Wilcoxon and Fisher's exact tests were adjusted with the
 Benjamini–Hochberg method {{ cite("benjamini1995") }}.
 {% endif %}
 
+{% if multiomics %}
+## Integration of all data sets
+
+For the contrasts with RNA-seq, H3K9me3 and DNA methylation data
+({{ multiomics | join_and }}), the four data sets were compared per repeat
+subfamily, per TE peak and per full-length copy.
+H3K9me3 and CpG methylation of the control and the treatment were averaged
+over all copies of each subfamily from their BigWig files (pyBigWig): the
+summed H3K9me3 signal divided by the total length of the copies, and the mean
+methylation of the covered CpGs. The change in H3K9me3 was expressed as the
+log2 ratio of the treatment over the control (pseudocount: 1% of the median
+signal of the subfamilies), and the change in methylation as the difference in
+percentage points. Subfamilies with at least {{ multiomics_min_copies }} copies
+and a significant change in accessibility or expression (at most
+{{ multiomics_max_subfamilies }}, smallest adjusted p-value first), and the
+profile subfamilies, were shown in a heatmap of the shrunken ATAC-seq log2
+fold change, the RNA-seq log2 fold change and the changes in H3K9me3 and
+methylation, with the percentage of copies in the regions where each mark
+changed, made with {{ tool("complexheatmap") }}.
+TE peaks tested by DESeq2 were assigned the change of each mark in the region
+they overlapped most, and the differential expression of the gene of their
+nearest TSS (within {{ rnaseq_max }}). Their overlaps were shown as an UpSet
+plot (ComplexHeatmap). The percentages of more and less accessible peaks, and
+of peaks whose gene was up- or downregulated, in the peaks with a change of
+both marks or of one mark were compared with those of the peaks without
+either change (Fisher's exact test, Benjamini–Hochberg adjusted
+{{ cite("benjamini1995") }}).
+{% if profile["subfamilies"] %}
+ATAC-seq (Tn5 insertions per million), H3K9me3 and CpG methylation of the
+control and the treatment over the full-length copies of the profile
+subfamilies (scaled to {{ number(profile["body_length"]) }} bp,
+± {{ number(profile["flank"]) }} bp, {{ epi_bin }} bp bins; methylation bins without
+CpGs left out) were calculated with computeMatrix scale-regions, joined with
+computeMatrixOperations cbind and plotted with plotHeatmap, with the copies
+sorted by the log2 ratio of their mean ATAC-seq signal in the treatment over
+the control, and as mean profiles.
+{% endif %}
+{% endif %}
+
 {% set r_packages = [] %}
 {% if annotation %}{% set _ = r_packages.append(tool("tidyverse")) %}{% endif %}
 {% if deseq2 %}
@@ -458,6 +497,7 @@ Benjamini–Hochberg method {{ cite("benjamini1995") }}.
 {% set _ = r_packages.append(tool("pheatmap")) %}
 {% endif %}
 {% if rnaseq or h3k9me3 or methylation %}{% set _ = r_packages.append(tool("cowplot")) %}{% endif %}
+{% if multiomics %}{% set _ = r_packages.append(tool("complexheatmap")) %}{% endif %}
 Custom scripts used {{ tool("python") }} with {{ tool("numpy") }},
 {{ tool("pandas") }}, {{ tool("scipy") }} and {{ tool("matplotlib") }}
 {% if r_used %}

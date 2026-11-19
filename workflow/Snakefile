@@ -58,6 +58,7 @@ include: "rules/te_peaks.smk"
 include: "rules/te_qc.smk"
 include: "rules/rnaseq.smk"
 include: "rules/epigenome.smk"
+include: "rules/multiomics.smk"
 include: "rules/methods.smk"
 
 
@@ -189,6 +190,9 @@ if te_enabled():
         TE_TARGETS += [
             f for mark in EPI_MARKS for f in epi_targets(mark, te_module=True)
         ]
+        # Integration of all data sets (multiomics: enable; contrasts with
+        # RNA-seq, H3K9me3 and DNA methylation data)
+        TE_TARGETS += multiomics_targets()
         if te_correlation_config()["datasets"]:
             TE_TARGETS += expand(
                 "results/te/correlation/{contrast}/venn.pdf",

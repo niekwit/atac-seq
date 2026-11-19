@@ -155,6 +155,9 @@ context = {
         }.items()
     },
     "epi_bin": params["computematrix_bin_size"],
+    "multiomics": params["multiomics"],
+    "multiomics_min_copies": params["multiomics_config"]["min_copies"],
+    "multiomics_max_subfamilies": params["multiomics_config"]["max_subfamilies"],
     "annotation": annotation,
     "r_used": annotation or reference["blacklist"]["source"] == "annotationhub",
 }

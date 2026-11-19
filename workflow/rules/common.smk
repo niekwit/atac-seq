@@ -721,6 +721,90 @@ def epi_conditions(contrast):
     return [control, treatment]
 
 
+def multiomics_config():
+    """
+    Returns the settings of the integration of all data sets of a contrast
+    (multiomics: in the config), with defaults
+    """
+    section = config.get("multiomics") or {}
+    return {
+        "enable": section.get("enable", False),
+        "min_copies": section.get("min_copies", 20),
+        "max_subfamilies": section.get("max_subfamilies", 60),
+        "max_combinations": section.get("max_combinations", 25),
+    }
+
+
+def multiomics_contrasts():
+    """
+    DESeq2 contrasts with all data sets: RNA-seq (rnaseq: tables), and
+    H3K9me3 and DNA methylation with BigWig files (h3k9me3: and methylation:
+    contrasts). Empty without multiomics: enable; needs the TE module
+    """
+    if not multiomics_config()["enable"]:
+        return []
+    if not te_enabled():
+        raise ValueError("multiomics: enable: true needs te: enable: true")
+    rnaseq = rnaseq_contrasts()
+    marks = {mark: epi_contrasts(mark) for mark in EPI_MARKS}
+    contrasts = [
+        contrast
+        for contrast in rnaseq
+        if all(
+            contrast in marks[mark] and marks[mark][contrast]["bigwigs"]
+            for mark in EPI_MARKS
+        )
+    ]
+    if not contrasts:
+        raise ValueError(
+            "multiomics: enable: true, but no contrast has an RNA-seq table "
+            "(rnaseq: tables) and H3K9me3 and DNA methylation data with "
+            "bigwigs (h3k9me3: and methylation: contrasts)"
+        )
+    # deepTools needs the profile lengths to be multiples of the bin size
+    bin_size = computematrix_bin_size()
+    for setting in ("flank", "body_length"):
+        value = te_profile_config()[setting]
+        if value % bin_size:
+            raise ValueError(
+                f"te: profile: {setting} ({value}) must be a multiple of the "
+                f"computeMatrix bin size ({bin_size} bp) for multiomics:"
+            )
+    return contrasts
+
+
+def multiomics_marks(contrast):
+    """
+    Per mark (h3k9me3, methylation): its change codes in the data of a
+    contrast (decrease first), the code of a decrease, and the plot labels
+    """
+    return {
+        mark: {
+            "changes": epi_changes(mark, contrast),
+            "down": EPI_MARKS[mark]["down"],
+            "labels": epi_labels(mark, contrast),
+        }
+        for mark in EPI_MARKS
+    }
+
+
+def multiomics_targets():
+    """Output files of the integration of all data sets"""
+    files = [
+        "subfamilies/heatmap.pdf",
+        "peaks/upset.pdf",
+        "peaks/enrichment.pdf",
+    ]
+    # Full-length copies only with te: profile: subfamilies
+    if te_profile_config()["subfamilies"]:
+        files += ["copies/heatmap.pdf", "copies/profile.pdf"]
+    return expand(
+        "results/te/integration/multiomics/{contrast}/{file}",
+        contrast=multiomics_contrasts(),
+        file=files,
+    )
+
+
 def te_only():
     """
     With te: only, the workflow runs the TE module only (and the read trimming,
@@ -782,6 +866,9 @@ def methods_envs():
     # Integration with H3K9me3 and DNA methylation: overlaps (bedtools), plots
     if epi_marks():
         envs += [e for e in ("integration", "gat") if e not in envs]
+    # Integration of all data sets: ComplexHeatmap
+    if multiomics_contrasts():
+        envs.append("multiomics")
     return envs
 
 

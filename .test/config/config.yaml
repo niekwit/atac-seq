@@ -291,6 +291,25 @@ methylation:
   profile_body_length: 5000
   min_copies: 20
 
+# Integration of all data sets of a contrast (not part of the ENCODE
+# pipeline; needs te: enable and deseq2: enable): for each contrast with an
+# RNA-seq table (rnaseq: tables) and H3K9me3 and DNA methylation data with
+# BigWig files (h3k9me3: and methylation: contrasts), the four data sets are
+# compared per repeat subfamily (heatmap of the changes), per TE peak (UpSet
+# plot, enrichment by combination of the marks) and per full-length copy of
+# the te: profile: subfamilies entries (heatmap and profile of the signal)
+# (results/te/integration/multiomics/{contrast}/)
+multiomics:
+  enable: true
+  # Subfamilies with at least this many copies in the genome are in the
+  # heatmap if their accessibility or expression changes significantly
+  min_copies: 20
+  # Most subfamilies in the heatmap (smallest adjusted p-value first); the
+  # subfamilies of te: profile: subfamilies are always shown
+  max_subfamilies: 60
+  # Largest combinations of sets in the UpSet plot of the TE peaks
+  max_combinations: 25
+
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
 # workflow's scripts (e.g. MACS2, IDR, plotFingerprint) are not included;
