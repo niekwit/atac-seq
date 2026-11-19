@@ -7,6 +7,7 @@ sizes) (te: bigwig_normalisation: deseq2).
 """
 
 import csv
+import shlex
 import subprocess
 
 sample = snakemake.wildcards["sample"]
@@ -28,7 +29,7 @@ command = [
     *normalisation,
     "--Offset",
     "1",
-    *snakemake.params["extra"].split(),
+    *shlex.split(snakemake.params["extra"]),
     "-p",
     str(snakemake.threads),
     "-b",
@@ -37,6 +38,6 @@ command = [
     snakemake.output[0],
 ]
 with open(log, "w") as fh:
-    fh.write(" ".join(command) + "\n")
+    fh.write(shlex.join(command) + "\n")
     fh.flush()
     subprocess.run(command, check=True, stdout=fh, stderr=fh)

@@ -13,7 +13,29 @@ sink(log, type = "message")
 
 library(DESeq2)
 
-dds <- readRDS(snakemake@input[["dds"]])
+samples <- unlist(snakemake@params[["samples"]])
+
+# Tn5 insertions per peak; the samples are the columns after the annotation.
+# Same peak filter as the DESeq2 fit (deseq2_fit.R), so the size factors are
+# those of the differential test; they do not depend on the design, so a ~1
+# design is used and no fit is needed
+counts <- read.delim(
+  snakemake@input[["counts"]],
+  comment.char = "#",
+  row.names = 1,
+  check.names = FALSE
+)
+counts <- as.matrix(counts[, -(1:5), drop = FALSE])
+colnames(counts) <- sub("\\.filtered\\.bam$", "", basename(colnames(counts)))
+counts <- counts[, samples, drop = FALSE]
+counts <- counts[rowSums(counts) >= snakemake@params[["min_count"]], ]
+
+dds <- DESeqDataSetFromMatrix(
+  counts,
+  data.frame(row.names = samples),
+  design = ~1
+)
+dds <- estimateSizeFactors(dds)
 stats <- read.delim(snakemake@input[["stats"]], check.names = FALSE)
 
 size_factors <- sizeFactors(dds)

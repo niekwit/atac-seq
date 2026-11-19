@@ -182,14 +182,19 @@ use rule deseq2_fit as te_peaks_deseq2_fit with:
 
 
 # Size factors of the TE peaks, for the signal tracks with
-# te: bigwig_normalisation: deseq2 (and to compare with the library sizes)
+# te: bigwig_normalisation: deseq2 (and to compare with the library sizes).
+# Estimated without the model fit, so runs without contrasts or replicates
+# also get them
 # -----------------------------------------------------
 rule te_peaks_size_factors:
     input:
-        dds="results/te/peaks/deseq2/dds.rds",
+        counts="results/te/peaks/consensus_peak_counts.txt",
         stats="results/te/te_library_stats.tsv",
     output:
         "results/te/peaks/deseq2/size_factors.tsv",
+    params:
+        samples=SAMPLES,
+        min_count=config.get("deseq2", {}).get("min_count", 10),
     threads: 1
     resources:
         runtime=runtime(10),

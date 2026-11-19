@@ -102,12 +102,15 @@ To decide, with `deseq2: enable` the workflow writes `peaks/deseq2/size_factors.
 the kept insertions, the library factor (kept insertions over their geometric mean), the size
 factor, their ratio and the scale factor of the `deseq2` tracks. A ratio above 1 means a higher
 FRiP than average. If the ratios are close to 1, or differ as much between replicates as
-between conditions, the choice does not matter. If they differ between conditions, look at the
-MA plot of the differential TE peaks (`peaks/deseq2/{contrast}/ma_plot.pdf`) and the number of
-differential peaks: if most peaks are centred on 0 and the changes go both ways, the difference
-in FRiP is technical and `deseq2` is the better choice; if a large part of the peaks shifts in
-one direction, use `cpm`. The library sizes of the subfamily test (`te: normalisation`, below)
-follow the same logic, with the subfamilies in place of the peaks.
+between conditions, the choice does not matter. If they differ between conditions, the data
+alone cannot tell a technical difference in FRiP from a global biological change: the MA plot of
+the differential TE peaks (`peaks/deseq2/{contrast}/ma_plot.pdf`) uses the DESeq2-normalised
+counts, so it is centred on 0 by construction and only shows the changes that remain after that
+normalisation. Base the choice on evidence from outside the TE peaks: what is known about the
+biology (e.g. a factor that opens or closes chromatin widely), a spike-in, or regions expected
+not to change. If no such evidence points to a global change, use `deseq2`; if it does, use
+`cpm`. The library sizes of the subfamily test (`te: normalisation`, below) follow the same
+logic, with the subfamilies in place of the peaks.
 
 ### Differential accessibility of subfamilies
 
