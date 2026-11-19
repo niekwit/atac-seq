@@ -392,6 +392,7 @@ rule te_epi_subfamilies:
         changes=lambda w: epi_changes(w.mark, w.contrast),
         labels=lambda w: epi_labels(w.mark, w.contrast),
         min_copies=lambda w: epi_config(w.mark)["min_copies"],
+        min_consensus_fraction=te_profile_config()["min_consensus_fraction"],
     threads: 1
     resources:
         runtime=runtime(15),

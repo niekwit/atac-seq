@@ -391,6 +391,9 @@ if (nrow(full_length) == 0) {
       y = "Full-length copies",
       fill = paste(treatment, "vs", control),
       caption = paste0(
+        "Full-length: one RepeatMasker alignment covers \u2265 ",
+        100 * snakemake@params[["min_consensus_fraction"]],
+        "% of the subfamily's consensus\n",
         "More accessible: overlapped by a more accessible TE peak\n",
         "Fisher's exact test, ",
         tolower(change_short),

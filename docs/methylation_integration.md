@@ -83,7 +83,11 @@ unchanged accessible peaks (`signal_profile.pdf`, `signal_heatmap.pdf`).
 - **Tiles:** methylKit tiles have a fixed width, so a tile that only partly covers a peak still
   counts as overlapping it. For the repeat subfamilies, a copy counts as in a DMR if at least
   half of it is in one region, so long copies (e.g. full-length L1s, about 6 kb) are only
-  counted if adjacent tiles were merged into one region.
+  counted if adjacent tiles were merged into one region. The full-length copies in
+  `full_length.pdf` are the exception: they are assigned the region they overlap most by any
+  overlap (≥ 1 bp), and the plot uses the hypomethylated regions (or the BED regions). Full-length
+  is defined in [Full-length copies](transposable_elements.md#full-length-copies) (one
+  RepeatMasker alignment covering at least 90% of the subfamily's consensus by default).
 
 ## Output
 

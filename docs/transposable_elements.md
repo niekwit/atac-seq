@@ -42,8 +42,8 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    multimappers. They are scaled per million insertions or with DESeq2 size factors
    (`te: bigwig_normalisation`, see [below](#scaling-of-the-signal-tracks)).
 6. With subfamilies in `te: profile: subfamilies`: profile of the signal tracks over the
-   full-length copies of these subfamilies (copies that cover at least 90% of the RepeatMasker
-   consensus), scaled to the same length from 5' to 3' with 2 kb flanks (`deepTools
+   full-length copies of these subfamilies (copies that cover at least 90% of their subfamily's
+   RepeatMasker consensus by default; see [Full-length copies](#full-length-copies)), scaled to the same length from 5' to 3' with 2 kb flanks (`deepTools
    computeMatrix scale-regions` and `plotProfile`), per condition and per sample. The profile
    is the mean over many copies, so it shows, for example, accessibility at the 5' UTR promoter
    of young LINE-1s, even though single copies can't be resolved.
@@ -59,6 +59,50 @@ include multimappers, so the values are close to, but not the same as, the ENCOD
    classes mix elements of different lengths and ages, and for LTR retrotransposons
    RepeatMasker annotates the LTRs and the internal part (`-int`) as separate subfamilies, so
    `class:LTR` mostly contains solo LTRs.
+
+### Full-length copies
+
+The TE profiles (step 6) and the `full_length.pdf` plots of the
+[H3K9me3](h3k9me3_integration.md) and [DNA methylation](methylation_integration.md)
+integrations use the same set of full-length copies (`resources/te/full_length_copies.bed`).
+Only copies of the `te: profile: subfamilies` entries are included.
+
+**Definition.** A copy is full-length if **one RepeatMasker alignment (one row of the UCSC
+`rmsk` table) covers at least `te: profile: min_consensus_fraction` (default 0.9, i.e. 90%) of
+the consensus sequence of its own subfamily**:
+
+```text
+covered fraction = consensus bases covered by the alignment / length of the consensus
+```
+
+Both numbers come from the `repStart`, `repEnd` and `repLeft` columns of `rmsk`, which give the
+part of the consensus that the copy aligns to and how many consensus bases come after it (on
+the minus strand `repStart` and `repLeft` swap roles). For example, a copy of a subfamily with a
+6,000 bp consensus that aligns to consensus positions 301–6,000 covers 5,700 / 6,000 = 95% and
+is full-length. A copy that aligns to positions 1,501–6,000 covers 75%: it is 5'-truncated, as
+most LINE-1 copies are, and is left out.
+
+What this means:
+
+- **Relative to the subfamily, not an absolute length.** A full-length copy of a 6 kb LINE-1
+  subfamily is about 6 kb; a full-length copy of an LTR subfamily is only as long as that LTR.
+  For LTR retrotransposons, RepeatMasker annotates the internal part (e.g. `IAPEz-int`) and the
+  LTRs (e.g. `IAPLTR1_Mm`) as separate subfamilies, so a full-length `IAPEz-int` copy is the
+  internal part only, without its LTRs.
+- **Coverage of the consensus, not intactness.** The covered consensus positions can still
+  contain mutations, small insertions or deletions, and a stop codon. A full-length copy is not
+  necessarily able to transpose (e.g. with intact ORFs).
+- **Split copies are missed.** RepeatMasker splits a copy into several rows when, for example,
+  another repeat is inserted in it. These rows are not joined, so such a copy counts only if one
+  of its pieces covers enough of the consensus on its own. This mainly affects long elements
+  (LINE-1, ERV internal parts).
+- **Consensus length.** For subfamilies whose consensus includes a variable part (e.g. the
+  5' UTR monomers of young mouse LINE-1s), copies with fewer monomers than the consensus cover a
+  smaller fraction and can fall below the threshold. Lower `min_consensus_fraction` (e.g. 0.8) to
+  include them; the profile and `full_length.pdf` then include more copies.
+
+`logs/te/te_full_length_copies.log` lists, for each entry, its subfamilies and its number of
+full-length copies out of all its copies, and the BED file has the covered fraction of each copy (column 5).
 
 ### Scaling of the signal tracks
 

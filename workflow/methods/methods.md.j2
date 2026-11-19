@@ -370,10 +370,12 @@ H3K9me3 regions (scaled to {{ h3k9me3_body }} bp, ± {{ h3k9me3_flank }} bp,
 {{ epi_bin }} bp bins) were calculated with computeMatrix scale-regions. For each repeat subfamily
 with at least {{ h3k9me3_min_copies }} copies, the percentage of copies with at
 least half their length in the H3K9me3 regions was correlated with the
-subfamily's shrunken log2 fold change (Spearman). Full-length copies of the
-profile subfamilies were classified by their overlap with the H3K9me3 regions
-and with more accessible TE peaks, and the association was tested with
-Fisher's exact test.
+subfamily's shrunken log2 fold change (Spearman). Full-length copies (a single RepeatMasker alignment covering ≥
+{{ percent(profile["min_consensus_fraction"]) }} of the subfamily's consensus
+sequence) of the
+profile subfamilies were assigned the H3K9me3 region they overlapped most and
+classified by overlap with a more accessible TE peak, and the association was
+tested with Fisher's exact test.
 {% endif %}
 P-values of the Wilcoxon and Fisher's exact tests were adjusted with the
 Benjamini–Hochberg method {{ cite("benjamini1995") }}.
@@ -425,9 +427,12 @@ Tn5 insertions per million over the
 scale-regions. For each repeat subfamily with at least
 {{ methylation_min_copies }} copies, the percentage of copies with at least
 half their length in the DMRs was correlated with the subfamily's shrunken log2
-fold change (Spearman), and full-length copies of the profile subfamilies were
-classified by their overlap with the DMRs and with more accessible TE peaks
-(Fisher's exact test).
+fold change (Spearman). Full-length copies (a single RepeatMasker alignment covering ≥
+{{ percent(profile["min_consensus_fraction"]) }} of the subfamily's consensus
+sequence) of the
+profile subfamilies were assigned the region they overlapped most and
+classified by overlap with a more accessible TE peak, and the association was
+tested with Fisher's exact test.
 {% endif %}
 P-values of the Wilcoxon and Fisher's exact tests were adjusted with the
 Benjamini–Hochberg method {{ cite("benjamini1995") }}.
