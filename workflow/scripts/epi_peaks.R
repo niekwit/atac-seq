@@ -4,17 +4,18 @@ sink(log, type = "output")
 sink(log, type = "message")
 
 # Integration of the differential accessibility of the peaks of a contrast
-# with the differential H3K9me3 regions of the same contrast
-# (h3k9me3_annotate_peaks: the H3K9me3 region each peak overlaps most).
+# with the differential regions of an epigenomic mark (H3K9me3, DNA
+# methylation) of the same contrast (epi_annotate_peaks: the region each peak
+# overlaps most).
 #
 # - enrichment.tsv, enrichment.pdf: percentage of the more, less and
-#   unchanged accessible peaks in regions that lose (or gain) H3K9me3, with
-#   Fisher's exact tests of the more and less accessible against the
-#   unchanged peaks
+#   unchanged accessible peaks in regions where the mark decreases (or
+#   increases), with Fisher's exact tests of the more and less accessible
+#   against the unchanged peaks
 # - distribution.pdf, distribution_tests.tsv: cumulative distribution of the
-#   ATAC-seq log2 fold changes of the peaks by the H3K9me3 change of their
+#   ATAC-seq log2 fold changes of the peaks by the change of the mark in their
 #   region, Wilcoxon rank-sum test of each group against the peaks outside
-#   the H3K9me3 regions
+#   the regions
 
 library(ggplot2)
 library(cowplot)
@@ -22,13 +23,28 @@ library(cowplot)
 treatment <- snakemake@params[["treatment"]]
 control <- snakemake@params[["control"]]
 peak_set <- snakemake@params[["peak_set"]]
+# Mark (h3k9me3, methylation): prefix of its columns in the input and output
+prefix <- snakemake@params[["prefix"]]
+# Change codes of a decrease and an increase in the treatment (lost/gained,
+# hypo/hyper), and plot labels
+down <- snakemake@params[["down"]]
+up <- snakemake@params[["up"]]
+labels <- snakemake@params[["labels"]]
 
 peaks <- read.delim(
   snakemake@input[["peaks"]],
   colClasses = c(chr = "character")
 )
+# Generic names of the columns of the mark (mark_change, ...)
+names(peaks) <- sub(paste0("^", prefix, "_"), "mark_", names(peaks))
 cat(sprintf("%d peaks tested by DESeq2\n", nrow(peaks)))
-print(table(peaks$change, peaks$h3k9me3_change))
+print(table(peaks$change, peaks$mark_change))
+
+# Writes a table with the column names of the mark (e.g. mark_change)
+write_tsv <- function(data, path) {
+  names(data) <- sub("^mark_", paste0(prefix, "_"), names(data))
+  write.table(data, path, quote = FALSE, sep = "\t", row.names = FALSE)
+}
 
 message_plot <- function(message) {
   ggplot() +
@@ -50,29 +66,30 @@ atac_colours <- c(
   "less accessible" = "#377EB8",
   "unchanged" = "#cccccc"
 )
-h3k9me3_levels <- c("lost", "gained", "unchanged", "outside")
-h3k9me3_labels <- c(
-  "lost" = paste("H3K9me3 lost in", treatment),
-  "gained" = paste("H3K9me3 gained in", treatment),
-  "unchanged" = "H3K9me3 unchanged",
-  "outside" = "outside H3K9me3 regions"
+mark_levels <- c(down, up, "unchanged", "outside")
+mark_labels <- setNames(
+  c(
+    labels[["down"]],
+    labels[["up"]],
+    labels[["unchanged"]],
+    labels[["outside"]]
+  ),
+  mark_levels
 )
-h3k9me3_colours <- c(
-  "lost" = "#377EB8",
-  "gained" = "#dd3b3b",
-  "unchanged" = "grey30",
-  "outside" = "#cccccc"
+mark_colours <- setNames(
+  c("#377EB8", "#dd3b3b", "grey30", "#cccccc"),
+  mark_levels
 )
-# Changes of H3K9me3 in the data (BED file: one direction)
-changes <- intersect(c("lost", "gained"), snakemake@params[["changes"]])
+# Changes of the mark in the data (BED file: one direction)
+changes <- intersect(c(down, up), snakemake@params[["changes"]])
 
-# Enrichment of differential peaks in regions that change H3K9me3
+# Enrichment of differential peaks in regions where the mark changes
 # -----------------------------------------------------
 reference <- peaks$change == "unchanged"
 enrichment <- do.call(
   rbind,
-  lapply(changes, function(h3k9me3_change) {
-    in_regions <- peaks$h3k9me3_change == h3k9me3_change
+  lapply(changes, function(mark_change) {
+    in_regions <- peaks$mark_change == mark_change
     do.call(
       rbind,
       lapply(atac_levels, function(atac_change) {
@@ -90,7 +107,7 @@ enrichment <- do.call(
           }
         }
         data.frame(
-          h3k9me3_change = h3k9me3_change,
+          mark_change = mark_change,
           atac_change = atac_change,
           n_peaks = sum(group),
           n_in_regions = sum(group & in_regions),
@@ -111,22 +128,16 @@ enrichment <- do.call(
 )
 enrichment$padj <- p.adjust(enrichment$p, method = "BH")
 print(enrichment)
-write.table(
-  enrichment,
-  snakemake@output[["enrichment"]],
-  quote = FALSE,
-  sep = "\t",
-  row.names = FALSE
-)
+write_tsv(enrichment, snakemake@output[["enrichment"]])
 
 plot_data <- enrichment[enrichment$n_peaks > 0, ]
 if (nrow(plot_data) == 0) {
   enrichment_plot <- message_plot("No peaks tested by DESeq2")
 } else {
   plot_data$atac_change <- factor(plot_data$atac_change, levels = atac_levels)
-  plot_data$h3k9me3_change <- factor(
-    h3k9me3_labels[plot_data$h3k9me3_change],
-    levels = h3k9me3_labels[changes]
+  plot_data$mark_change <- factor(
+    mark_labels[plot_data$mark_change],
+    levels = mark_labels[changes]
   )
   plot_data$label <- paste0(
     plot_data$n_in_regions,
@@ -141,12 +152,12 @@ if (nrow(plot_data) == 0) {
   ) +
     geom_col(colour = "black", linewidth = 0.3, width = 0.7) +
     geom_text(aes(label = label), vjust = -0.2, size = 3.5, lineheight = 0.9) +
-    facet_wrap(~h3k9me3_change) +
+    facet_wrap(~mark_change) +
     scale_fill_manual(values = atac_colours, guide = "none") +
     scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
     labs(
       x = paste("Accessibility in", treatment, "vs", control),
-      y = "Peaks in the H3K9me3 regions (%)",
+      y = paste0("Peaks in the ", labels[["regions"]], " (%)"),
       caption = paste0(
         peak_set,
         "\nFisher's exact test against the unchanged peaks; ",
@@ -168,18 +179,18 @@ ggsave(
   bg = "white"
 )
 
-# Distribution of the ATAC-seq log2 fold changes by H3K9me3 change
+# Distribution of the ATAC-seq log2 fold changes by change of the mark
 # -----------------------------------------------------
-outside <- peaks$log2FoldChange_shrunken[peaks$h3k9me3_change == "outside"]
+outside <- peaks$log2FoldChange_shrunken[peaks$mark_change == "outside"]
 tests <- do.call(
   rbind,
-  lapply(h3k9me3_levels, function(level) {
-    values <- peaks$log2FoldChange_shrunken[peaks$h3k9me3_change == level]
+  lapply(mark_levels, function(level) {
+    values <- peaks$log2FoldChange_shrunken[peaks$mark_change == level]
     testable <- level != "outside" &&
       length(values) > 0 &&
       length(outside) > 0
     data.frame(
-      h3k9me3_change = level,
+      mark_change = level,
       n_peaks = length(values),
       median_log2FoldChange_shrunken = if (length(values)) {
         median(values)
@@ -203,24 +214,18 @@ tests <- do.call(
 tests <- tests[tests$n_peaks > 0, ]
 tests$wilcoxon_padj <- p.adjust(tests$wilcoxon_p, method = "BH")
 print(tests)
-write.table(
-  tests,
-  snakemake@output[["distribution_tests"]],
-  quote = FALSE,
-  sep = "\t",
-  row.names = FALSE
-)
+write_tsv(tests, snakemake@output[["distribution_tests"]])
 
 if (nrow(peaks) == 0) {
   distribution <- message_plot("No peaks tested by DESeq2")
 } else {
-  cdf_data <- peaks[, c("h3k9me3_change", "log2FoldChange_shrunken")]
-  present <- h3k9me3_levels[h3k9me3_levels %in% cdf_data$h3k9me3_change]
+  cdf_data <- peaks[, c("mark_change", "log2FoldChange_shrunken")]
+  present <- mark_levels[mark_levels %in% cdf_data$mark_change]
   legend_labels <- sapply(present, function(level) {
-    row <- tests[tests$h3k9me3_change == level, ]
+    row <- tests[tests$mark_change == level, ]
     sprintf(
       "%s (n = %d)%s",
-      h3k9me3_labels[[level]],
+      mark_labels[[level]],
       row$n_peaks,
       if (is.na(row$wilcoxon_padj)) {
         ""
@@ -237,15 +242,15 @@ if (nrow(peaks) == 0) {
       }
     )
   })
-  cdf_data$h3k9me3_change <- factor(cdf_data$h3k9me3_change, levels = present)
+  cdf_data$mark_change <- factor(cdf_data$mark_change, levels = present)
   distribution <- ggplot(
     cdf_data,
-    aes(log2FoldChange_shrunken, colour = h3k9me3_change)
+    aes(log2FoldChange_shrunken, colour = mark_change)
   ) +
     geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
     stat_ecdf(geom = "step", linewidth = 0.8) +
     scale_colour_manual(
-      values = h3k9me3_colours[present],
+      values = mark_colours[present],
       labels = legend_labels
     ) +
     labs(
@@ -259,8 +264,9 @@ if (nrow(peaks) == 0) {
       colour = NULL,
       caption = paste0(
         peak_set,
-        "\nWilcoxon rank-sum test against the peaks outside the H3K9me3 ",
-        "regions (BH-adjusted p)"
+        "\nWilcoxon rank-sum test against the peaks outside the ",
+        labels[["regions"]],
+        " (BH-adjusted p)"
       )
     ) +
     theme_cowplot(12) +

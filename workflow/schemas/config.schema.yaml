@@ -344,6 +344,79 @@ properties:
         minimum: 1
         default: 20
 
+  methylation:
+    type: object
+    properties:
+      contrasts:
+        type: [object, "null"]
+        additionalProperties:
+          type: object
+          properties:
+            regions:
+              type: string
+            # No default: a methylKit table read as BED would fail later
+            methylkit:
+              type: boolean
+            direction:
+              type: string
+              enum: ["hypo", "hyper"]
+              default: hypo
+            bigwigs:
+              type: [object, "null"]
+              properties:
+                control:
+                  type: string
+                treatment:
+                  type: string
+              required: ["control", "treatment"]
+              additionalProperties: false
+          required: ["regions", "methylkit"]
+          additionalProperties: false
+        default: {}
+      columns:
+        type: object
+        properties:
+          chr:
+            type: string
+            default: chr
+          start:
+            type: string
+            default: start
+          end:
+            type: string
+            default: end
+          diff:
+            type: string
+            default: meth.diff
+          fdr:
+            type: string
+            default: qvalue
+      flip_diff:
+        type: boolean
+        default: false
+      fdr:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+        default: 0.01
+      min_diff:
+        type: number
+        minimum: 0
+        maximum: 100
+        default: 25
+      profile_flank:
+        type: integer
+        minimum: 100
+        default: 5000
+      profile_body_length:
+        type: integer
+        minimum: 100
+        default: 5000
+      min_copies:
+        type: integer
+        minimum: 1
+        default: 20
+
   extra:
     type: object
     properties:

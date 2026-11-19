@@ -56,13 +56,13 @@ EXTRA_NAMES = {
 }
 profiles = bool(profile["subfamilies"])
 # deepTools profiles: TE profile, TSS profile of the RNA-seq integration (TE
-# module), H3K9me3 profiles (signal around the peaks, with BigWigs; ATAC-seq
-# over the H3K9me3 regions with the TE module)
+# module), H3K9me3 and DNA methylation profiles (signal around the peaks, with
+# BigWigs; ATAC-seq over the regions with the TE module)
 deeptools_profiles = (
     (te and profiles)
     or (te and bool(params["rnaseq"]))
-    or (te and bool(params["h3k9me3"]))
-    or any(s["bigwigs"] for s in params["h3k9me3"].values())
+    or (te and any(params["epi"].values()))
+    or any(s["bigwigs"] for c in params["epi"].values() for s in c.values())
 )
 EXTRA_RUNS = {
     "markduplicates": not te_only,
@@ -139,15 +139,22 @@ context = {
         if params["rnaseq_config"]["lfc_threshold"]
         else "log2 fold change ≠ 0"
     ),
-    "h3k9me3": list(params["h3k9me3"]),
-    "h3k9me3_diffbind": any(s["diffbind"] for s in params["h3k9me3"].values()),
-    "h3k9me3_bed": any(not s["diffbind"] for s in params["h3k9me3"].values()),
-    "h3k9me3_bigwigs": any(s["bigwigs"] for s in params["h3k9me3"].values()),
-    "h3k9me3_fdr": params["h3k9me3_config"]["fdr"],
-    "h3k9me3_flank": params["h3k9me3_config"]["profile_flank"],
-    "h3k9me3_body": params["h3k9me3_config"]["profile_body_length"],
-    "h3k9me3_min_copies": params["h3k9me3_config"]["min_copies"],
-    "h3k9me3_bin": params["computematrix_bin_size"],
+    **{
+        f"{mark}{suffix}": value
+        for mark, contrasts in params["epi"].items()
+        for suffix, value in {
+            "": list(contrasts),
+            "_table": any(c["table"] for c in contrasts.values()),
+            "_bed": any(not c["table"] for c in contrasts.values()),
+            "_bigwigs": any(c["bigwigs"] for c in contrasts.values()),
+            "_fdr": params["epi_config"][mark]["fdr"],
+            "_min_effect": params["epi_config"][mark]["min_effect"],
+            "_flank": params["epi_config"][mark]["profile_flank"],
+            "_body": params["epi_config"][mark]["profile_body_length"],
+            "_min_copies": params["epi_config"][mark]["min_copies"],
+        }.items()
+    },
+    "epi_bin": params["computematrix_bin_size"],
     "annotation": annotation,
     "r_used": annotation or reference["blacklist"]["source"] == "annotationhub",
 }

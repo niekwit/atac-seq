@@ -196,8 +196,10 @@ rule methods:
         rnaseq_config=rnaseq_config(),
         # Contrasts integrated with H3K9me3 ({contrast: settings}), and its
         # settings
-        h3k9me3=lambda w: h3k9me3_contrasts(),
-        h3k9me3_config=h3k9me3_config(),
+        # Contrasts integrated with H3K9me3 and DNA methylation
+        # ({mark: {contrast: settings}}), and their settings
+        epi=lambda w: {mark: epi_contrasts(mark) for mark in EPI_MARKS},
+        epi_config={mark: epi_config(mark) for mark in EPI_MARKS},
         computematrix_bin_size=computematrix_bin_size(),
         # From the config, so the data set files are not checked without TE
         gat_samples=config.get("te", {})

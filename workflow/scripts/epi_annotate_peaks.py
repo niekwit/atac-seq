@@ -1,10 +1,13 @@
 """
 Annotates the differential accessibility of the peaks of a contrast with the
-differential H3K9me3 regions of the same contrast (h3k9me3_prepare).
+differential regions of an epigenomic mark of the same contrast (epi_prepare;
+H3K9me3, DNA methylation).
 
-Each peak tested by DESeq2 (padj not NA) gets the H3K9me3 region it overlaps
-most (bedtools intersect -wo, >= 1 bp), with the change of H3K9me3 in that
-region (lost, gained or unchanged), or "outside" if it overlaps no region.
+Each peak tested by DESeq2 (padj not NA) gets the region it overlaps most
+(bedtools intersect -wo, >= 1 bp), with the change of the mark in that region
+(decrease, increase or unchanged: lost/gained, hypo/hyper), or "outside" if it
+overlaps no region. Columns of the region start with the mark (prefix), e.g.
+h3k9me3_change, methylation_meth_diff.
 Peaks not tested by DESeq2 are left out, as they would count as unchanged.
 """
 
@@ -19,6 +22,8 @@ import pandas as pd
 peaks_file = snakemake.input["atac"]
 regions_file = snakemake.input["regions"]
 output = snakemake.output["peaks"]
+prefix = snakemake.params["prefix"]
+effect_name = snakemake.params["effect_name"]
 log = snakemake.log[0]
 
 logging.basicConfig(
@@ -78,25 +83,29 @@ overlaps = overlaps.sort_values("overlap_bp", ascending=False).drop_duplicates(
     "peak_id"
 )
 overlaps = overlaps.merge(
-    regions[["region_id", "width", "log2FoldChange", "FDR", "change"]].rename(
+    regions[["region_id", "width", effect_name, "FDR", "change"]].rename(
         columns={
-            "region_id": "h3k9me3_region",
-            "width": "h3k9me3_width",
-            "log2FoldChange": "h3k9me3_log2FoldChange",
-            "FDR": "h3k9me3_FDR",
-            "change": "h3k9me3_change",
+            "region_id": f"{prefix}_region",
+            "width": f"{prefix}_width",
+            effect_name: f"{prefix}_{effect_name}",
+            "FDR": f"{prefix}_FDR",
+            "change": f"{prefix}_change",
         }
     ),
     left_on="region_id",
-    right_on="h3k9me3_region",
+    right_on=f"{prefix}_region",
 ).drop(columns="region_id")
-overlaps = overlaps.rename(columns={"overlap_bp": "h3k9me3_overlap_bp"})
+overlaps = overlaps.rename(columns={"overlap_bp": f"{prefix}_overlap_bp"})
 
 annotated = peaks.merge(overlaps, on="peak_id", how="left")
-annotated["h3k9me3_change"] = annotated["h3k9me3_change"].fillna("outside")
-annotated["h3k9me3_overlap_bp"] = annotated["h3k9me3_overlap_bp"].fillna(0).astype(int)
+annotated[f"{prefix}_change"] = annotated[f"{prefix}_change"].fillna("outside")
+# Integers (missing outside the regions)
+annotated[f"{prefix}_width"] = annotated[f"{prefix}_width"].astype("Int64")
+annotated[f"{prefix}_overlap_bp"] = (
+    annotated[f"{prefix}_overlap_bp"].fillna(0).astype(int)
+)
 annotated.to_csv(output, sep="\t", index=False, na_rep="NA")
 logging.info(
-    "Peaks by accessibility and H3K9me3 change:\n"
-    + pd.crosstab(annotated["change"], annotated["h3k9me3_change"]).to_string()
+    f"Peaks by accessibility and {prefix} change:\n"
+    + pd.crosstab(annotated["change"], annotated[f"{prefix}_change"]).to_string()
 )

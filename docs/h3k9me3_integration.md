@@ -1,5 +1,8 @@
 # Integration with H3K9me3
 
+The same analyses are available for DNA methylation; see
+[Integration with DNA methylation](methylation_integration.md).
+
 The differential accessibility of a contrast can be compared with the H3K9me3 regions that change
 in the same contrast (e.g. CUT&RUN or ChIP-seq of the same conditions). The main question: do
 regions that lose H3K9me3 become more accessible, and do the repeats in them open up? This needs
@@ -105,10 +108,24 @@ region). The analyses:
      half of it is in one region), so use it as a guide, not a test. Subfamilies that are H3K9me3
      targets and open up are at the top right.
    - **Full-length copies:** the full-length copies of the `te: profile: subfamilies` entries
-     (e.g. young L1s), by whether they are in a region that loses H3K9me3 (gains, for a BED file
-     with `direction: gained`) and whether a more accessible TE peak overlaps them, with Fisher's
-     exact test of the association per entry. Without `te: profile: subfamilies` the plot says
-     there are no full-length copies.
+     (e.g. young L1s), one bar per entry. **Full-length** means that one RepeatMasker alignment
+     of the copy covers at least `te: profile: min_consensus_fraction` (default 90%) of its
+     subfamily's consensus sequence; see
+     [Full-length copies](transposable_elements.md#full-length-copies) for the exact definition
+     and its limitations. Each copy is put in one of four groups:
+     - **in a region:** the copy is assigned the H3K9me3 region it overlaps most (by ≥ 1 bp;
+       `lost`, `gained`, `unchanged` or `outside`), and the plot uses the regions that lose
+       H3K9me3 (gain, for a BED file with `direction: gained`);
+     - **more accessible:** a more accessible TE peak overlaps the copy (by ≥ 1 bp; TE peaks
+       not tested by DESeq2 are left out).
+
+     The bars show the percentage of copies in each combination (in a region and more
+     accessible, in a region only, more accessible only, neither), with the number of copies
+     above the bar. Fisher's exact test per entry tests whether copies in the regions are more
+     (or less) often more accessible than the other copies (2 × 2 table, BH-adjusted). Unlike
+     the scatter plot (at least half of a copy in one region), any overlap counts here, because
+     full-length copies are long (e.g. about 6 kb for L1) compared with many regions. Without
+     `te: profile: subfamilies` the plot says there are no full-length copies.
 5. **H3K9me3 signal around the differential peaks** (with `bigwigs`, `signal_profile.pdf`,
    `signal_heatmap.pdf`): H3K9me3 signal of the control and the treatment within `profile_flank`
    of the centre of the more, less and unchanged accessible peaks (computeMatrix
@@ -149,7 +166,8 @@ In `results/te/integration/h3k9me3/{contrast}/` (TE module):
 | `subfamilies/full_length_copies.tsv`  | each full-length copy of the profile subfamilies with its H3K9me3 change and accessibility (`more accessible`, `less accessible`, `unchanged` or `no peak`, from the TE peaks overlapping it) |
 | `subfamilies/full_length.tsv`, `full_length.pdf` | per profile entry: copies by H3K9me3 change and accessibility, Fisher's exact test |
 
-`regions.tsv` (the prepared regions with their change), `lost.bed` and `gained.bed` are in
+`regions.tsv` (the prepared regions with their change), `decreased.bed` (lost) and
+`increased.bed` (gained) are in
 `results/integration/h3k9me3/{contrast}/` (in `results/te/integration/h3k9me3/{contrast}/` with
 `te: only`). `input_tables/` next to them has an unchanged copy of the `regions` file, so the
 results keep the input they were made from. The BigWig files are not copied.

@@ -76,6 +76,13 @@ All files are listed in [Integration with RNA-seq](rnaseq_integration.md#output)
 
 All files are listed in [Integration with H3K9me3](h3k9me3_integration.md#output).
 
+## Integration with DNA methylation (`methylation: contrasts`)
+
+The same files as for H3K9me3, in `integration/methylation/{contrast}/` and
+`te/integration/methylation/{contrast}/`, with the DMRs as regions (hypo- and hypermethylated).
+`scatter.pdf` needs a methylKit table, and `signal_profile.pdf` needs methylation BigWigs.
+All files are listed in [Integration with DNA methylation](methylation_integration.md#output).
+
 ## Methods
 
 `methods/methods.md` (in the analysis directory, not `results/`) is a methods section of the
