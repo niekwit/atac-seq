@@ -178,11 +178,8 @@ rule te_multiomics_profile:
         body_length=te_profile_config()["body_length"],
         # y axis units of each data set
         units={
-            "ATAC-seq": (
-                "CPM"
-                if te_bigwig_normalisation() == "cpm"
-                else "normalised insertions"
-            ),
+            # As in the other profiles of the TE signal tracks
+            "ATAC-seq": TE_BIGWIG_LABEL,
             "H3K9me3": epi_config("h3k9me3")["bigwig_units"],
             "Methylation": epi_config("methylation")["bigwig_units"],
         },
