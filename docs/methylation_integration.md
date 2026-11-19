@@ -54,7 +54,8 @@ methylation:
   the group with `treatment = 0` from the group with `treatment = 1`, so set
   `flip_diff: true` if the control was 1. Regions with `qvalue < fdr` and
   `|meth.diff| > min_diff` are **hypo**methylated (below 0) or **hyper**methylated (above 0), the
-  others **unchanged**. The defaults (q < 0.01, 25 percentage points) are common methylKit
+  others **unchanged**. Rows without a q-value or methylation difference are removed (counted in
+  the log), as they have no test result. The defaults (q < 0.01, 25 percentage points) are common methylKit
   thresholds. Other tools (e.g. DSS) work if their table has the same kind of columns
   (`columns`).
 - **BED file** (`methylkit: false`): DMRs that change in one direction, given by `direction`,

@@ -395,11 +395,15 @@ DMRs given as a BED file (one direction of change) were merged where they
 overlapped ({{ tool("bedtools") }} merge).
 {% endif %}
 {% if te_only %}Peaks of the TE module{% else %}Consensus peaks{% endif %} tested by DESeq2
-(with adjusted p-value) were assigned the DMR they overlapped most (bedtools
-intersect). The percentages of more and less accessible peaks in the DMRs
-were compared with those of the unchanged peaks (Fisher's exact test), and the
-shrunken log2 fold changes of the peaks in the DMRs with those of the peaks
-outside (Wilcoxon rank-sum test).
+(with adjusted p-value) were assigned the
+{% if methylation_table %}tested region (hypo-, hypermethylated or unchanged){% else %}DMR{% endif %} they
+overlapped most (bedtools intersect). The percentages of more and less
+accessible peaks in the hypo- and hypermethylated regions were compared with
+those of the unchanged peaks (Fisher's exact test), and the shrunken log2 fold
+changes of the peaks in each group of
+{% if methylation_table %}tested regions with those of the peaks outside all
+tested regions{% else %}DMRs with those of the peaks outside the DMRs{% endif %} (Wilcoxon
+rank-sum test).
 {% if methylation_table %}
 Methylation differences of the tested regions were correlated (Spearman) with
 the mean shrunken log2 fold change of the peaks in each region.
@@ -415,7 +419,8 @@ plotProfile and plotHeatmap.
 {% if not te_only %}
 The same analyses were run for the peaks of the TE module.
 {% endif %}
-Tn5 insertions per million over the DMRs (scaled to {{ methylation_body }} bp,
+Tn5 insertions per million over the
+{% if methylation_table %}hypo-, hypermethylated and unchanged regions{% else %}DMRs{% endif %} (scaled to {{ methylation_body }} bp,
 ± {{ methylation_flank }} bp) were calculated with computeMatrix
 scale-regions. For each repeat subfamily with at least
 {{ methylation_min_copies }} copies, the percentage of copies with at least

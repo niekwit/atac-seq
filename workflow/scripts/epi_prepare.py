@@ -7,7 +7,8 @@ differential accessibility.
   tested region with its effect size (log2 fold change, or methylation
   difference in percentage points) and FDR (q-value); regions with FDR below
   {mark}: fdr and |effect| above min_effect decrease (lost, hypo) or increase
-  (gained, hyper) in the treatment, the others are unchanged. DiffBind and
+  (gained, hyper) in the treatment, the others are unchanged; rows without
+  a q-value or effect are removed. DiffBind and
   methylKit report 1-based starts, which are converted to BED (0-based).
 - BED file: regions that change in one direction (direction), e.g. MACS2
   peaks of the control called with the treatment as control sample, or the
@@ -114,6 +115,17 @@ if is_table:
             "FDR": table[columns["fdr"]].astype(float),
         }
     )
+    # Rows without a test result (missing q-value or effect) cannot be called
+    # changed or unchanged, so they are left out
+    untested = regions[[effect_name, "FDR"]].isna().any(axis=1)
+    if untested.any():
+        logging.warning(
+            f"{untested.sum()} regions without {columns['fdr']} or "
+            f"{columns['effect']} removed"
+        )
+        regions = regions[~untested].copy()
+    if regions.empty:
+        raise ValueError(f"No regions with a test result in {regions_file}")
     if flip:
         regions[effect_name] = -regions[effect_name]
     significant = (regions["FDR"] < fdr) & (regions[effect_name].abs() > min_effect)
