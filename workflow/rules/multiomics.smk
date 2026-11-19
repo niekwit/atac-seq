@@ -176,9 +176,9 @@ rule te_multiomics_profile:
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         flank=te_profile_config()["flank"],
         body_length=te_profile_config()["body_length"],
-        # y axis units of each data set
+        # y axis units of each data set (ATAC-seq as in the other profiles of
+        # the TE signal tracks)
         units={
-            # As in the other profiles of the TE signal tracks
             "ATAC-seq": TE_BIGWIG_LABEL,
             "H3K9me3": epi_config("h3k9me3")["bigwig_units"],
             "Methylation": epi_config("methylation")["bigwig_units"],
