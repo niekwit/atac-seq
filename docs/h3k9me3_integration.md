@@ -90,7 +90,7 @@ region). The analyses:
    differential peaks.
 3. **ATAC-seq signal over the H3K9me3 regions** (TE module, `atac_profile.pdf`,
    `atac_heatmap.pdf`): Tn5 insertions per million (mean of the replicates of each condition, the
-   CPM signal tracks of the TE module) over the lost, gained and unchanged H3K9me3 regions,
+   signal tracks of the TE module, scaled as set by `te: bigwig_normalisation`) over the lost, gained and unchanged H3K9me3 regions,
    scaled to `profile_body_length` with `profile_flank` on each side (deepTools computeMatrix
    scale-regions, plotProfile and plotHeatmap). Peaks only count the open sites that were
    called. This shows the accessibility of the whole region, including weak opening spread over

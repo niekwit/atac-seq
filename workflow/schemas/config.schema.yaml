@@ -156,6 +156,10 @@ properties:
         type: integer
         minimum: 1
         default: 10
+      bigwig_normalisation:
+        type: string
+        enum: ["cpm", "deseq2"]
+        default: cpm
       heatmap:
         type: object
         properties:

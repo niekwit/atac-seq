@@ -180,10 +180,20 @@ were used. Tn5 insertions in repeats were counted with
   ~ " for all read pairs, without for uniquely mapping read pairs") }}
 and summed per subfamily, family and class, with counts per million insertions
 and log2 enrichment (fraction of insertions over fraction of the genome
-covered, pseudocount 1). CPM-normalised insertion tracks were made with
+covered, pseudocount 1).
+{% if te_config.get("bigwig_normalisation", "cpm") == "deseq2" %}
+Insertion tracks were made with
+{{ tool("deeptools", "bamCoverage " ~ code("--binSize " ~ bin_size
+  ~ " --Offset 1")) }}
+scaled with the DESeq2 median-of-ratios size factors of the TE consensus peaks
+({{ code("--scaleFactor") }}: one million divided by the product of the size
+factor and the geometric mean of the numbers of kept insertions), and averaged per condition (bigwigAverage).
+{% else %}
+CPM-normalised insertion tracks were made with
 {{ tool("deeptools", "bamCoverage " ~ code("--binSize " ~ bin_size
   ~ " --normalizeUsing CPM --Offset 1")) }}
 and averaged per condition (bigwigAverage).
+{% endif %}
 {% if profile["subfamilies"] %}
 Insertion profiles over full-length copies (covering ≥
 {{ percent(profile["min_consensus_fraction"]) }} of the consensus) of selected
@@ -315,7 +325,7 @@ concordant (more accessible and up, or less accessible and down) or
 discordant; the larger of the two adjusted p-values was used as the p-value of
 a change in both (intersection-union test {{ cite("berger1982") }}).
 {% if te %}
-Tn5 insertions per million (mean of the replicates of each condition) around
+Tn5 insertions (signal tracks of the TE module, mean of the replicates of each condition) around
 the TSS (± {{ rnaseq_tss_flank }} bp, 50 bp bins) of the up-, down- and
 unchanged genes were calculated with computeMatrix reference-point and plotted
 with plotProfile.

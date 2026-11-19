@@ -401,6 +401,18 @@ def te_enabled():
     return config.get("te", {}).get("enable", False)
 
 
+def te_bigwig_normalisation():
+    """
+    Scaling of the TE signal tracks: cpm (insertions per million kept
+    insertions) or deseq2 (DESeq2 size factors of the TE consensus peaks,
+    which needs deseq2: enable)
+    """
+    normalisation = config.get("te", {}).get("bigwig_normalisation", "cpm")
+    if normalisation == "deseq2" and te_enabled() and not deseq2_enabled():
+        raise ValueError("te: bigwig_normalisation: deseq2 needs deseq2: enable: true")
+    return normalisation
+
+
 def te_profile_config():
     """
     Returns the settings of the profile plot over full-length copies of

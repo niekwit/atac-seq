@@ -186,19 +186,25 @@ rule te_sort_bam:
         "samtools index -@ {threads} {output.bam}) 2> {log}"
 
 
-# Tn5 insertions (5' end of each read) per million insertions, including
-# multimappers at one of their best alignments: the signal at a single copy
-# of a young repeat is not reliable, only the pattern over many copies
+# Tn5 insertions (5' end of each read), including multimappers at one of
+# their best alignments: the signal at a single copy of a young repeat is not
+# reliable, only the pattern over many copies. Per million kept insertions
+# (te: bigwig_normalisation: cpm) or scaled with the DESeq2 size factors of
+# the TE consensus peaks (deseq2)
 # -----------------------------------------------------
 rule te_bigwig:
     input:
         bam="results/te/{sample}.sorted.bam",
         bai="results/te/{sample}.sorted.bam.bai",
+        size_factors=(
+            ["results/te/peaks/deseq2/size_factors.tsv"]
+            if TE_BIGWIG == "deseq2"
+            else []
+        ),
     output:
-        "results/te/bigwig/{sample}.cpm.bigwig",
+        f"results/te/bigwig/{{sample}}.{TE_BIGWIG}.bigwig",
     params:
         bin_size=config.get("te", {}).get("bigwig_bin_size", 10),
-        options="--normalizeUsing CPM --Offset 1",
         extra=extra("bamcoverage"),
     threads: 4
     resources:
@@ -208,10 +214,8 @@ rule te_bigwig:
         "logs/te/te_bigwig_{sample}.log",
     conda:
         "../envs/qc.yaml"
-    shell:
-        "bamCoverage --binSize {params.bin_size} {params.options} {params.extra} "
-        "-p {threads} "
-        "-b {input.bam} -o {output} > {log} 2>&1"
+    script:
+        "../scripts/te_bigwig.py"
 
 
 # Mean signal of the replicates of a condition
@@ -219,10 +223,11 @@ rule te_bigwig:
 rule te_bigwig_mean:
     input:
         lambda w: expand(
-            "results/te/bigwig/{sample}.cpm.bigwig", sample=replicates(w.condition)
+            f"results/te/bigwig/{{sample}}.{TE_BIGWIG}.bigwig",
+            sample=replicates(w.condition),
         ),
     output:
-        "results/te/bigwig/mean/{condition}.cpm.bigwig",
+        f"results/te/bigwig/mean/{{condition}}.{TE_BIGWIG}.bigwig",
     params:
         bin_size=config.get("te", {}).get("bigwig_bin_size", 10),
         extra=extra("bigwigaverage"),
@@ -273,10 +278,13 @@ rule te_profile_matrix:
         bed="resources/te/full_length_copies.bed",
         bigwigs=lambda w: (
             expand(
-                "results/te/bigwig/mean/{condition}.cpm.bigwig", condition=CONDITIONS
+                f"results/te/bigwig/mean/{{condition}}.{TE_BIGWIG}.bigwig",
+                condition=CONDITIONS,
             )
             if w.level == "conditions"
-            else expand("results/te/bigwig/{sample}.cpm.bigwig", sample=SAMPLES)
+            else expand(
+                f"results/te/bigwig/{{sample}}.{TE_BIGWIG}.bigwig", sample=SAMPLES
+            )
         ),
     output:
         "results/te/profile/{level}.matrix.gz",
@@ -314,7 +322,7 @@ rule te_profile_plot:
         options=(
             "--perGroup --numPlotsPerRow 3 --startLabel 5\\' --endLabel 3\\' "
             "--plotHeight 6 --plotWidth 8 "
-            "--yAxisLabel 'Tn5 insertions per million'"
+            f"--yAxisLabel '{TE_BIGWIG_LABEL}'"
         ),
         extra=extra("plotprofile"),
     wildcard_constraints:
