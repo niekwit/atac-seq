@@ -343,6 +343,9 @@ properties:
         type: integer
         minimum: 1
         default: 20
+      bigwig_units:
+        type: string
+        default: signal
 
   methylation:
     type: object

@@ -234,6 +234,9 @@ h3k9me3:
   # TE module: subfamilies with at least this many copies in the genome are
   # compared (subfamilies/)
   min_copies: 20
+  # Units of the BigWig files (e.g. CPM, RPGC; y axis of the profiles of all
+  # data sets, multiomics:)
+  bigwig_units: signal
 
 # Integration with DNA methylation (not part of the ENCODE pipeline; needs
 # deseq2: enable): as h3k9me3:, with the differentially methylated regions

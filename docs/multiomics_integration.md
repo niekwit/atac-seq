@@ -118,7 +118,9 @@ treatment over the control, most gained accessibility at the top. So a band of c
 up can be compared directly with their H3K9me3 and methylation in the columns next to them.
 
 `copies/profile.pdf` shows the mean signal of each group (columns) and data set (rows), control
-in grey and treatment in red.
+in grey and treatment in red. The y axis titles give the units: ATAC-seq CPM (or normalised
+insertions with `te: bigwig_normalisation: deseq2`), H3K9me3 `h3k9me3: bigwig_units` (e.g. CPM;
+`signal` by default) and methylation %.
 
 ## Output
 

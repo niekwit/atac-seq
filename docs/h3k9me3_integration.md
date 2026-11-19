@@ -35,6 +35,7 @@ h3k9me3:
   profile_flank: 5000         # multiple of the bin size (50 bp, or extra: computematrix --binSize)
   profile_body_length: 5000   # multiple of the bin size
   min_copies: 20
+  bigwig_units: signal        # units of the BigWig files (e.g. CPM), for the y axis labels
 ```
 
 `regions` can be one of two kinds, set with `diffbind`:

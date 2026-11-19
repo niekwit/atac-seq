@@ -593,6 +593,11 @@ def epi_config(mark):
         "profile_flank": section.get("profile_flank", 5000),
         "profile_body_length": section.get("profile_body_length", 5000),
         "min_copies": section.get("min_copies", 20),
+        # Units of the BigWig files (y axis of the multiomics copy profiles);
+        # methylation BigWig files must be in %
+        "bigwig_units": section.get(
+            "bigwig_units", "%" if mark == "methylation" else "signal"
+        ),
     }
 
 

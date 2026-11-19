@@ -27,7 +27,14 @@ profile$group <- factor(
   levels = groups,
   labels = sprintf("%s (n = %d)", groups, n_copies[groups])
 )
-profile$dataset <- factor(profile$dataset, levels = unique(profile$dataset))
+units <- unlist(snakemake@params[["units"]])
+datasets <- unique(profile$dataset)
+# Units on a second line of the y axis titles (strips)
+profile$dataset <- factor(
+  profile$dataset,
+  levels = datasets,
+  labels = sprintf("%s\n(%s)", datasets, units[datasets])
+)
 profile$condition <- factor(profile$condition, levels = c(control, treatment))
 
 plot <- ggplot(profile, aes(position, signal, colour = condition)) +
