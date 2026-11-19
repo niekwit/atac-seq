@@ -26,6 +26,7 @@ import os
 import subprocess
 import tempfile
 
+import numpy as np
 import pandas as pd
 import pyBigWig
 
@@ -102,19 +103,40 @@ def run(command):
         subprocess.run(command, check=True, stdout=fh, stderr=fh)
 
 
-if not beds:
+def no_data(message):
+    """PDFs with a message instead of the profile and the heatmap"""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    logging.warning(f"No {region_name}: no profile")
+    logging.warning(f"{message}: no profile")
     for path in (out_profile, out_heatmap):
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.axis("off")
-        ax.text(0.5, 0.5, f"No {region_name}", ha="center")
+        ax.text(0.5, 0.5, message, ha="center")
         fig.savefig(path)
         plt.close(fig)
+
+
+def has_signal(matrix):
+    """
+    Whether the computeMatrix matrix has a finite value (without
+    --missingDataAsZero, e.g. methylation without CpGs in any window, all
+    bins are nan, which plotHeatmap does not plot)
+    """
+    try:
+        values = pd.read_csv(matrix, sep="\t", header=None, skiprows=1)
+    except pd.errors.EmptyDataError:
+        # No regions left (e.g. --skipZeros in extra: computematrix)
+        return False
+    values = values.iloc[:, 6:]
+    values = values.apply(pd.to_numeric, errors="coerce")
+    return bool(np.isfinite(values.to_numpy(dtype=float)).any())
+
+
+if not beds:
+    no_data(f"No {region_name}")
     with gzip.open(out_matrix, "wt"):
         pass
 else:
@@ -156,74 +178,77 @@ else:
             *extra_matrix.split(),
         ]
     )
-    # Regions in the matrix per group: fewer than in the BED files with, e.g.,
-    # --skipZeros in extra: computematrix; groups without regions are dropped
-    with gzip.open(out_matrix, "rt") as fh:
-        header = json.loads(fh.readline()[1:])
-    boundaries = header["group_boundaries"]
-    region_labels, heatmap_labels = [], []
-    for i, group in enumerate(header["group_labels"]):
-        # By file name; by position if deepTools renamed the groups (a single
-        # group is "genes") and no group was dropped
-        if group in names:
-            label = names[group]
-        elif len(header["group_labels"]) == len(beds):
-            label = list(names.values())[i]
-        else:
-            label = group
-        n = boundaries[i + 1] - boundaries[i]
-        logging.info(f"{label}: {n} regions in the matrix")
-        region_labels.append(f"{label} (n = {n})")
-        # Heatmap labels without the numbers, which are in the profile
-        heatmap_labels.append(label)
-    run(
-        [
-            "plotProfile",
-            "-m",
-            out_matrix,
-            "-o",
-            out_profile,
-            "--perGroup",
-            "--regionsLabel",
-            *region_labels,
-            "--colors",
-            *colours,
-            *point_labels,
-            "--numPlotsPerRow",
-            str(len(region_labels)),
-            "--plotHeight",
-            "7",
-            "--plotWidth",
-            "8",
-            "--yAxisLabel",
-            y_label,
-            *extra_plot.split(),
-        ]
-    )
-    run(
-        [
-            "plotHeatmap",
-            "-m",
-            out_matrix,
-            "-o",
-            out_heatmap,
-            "--regionsLabel",
-            *heatmap_labels,
-            *point_labels,
-            "--colorMap",
-            "Reds",
-            "--sortRegions",
-            "descend",
-            # The profile is in its own plot
-            "--whatToShow",
-            "heatmap and colorbar",
-            "--heatmapHeight",
-            "14",
-            "--heatmapWidth",
-            "4",
-            "--xAxisLabel",
-            "",
-            "--yAxisLabel",
-            y_label,
-        ]
-    )
+    if not has_signal(out_matrix):
+        no_data(f"No signal over the {region_name}")
+    else:
+        # Regions in the matrix per group: fewer than in the BED files with, e.g.,
+        # --skipZeros in extra: computematrix; groups without regions are dropped
+        with gzip.open(out_matrix, "rt") as fh:
+            header = json.loads(fh.readline()[1:])
+        boundaries = header["group_boundaries"]
+        region_labels, heatmap_labels = [], []
+        for i, group in enumerate(header["group_labels"]):
+            # By file name; by position if deepTools renamed the groups (a single
+            # group is "genes") and no group was dropped
+            if group in names:
+                label = names[group]
+            elif len(header["group_labels"]) == len(beds):
+                label = list(names.values())[i]
+            else:
+                label = group
+            n = boundaries[i + 1] - boundaries[i]
+            logging.info(f"{label}: {n} regions in the matrix")
+            region_labels.append(f"{label} (n = {n})")
+            # Heatmap labels without the numbers, which are in the profile
+            heatmap_labels.append(label)
+        run(
+            [
+                "plotProfile",
+                "-m",
+                out_matrix,
+                "-o",
+                out_profile,
+                "--perGroup",
+                "--regionsLabel",
+                *region_labels,
+                "--colors",
+                *colours,
+                *point_labels,
+                "--numPlotsPerRow",
+                str(len(region_labels)),
+                "--plotHeight",
+                "7",
+                "--plotWidth",
+                "8",
+                "--yAxisLabel",
+                y_label,
+                *extra_plot.split(),
+            ]
+        )
+        run(
+            [
+                "plotHeatmap",
+                "-m",
+                out_matrix,
+                "-o",
+                out_heatmap,
+                "--regionsLabel",
+                *heatmap_labels,
+                *point_labels,
+                "--colorMap",
+                "Reds",
+                "--sortRegions",
+                "descend",
+                # The profile is in its own plot
+                "--whatToShow",
+                "heatmap and colorbar",
+                "--heatmapHeight",
+                "14",
+                "--heatmapWidth",
+                "4",
+                "--xAxisLabel",
+                "",
+                "--yAxisLabel",
+                y_label,
+            ]
+        )
