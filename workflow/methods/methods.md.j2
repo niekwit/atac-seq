@@ -473,10 +473,11 @@ TE peaks tested by DESeq2 were assigned the change of each mark in the region
 they overlapped most, and the differential expression of the gene of their
 nearest TSS (within {{ rnaseq_max }}). Their overlaps were shown as an UpSet
 plot (ComplexHeatmap). The percentages of more and less accessible peaks, and
-of peaks whose gene was up- or downregulated, in the peaks with a change of
-both marks or of one mark were compared with those of the peaks without
-either change (Fisher's exact test, Benjamini–Hochberg adjusted
-{{ cite("benjamini1995") }}).
+of peaks whose gene was up- or downregulated, in the peaks with a
+selected change of both marks or of one mark (per mark, the decrease if both
+directions were tested, otherwise the direction of the regions) were each
+compared with those of the peaks with neither selected change (Fisher's exact
+test, Benjamini–Hochberg adjusted {{ cite("benjamini1995") }}).
 {% if profile["subfamilies"] %}
 ATAC-seq (Tn5 insertions per million), H3K9me3 and CpG methylation of the
 control and the treatment over the full-length copies of the profile

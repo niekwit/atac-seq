@@ -18,7 +18,7 @@ and CpG methylation of the control and the treatment.
   in the region the copy overlaps most and its accessibility (TE peaks)
 - heatmap.pdf: plotHeatmap of the matrix (one colour scale per data set,
   shared by the control and the treatment, from 0 to the 98th percentile of
-  the bins; methylation 0 to 100; copies in the order of the matrix, most
+  the bins; methylation 0 to 100, BigWig files in %; copies in the order of the matrix, most
   gained accessibility first, 5' to 3' from left to right)
 - profile.tsv: mean signal per bin of each group and BigWig file (bins
   without a value left out), for the profile plot
@@ -264,9 +264,9 @@ z_min, z_max = [], []
 for i in range(len(bigwigs)):
     pair = [j for j in range(len(bigwigs)) if datasets[j] == datasets[i]]
     if not missing_as_zero[i]:
-        high = np.nanmax([np.nanmax(means[j]) for j in pair] + [0])
+        # CpG methylation in % (as documented for methylation: bigwigs)
         z_min.append(0)
-        z_max.append(100 if high > 1 else 1)
+        z_max.append(100)
         continue
     k = [order.index(j) for j in pair]
     pooled = np.concatenate([values[:, bounds[m] : bounds[m + 1]].ravel() for m in k])

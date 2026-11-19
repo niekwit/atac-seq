@@ -58,12 +58,7 @@ rule te_multiomics_subfamilies:
         signal="results/te/integration/multiomics/{contrast}/subfamilies/signal.tsv",
         h3k9me3="results/te/integration/h3k9me3/{contrast}/subfamilies/copies.tsv",
         methylation="results/te/integration/methylation/{contrast}/subfamilies/copies.tsv",
-        # Subfamilies of te: profile: subfamilies, always in the heatmap
-        full_length=lambda w: (
-            ["resources/te/full_length_copies.bed"]
-            if te_profile_config()["subfamilies"]
-            else []
-        ),
+        annotation="resources/te/subfamilies.tsv",
     output:
         table="results/te/integration/multiomics/{contrast}/subfamilies/subfamilies.tsv",
         heatmap="results/te/integration/multiomics/{contrast}/subfamilies/heatmap.pdf",
@@ -73,6 +68,8 @@ rule te_multiomics_subfamilies:
         marks=lambda w: multiomics_marks(w.contrast),
         min_copies=multiomics_config()["min_copies"],
         max_subfamilies=multiomics_config()["max_subfamilies"],
+        # Subfamilies of these entries are always in the heatmap
+        profile_entries=te_profile_config()["subfamilies"],
     threads: 1
     resources:
         runtime=runtime(15),

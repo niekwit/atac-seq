@@ -761,11 +761,12 @@ def multiomics_contrasts():
             "(rnaseq: tables) and H3K9me3 and DNA methylation data with "
             "bigwigs (h3k9me3: and methylation: contrasts)"
         )
-    # deepTools needs the profile lengths to be multiples of the bin size
+    # Copy plots (with te: profile: subfamilies): deepTools needs the profile
+    # lengths to be multiples of the bin size
     bin_size = computematrix_bin_size()
     for setting in ("flank", "body_length"):
         value = te_profile_config()[setting]
-        if value % bin_size:
+        if te_profile_config()["subfamilies"] and value % bin_size:
             raise ValueError(
                 f"te: profile: {setting} ({value}) must be a multiple of the "
                 f"computeMatrix bin size ({bin_size} bp) for multiomics:"

@@ -17,7 +17,7 @@ sink(log, type = "message")
 #   a significant change in accessibility or expression (at most
 #   max_subfamilies, those with the smallest adjusted p-value), and the
 #   subfamilies of te: profile: subfamilies (bold; not of family: and class:
-#   entries), split by class. Bars: the
+#   entries; also if not tested in a data set, grey), split by class. Bars: the
 #   percentage of copies in the regions where the marks change.
 #
 # H3K9me3: log2 of the ratio of the mean signal per base of the copies in the
@@ -35,8 +35,14 @@ marks <- snakemake@params[["marks"]]
 min_copies <- snakemake@params[["min_copies"]]
 max_subfamilies <- snakemake@params[["max_subfamilies"]]
 
+profile_entries <- unlist(snakemake@params[["profile_entries"]])
+# All counted subfamilies (resources/te/subfamilies.tsv)
+annotation <- read.delim(
+  snakemake@input[["annotation"]],
+  check.names = FALSE,
+  colClasses = c(subfamily = "character")
+)
 atac <- read.delim(snakemake@input[["atac"]], check.names = FALSE)
-atac <- atac[!is.na(atac$padj), ]
 rna <- read.delim(
   snakemake@input[["rnaseq"]],
   colClasses = c(subfamily = "character")
@@ -44,32 +50,55 @@ rna <- read.delim(
 rna <- rna[rna$type == "te" & rna$rna_change != "not tested", ]
 signal <- read.delim(snakemake@input[["signal"]], check.names = FALSE)
 
-# Subfamilies tested in both data sets
-subfamilies <- merge(
-  atac[, c(
-    "subfamily",
-    "family",
-    "class",
-    "n_copies",
-    "log2FoldChange_shrunken",
-    "padj",
-    "change"
-  )],
-  data.frame(
-    subfamily = rna$subfamily,
-    rna_log2FoldChange = rna$log2FoldChange,
-    rna_padj = rna$padj,
-    rna_change = rna$rna_change
-  ),
-  by = "subfamily"
-)
-names(subfamilies)[names(subfamilies) == "log2FoldChange_shrunken"] <-
-  "atac_log2FoldChange_shrunken"
-names(subfamilies)[names(subfamilies) == "padj"] <- "atac_padj"
-names(subfamilies)[names(subfamilies) == "change"] <- "atac_change"
+# Subfamilies of the profiles (te: profile: subfamilies), always plotted: a
+# subfamily, or the subfamilies <entry>_* if no subfamily has that name (as
+# for the profiles); not family: and class: entries, which would fill the
+# heatmap. Also those without full-length copies or data in a data set
+# (missing values are grey)
+profile_subfamilies <- character()
+for (entry in profile_entries) {
+  if (grepl("^(family|class):", entry)) {
+    next
+  }
+  members <- if (entry %in% annotation$subfamily) {
+    entry
+  } else {
+    annotation$subfamily[startsWith(annotation$subfamily, paste0(entry, "_"))]
+  }
+  if (length(members) == 0) {
+    cat(sprintf("te: profile: subfamilies: %s: no subfamily\n", entry))
+  }
+  profile_subfamilies <- union(profile_subfamilies, members)
+}
+
+# Subfamilies tested in both data sets (ATAC-seq padj not NA), and those of
+# the profiles
+atac_tested <- atac$subfamily[!is.na(atac$padj)]
+keep <- (annotation$subfamily %in%
+  atac_tested &
+  annotation$subfamily %in% rna$subfamily) |
+  annotation$subfamily %in% profile_subfamilies
+subfamilies <- annotation[keep, c("subfamily", "family", "class", "n_copies")]
+atac <- atac[!is.na(atac$padj), ]
+match_atac <- match(subfamilies$subfamily, atac$subfamily)
+subfamilies$atac_log2FoldChange_shrunken <- atac$log2FoldChange_shrunken[
+  match_atac
+]
+subfamilies$atac_padj <- atac$padj[match_atac]
+subfamilies$atac_change <- atac$change[match_atac]
+match_rna <- match(subfamilies$subfamily, rna$subfamily)
+subfamilies$rna_log2FoldChange <- rna$log2FoldChange[match_rna]
+subfamilies$rna_padj <- rna$padj[match_rna]
+subfamilies$rna_change <- rna$rna_change[match_rna]
+subfamilies$profile <- subfamilies$subfamily %in% profile_subfamilies
 cat(sprintf(
-  "%d subfamilies tested in the ATAC-seq and RNA-seq data\n",
-  nrow(subfamilies)
+  paste(
+    "%d subfamilies tested in the ATAC-seq and RNA-seq data; %d profile",
+    "subfamilies (%d not tested in both)\n"
+  ),
+  sum(!is.na(match_atac) & !is.na(match_rna)),
+  sum(subfamilies$profile),
+  sum(subfamilies$profile & (is.na(match_atac) | is.na(match_rna)))
 ))
 
 # H3K9me3 and DNA methylation over the copies
@@ -119,34 +148,14 @@ for (mark in names(marks)) {
   }
 }
 
-# Subfamilies of the profiles (te: profile: subfamilies), always plotted:
-# those of subfamily and prefix entries (e.g. L1MdTf), not of family: and
-# class: entries, which would fill the heatmap. In the BED file, the copies of
-# an entry are followed by "#<entry> (n=...)"
-profile_subfamilies <- character()
-full_length <- snakemake@input[["full_length"]]
-if (length(full_length) > 0) {
-  pending <- character()
-  for (line in readLines(full_length[[1]])) {
-    if (startsWith(line, "#")) {
-      entry <- sub(" \\(n=.*$", "", sub("^#", "", line))
-      if (!grepl("^(family|class):", entry)) {
-        profile_subfamilies <- union(profile_subfamilies, pending)
-      }
-      pending <- character()
-    } else if (nzchar(line)) {
-      pending <- union(pending, strsplit(line, "\t")[[1]][4])
-    }
-  }
-}
-subfamilies$profile <- subfamilies$subfamily %in% profile_subfamilies
 
 # Heatmap rows: significant in ATAC-seq or RNA-seq, most significant first
+atac_significant <- subfamilies$atac_change %in%
+  c("more accessible", "less accessible")
 significant <- subfamilies$n_copies >= min_copies &
-  (subfamilies$atac_change != "unchanged" |
-    subfamilies$rna_change %in% c("up", "down"))
+  (atac_significant | subfamilies$rna_change %in% c("up", "down"))
 best_padj <- pmin(
-  ifelse(subfamilies$atac_change != "unchanged", subfamilies$atac_padj, 1),
+  ifelse(atac_significant, subfamilies$atac_padj, 1),
   ifelse(
     subfamilies$rna_change %in% c("up", "down"),
     subfamilies$rna_padj,
@@ -269,6 +278,7 @@ heatmaps <- Heatmap(
   ),
   name = "atac",
   col = diverging(data$atac_log2FoldChange_shrunken),
+  na_col = "grey90",
   width = cell_width,
   height = cell_height * nrow(data),
   cluster_rows = FALSE,
@@ -281,7 +291,9 @@ heatmaps <- Heatmap(
   column_names_rot = 45,
   column_names_gp = gpar(fontsize = 10),
   rect_gp = gpar(col = "white", lwd = 0.5),
-  cell_fun = star(data$atac_change != "unchanged"),
+  cell_fun = star(
+    data$atac_change %in% c("more accessible", "less accessible")
+  ),
   heatmap_legend_param = list(
     title = "ATAC-seq\nlog2 FC",
     title_gp = gpar(fontsize = 9)

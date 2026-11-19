@@ -49,8 +49,7 @@ H3K9me3 and CpG methylation are measured over **all copies** of each subfamily
   the difference of the treatment minus the control (percentage points). Subfamilies without
   covered CpGs are grey.
 
-`subfamilies/heatmap.pdf` shows, for each subfamily tested in both the ATAC-seq and the RNA-seq
-data, four columns, each with its own colour scale (blue: lower, red: higher in the treatment):
+`subfamilies/heatmap.pdf` shows, for the selected subfamilies (below), four columns, each with its own colour scale (blue: lower, red: higher in the treatment):
 
 1. ATAC-seq shrunken log2 fold change (DESeq2 of the insertions in all copies,
    [Transposable elements](transposable_elements.md));
@@ -66,8 +65,9 @@ integrations).
 The rows are the subfamilies with at least `min_copies` copies and a significant change in
 accessibility or expression (at most `max_subfamilies`, those with the smallest adjusted p-value
 first), plus every subfamily of the `te: profile: subfamilies` entries (bold), whether it changes
-or not. Subfamilies of `family:` and `class:` entries are not always shown, as they would fill the
-heatmap (they are shown if they change). Rows are split by class and sorted by the ATAC-seq fold change.
+or not, also if they have no full-length copies or are not tested in one of the data sets
+(missing values are grey). Subfamilies of `family:` and `class:` entries are not always shown, as
+they would fill the heatmap (they are shown if they change). Rows are split by class and sorted by the ATAC-seq fold change.
 
 ### TE peaks
 
@@ -90,9 +90,11 @@ has all peaks.
 H3K9me3 lost, if the data have both directions): both marks change, only one, or neither. For
 each group it shows the percentage of peaks that are more or less accessible, and of the peaks
 with a tested gene, the percentage whose gene is up- or downregulated. Each group is compared
-with the peaks where neither mark changes (Fisher's exact test, Benjamini–Hochberg adjusted over
-all tests; `ns`, `*` < 0.05, `**` < 0.01, `***` < 0.001). This tests whether losing both marks
-goes with more opening or expression than losing one.
+with the peaks without either selected change ("Neither"; with data of both directions, this
+includes peaks where a mark changes in the other direction) (Fisher's exact test,
+Benjamini–Hochberg adjusted over all tests; `ns`, `*` < 0.05, `**` < 0.01, `***` < 0.001). Each
+test compares one group with "Neither"; the groups with both marks and with one mark are not
+tested against each other, so compare their percentages descriptively.
 
 ### Full-length copies
 
@@ -102,7 +104,8 @@ the treatment of ATAC-seq (Tn5 insertions, TE signal tracks), H3K9me3 and CpG me
 group of rows per entry. Copies are scaled to `te: profile: body_length` bp, 5' to 3' from left
 to right, with `te: profile: flank` bp on each side. Methylation bins without a CpG are light
 grey (missing); for ATAC-seq and H3K9me3, missing bins are 0. Each data set has its own colour
-scale (from 0 to the 98th percentile of its bins; methylation 0 to 100%), shared by the control
+scale (from 0 to the 98th percentile of its bins; methylation 0 to 100%, the BigWig files must
+be in %), shared by the control
 and the treatment.
 
 Within each group, the copies are sorted by the log2 ratio of their mean ATAC-seq signal in the

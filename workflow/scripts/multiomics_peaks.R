@@ -150,7 +150,10 @@ write.table(
 # -----------------------------------------------------
 binary <- as.data.frame(lapply(sets, as.integer), check.names = FALSE)
 binary <- binary[, colSums(binary) > 0, drop = FALSE]
-if (ncol(binary) == 0 || sum(rowSums(binary) > 0) == 0) {
+# Peaks in no set left out (make_comb_mat would add them as the complement
+# combination)
+binary <- binary[rowSums(binary) > 0, , drop = FALSE]
+if (ncol(binary) == 0 || nrow(binary) == 0) {
   pdf(snakemake@output[["upset"]], width = 6, height = 4)
   grid::grid.text("No TE peak in any set")
   dev.off()
@@ -166,7 +169,7 @@ if (ncol(binary) == 0 || sum(rowSums(binary) > 0) == 0) {
     length(keep),
     length(sizes),
     sum(comb_size(combinations)),
-    sum(rowSums(binary) > 0)
+    nrow(binary)
   ))
   # Combinations with more accessible peaks in red
   colours <- ifelse(
@@ -300,32 +303,39 @@ group_colours <- setNames(
   c("#dd3b3b", "#377EB8", "#4DAF4A", "#cccccc"),
   group_levels
 )
-plot <- ggplot(
-  enrichment[!is.na(enrichment$percent), ],
-  aes(group, percent, fill = group)
-) +
-  geom_col(colour = "black", width = 0.7) +
-  geom_text(aes(label = label), vjust = -0.4, size = 3.5) +
-  geom_text(aes(y = 0, label = paste0("n=", n)), vjust = 1.4, size = 2.8) +
-  facet_wrap(~outcome, nrow = 1, scales = "free_y") +
-  scale_fill_manual(values = group_colours, guide = "none") +
-  scale_x_discrete(labels = function(x) sub(" (only|\\+ )", "\n\\1", x)) +
-  scale_y_continuous(expand = expansion(mult = c(0.12, 0.15))) +
-  labs(
-    x = NULL,
-    y = sprintf("TE peaks (%%; %s vs %s)", treatment, control)
+plotted <- enrichment[!is.na(enrichment$percent), ]
+if (nrow(plotted) == 0) {
+  pdf(snakemake@output[["enrichment_plot"]], width = 6, height = 4)
+  grid::grid.text("No tested TE peak")
+  dev.off()
+} else {
+  plot <- ggplot(
+    plotted,
+    aes(group, percent, fill = group)
   ) +
-  theme_cowplot(12) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.background = element_blank(),
-    plot.margin = margin(5.5, 5.5, 5.5, 30)
+    geom_col(colour = "black", width = 0.7) +
+    geom_text(aes(label = label), vjust = -0.4, size = 3.5) +
+    geom_text(aes(y = 0, label = paste0("n=", n)), vjust = 1.4, size = 2.8) +
+    facet_wrap(~outcome, nrow = 1, scales = "free_y") +
+    scale_fill_manual(values = group_colours, guide = "none") +
+    scale_x_discrete(labels = function(x) sub(" (only|\\+ )", "\n\\1", x)) +
+    scale_y_continuous(expand = expansion(mult = c(0.12, 0.15))) +
+    labs(
+      x = NULL,
+      y = sprintf("TE peaks (%%; %s vs %s)", treatment, control)
+    ) +
+    theme_cowplot(12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      strip.background = element_blank(),
+      plot.margin = margin(5.5, 5.5, 5.5, 30)
+    )
+  ggsave(
+    snakemake@output[["enrichment_plot"]],
+    plot,
+    width = 10,
+    height = 4.5,
+    bg = "white"
   )
-ggsave(
-  snakemake@output[["enrichment_plot"]],
-  plot,
-  width = 10,
-  height = 4.5,
-  bg = "white"
-)
+}
 cat("Done!\n")

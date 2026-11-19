@@ -67,6 +67,8 @@ ggsave(
   plot,
   width = 2.2 + 2.6 * length(groups),
   height = 1.2 + 2.2 * nlevels(profile$dataset),
-  bg = "white"
+  bg = "white",
+  # Wide with many entries of te: profile: subfamilies
+  limitsize = FALSE
 )
 cat("Done!\n")

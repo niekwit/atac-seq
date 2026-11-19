@@ -76,6 +76,7 @@ def integrate(bw, chrom, starts, ends):
         if intervals:
             iv = np.array(intervals, dtype=float)
             iv = iv[np.isfinite(iv[:, 2])]
+        if intervals and len(iv):
             s, e, v = iv[:, 0], iv[:, 1], iv[:, 2]
             # Cumulative signal and bases up to the end of each interval
             cum_signal = np.concatenate([[0.0], np.cumsum(v * (e - s))])
