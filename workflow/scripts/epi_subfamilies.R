@@ -380,6 +380,9 @@ if (nrow(full_length) == 0) {
     # All categories in the legend, also those without copies
     scale_fill_manual(values = category_colours, drop = FALSE) +
     scale_y_continuous(
+      # Fixed breaks: the space above the bars for the labels would otherwise
+      # give breaks at 0, 30, 60 and 90%
+      breaks = seq(0, 1, 0.25),
       labels = function(x) paste0(100 * x, "%"),
       expand = expansion(mult = c(0, 0.15))
     ) +
