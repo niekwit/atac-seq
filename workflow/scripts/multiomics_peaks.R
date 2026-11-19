@@ -314,12 +314,17 @@ if (nrow(plotted) == 0) {
     aes(group, percent, fill = group)
   ) +
     geom_col(colour = "black", width = 0.7) +
-    geom_text(aes(label = label), vjust = -0.4, size = 3.5) +
-    geom_text(aes(y = 0, label = paste0("n=", n)), vjust = 1.4, size = 2.8) +
+    # Significance above n= on top of each bar
+    geom_text(
+      aes(label = paste0(label, "\nn=", n)),
+      vjust = -0.3,
+      size = 3,
+      lineheight = 0.9
+    ) +
     facet_wrap(~outcome, nrow = 1, scales = "free_y") +
     scale_fill_manual(values = group_colours, guide = "none") +
     scale_x_discrete(labels = function(x) sub(" (only|\\+ )", "\n\\1", x)) +
-    scale_y_continuous(expand = expansion(mult = c(0.12, 0.15))) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
     labs(
       x = NULL,
       y = sprintf("TE peaks (%%; %s vs %s)", treatment, control)
