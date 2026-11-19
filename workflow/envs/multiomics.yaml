@@ -1,0 +1,14 @@
+# Plots of the integration of all data sets of a contrast (ATAC-seq, RNA-seq,
+# H3K9me3, DNA methylation): ComplexHeatmap heatmap and UpSet plot, ggplot2
+# with the cowplot theme (R as in the integration environment)
+name: multiomics
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - conda-forge::r-base=4.5.3
+  - conda-forge::r-ggplot2=4.0.3
+  - conda-forge::r-cowplot=1.2.0
+  - conda-forge::r-circlize=0.4.18
+  - bioconda::bioconductor-complexheatmap=2.26.1

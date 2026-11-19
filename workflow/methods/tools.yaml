@@ -10,11 +10,28 @@ tools:
   numpy: {envs: [qc, tss, te]}
   scipy: {envs: [qc]}
   matplotlib: {envs: [qc, tss]}
-  r: {envs: [r, deseq2, eulerr, integration]}
+  r: {envs: [r, deseq2, eulerr, integration, multiomics]}
   # Versions of the DESeq2 plots; the integration plots have their own env
   ggplot2: {envs: [deseq2]}
   ggrepel: {envs: [deseq2]}
+  # Heatmap and UpSet plot of the integration of all data sets
+  complexheatmap:
+    name: ComplexHeatmap
+    references: [gu2016]
+    packages: [bioconductor-complexheatmap]
 references:
+  # ComplexHeatmap (checked on Crossref, 2026-11-19)
+  gu2016:
+    citation: Gu et al., 2016
+    authors: [Gu Z, Eils R, Schlesner M]
+    year: 2016
+    title: >-
+      Complex heatmaps reveal patterns and correlations in multidimensional
+      genomic data
+    journal: Bioinformatics
+    volume: 32
+    pages: "2847-2849"
+    doi: 10.1093/bioinformatics/btw313
   # Intersection-union test (checked on Crossref, 2026-11-18)
   berger1982:
     citation: Berger, 1982

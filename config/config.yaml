@@ -247,6 +247,9 @@ h3k9me3:
   # TE module: subfamilies with at least this many copies in the genome are
   # compared (subfamilies/)
   min_copies: 20
+  # Units of the BigWig files (e.g. CPM, RPGC; y axis of the profiles of all
+  # data sets, multiomics:)
+  bigwig_units: signal
 
 # Integration with DNA methylation (not part of the ENCODE pipeline; needs
 # deseq2: enable): as h3k9me3:, with the differentially methylated regions
@@ -295,6 +298,26 @@ methylation:
   profile_flank: 5000
   profile_body_length: 5000
   min_copies: 20
+
+# Integration of all data sets of a contrast (not part of the ENCODE
+# pipeline; needs te: enable and deseq2: enable): for each contrast with an
+# RNA-seq table (rnaseq: tables) and H3K9me3 and DNA methylation data with
+# BigWig files (h3k9me3: and methylation: contrasts), the four data sets are
+# compared per repeat subfamily (heatmap of the changes), per TE peak (UpSet
+# plot, enrichment by combination of the marks) and per full-length copy of
+# the te: profile: subfamilies entries (heatmap and profile of the signal)
+# (results/te/integration/multiomics/{contrast}/)
+multiomics:
+  enable: false
+  # Subfamilies with at least this many copies in the genome are in the
+  # heatmap of the significant subfamilies if their accessibility or
+  # expression changes significantly
+  min_copies: 20
+  # Most subfamilies per class in that heatmap (smallest adjusted p-value
+  # first); the subfamilies of te: profile: subfamilies have their own heatmap
+  max_per_class: 10
+  # Largest combinations of sets in the UpSet plot of the TE peaks
+  max_combinations: 25
 
 # Extra command-line arguments of tools that are run directly as a command,
 # appended to the workflow's own options ("": none). Tools run from the
