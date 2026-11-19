@@ -50,8 +50,11 @@ properties:
     required: ["mapq_thresh", "filter_chrs"]
 
   subsample_reads:
-    type: integer
-    minimum: 0
+    oneOf:
+      - type: integer
+        minimum: 0
+      - type: string
+        enum: ["min"]
 
   macs2:
     type: object

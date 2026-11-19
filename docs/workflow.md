@@ -13,7 +13,8 @@ condition are treated as biological replicates of one ENCODE experiment.
 4. Alignment (`bowtie2 -k 5 -X2000 --mm`)
 5. Removal of unmapped, unpaired and multimapping (> 4 alignments) reads (`samtools`, `pysam`)
 6. Duplicate marking (`Picard MarkDuplicates`) and removal of duplicates and mitochondrial reads
-7. Conversion to Tn5 shifted (+4/-5 bp) tagAlign files of both mates
+7. Conversion to Tn5 shifted (+4/-5 bp) tagAlign files of both mates, optionally subsampled
+   (`subsample_reads`, see [Subsampling](configuration.md#subsampling))
 8. Pseudoreplication of each replicate, and pooling of the replicates and of the
    pseudoreplicates per condition
 9. Peak calling (`MACS2 callpeak -p 0.01 --shift -75 --extsize 150 --nomodel --keep-dup all
