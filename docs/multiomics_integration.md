@@ -7,8 +7,8 @@ expressed, and does that happen at the same copies? The pairwise integrations
 [DNA methylation](methylation_integration.md)) each compare one data set with the ATAC-seq data;
 this section puts all four side by side at three levels:
 
-- **repeat subfamilies:** a heatmap of the change in accessibility, expression, H3K9me3 and
-  methylation of each subfamily;
+- **repeat subfamilies:** heatmaps of the change in accessibility, expression, H3K9me3 and
+  methylation of the significant subfamilies and of the `te: profile: subfamilies` entries;
 - **TE peaks:** an UpSet plot of the peaks by their changes, and the accessibility and
   expression near the peaks by combination of the marks;
 - **full-length copies** of the `te: profile: subfamilies` entries: a heatmap and profiles of the
@@ -19,8 +19,8 @@ this section puts all four side by side at three levels:
 ```yaml
 multiomics:
   enable: true
-  min_copies: 20          # subfamilies in the heatmap: at least this many copies
-  max_subfamilies: 60     # most subfamilies in the heatmap
+  min_copies: 20          # significant subfamilies in the heatmap: at least this many copies
+  max_per_class: 10       # most significant subfamilies per class in the heatmap
   max_combinations: 25    # largest combinations in the UpSet plot
 ```
 
@@ -49,7 +49,9 @@ H3K9me3 and CpG methylation are measured over **all copies** of each subfamily
   the difference of the treatment minus the control (percentage points). Subfamilies without
   covered CpGs are grey.
 
-`subfamilies/heatmap.pdf` shows, for the selected subfamilies (below), four columns, each with its own colour scale (blue: lower, red: higher in the treatment):
+Two heatmaps, `subfamilies/heatmap.pdf` (significant subfamilies) and
+`subfamilies/profile_heatmap.pdf` (profile subfamilies), show four columns, each with its own
+colour scale (blue: lower, red: higher in the treatment):
 
 1. ATAC-seq shrunken log2 fold change (DESeq2 of the insertions in all copies,
    [Transposable elements](transposable_elements.md));
@@ -62,12 +64,15 @@ data set). The bars on the right give the percentage of copies with at least hal
 in the regions where each mark changes (as in the subfamily plots of the H3K9me3 and methylation
 integrations).
 
-The rows are the subfamilies with at least `min_copies` copies and a significant change in
-accessibility or expression (at most `max_subfamilies`, those with the smallest adjusted p-value
-first), plus every subfamily of the `te: profile: subfamilies` entries (bold), whether it changes
-or not, also if they have no full-length copies or are not tested in one of the data sets
-(missing values are grey). Subfamilies of `family:` and `class:` entries are not always shown, as
-they would fill the heatmap (they are shown if they change). Rows are split by class and sorted by the ATAC-seq fold change.
+- `heatmap.pdf`: the subfamilies with at least `min_copies` copies and a significant change in
+  accessibility or expression, at most `max_per_class` per class (those with the smallest
+  adjusted p-value in either data set first). Profile subfamilies among them are bold.
+- `profile_heatmap.pdf` (only with `te: profile: subfamilies`): every subfamily of the
+  `te: profile: subfamilies` entries, whether it changes or not, also if it has no full-length
+  copies or is not tested in one of the data sets (missing values are grey). `family:` and
+  `class:` entries are left out, as they have too many subfamilies.
+
+In both, rows are split by class and sorted by the ATAC-seq fold change.
 
 ### TE peaks
 
@@ -122,8 +127,9 @@ In `results/te/integration/multiomics/{contrast}/`:
 | File | Content |
 | ---- | ------- |
 | `subfamilies/signal.tsv` | per subfamily: copies, bp, H3K9me3 and methylation of the control and the treatment (`*_covered_bp`: bases with a value) |
-| `subfamilies/subfamilies.tsv` | per subfamily tested in ATAC-seq and RNA-seq: the four changes, `percent_copies_{mark}_{change}`, `profile` (a `te: profile` subfamily), `in_heatmap` |
-| `subfamilies/heatmap.pdf` | heatmap of the four changes |
+| `subfamilies/subfamilies.tsv` | per subfamily tested in ATAC-seq and RNA-seq: the four changes, `percent_copies_{mark}_{change}`, `profile` (a `te: profile` subfamily), `in_heatmap` (in `heatmap.pdf`) |
+| `subfamilies/heatmap.pdf` | heatmap of the four changes of the significant subfamilies |
+| `subfamilies/profile_heatmap.pdf` | the same for the `te: profile: subfamilies` subfamilies |
 | `peaks/peaks.tsv` | per tested TE peak: accessibility, `h3k9me3_change`, `methylation_change`, nearest tested gene and its `rna_change`, `mark_group` |
 | `peaks/upset.pdf` | UpSet plot of the peak sets |
 | `peaks/enrichment.tsv`, `peaks/enrichment.pdf` | percentages and Fisher's exact tests by combination of the marks |
@@ -131,7 +137,8 @@ In `results/te/integration/multiomics/{contrast}/`:
 | `copies/matrix.gz` | computeMatrix matrix of the six BigWig files (copies in the order of the heatmap) |
 | `copies/heatmap.pdf`, `copies/profile.tsv`, `copies/profile.pdf` | heatmap and mean profiles |
 
-The `copies/` files are made only with `te: profile: subfamilies`.
+`subfamilies/profile_heatmap.pdf` and the `copies/` files are made only with
+`te: profile: subfamilies`.
 
 ## Caveats
 

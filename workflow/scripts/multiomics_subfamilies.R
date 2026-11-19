@@ -11,14 +11,17 @@ sink(log, type = "message")
 #
 # - subfamilies.tsv: every subfamily tested in the ATAC-seq and RNA-seq data,
 #   with the four changes, the percentage of its copies in the regions where
-#   each mark changes, and whether it is in the heatmap
+#   each mark changes, and whether it is in the heatmap of the significant
+#   subfamilies
 # - heatmap.pdf: ComplexHeatmap of the four changes (one colour scale each,
 #   blue: decrease, red: increase in the treatment) for the subfamilies with
 #   a significant change in accessibility or expression (at most
-#   max_subfamilies, those with the smallest adjusted p-value), and the
-#   subfamilies of te: profile: subfamilies (bold; not of family: and class:
-#   entries; also if not tested in a data set, grey), split by class. Bars: the
-#   percentage of copies in the regions where the marks change.
+#   max_per_class per class, those with the smallest adjusted p-value),
+#   split by class (profile subfamilies in bold). Bars: the percentage of
+#   copies in the regions where the marks change.
+# - profile_heatmap.pdf: the same for the subfamilies of te: profile:
+#   subfamilies (not of family: and class: entries; also if not tested in a
+#   data set, grey)
 #
 # H3K9me3: log2 of the ratio of the mean signal per base of the copies in the
 # treatment and the control, with a pseudocount of 1% of the median signal of
@@ -33,7 +36,7 @@ treatment <- snakemake@params[["treatment"]]
 control <- snakemake@params[["control"]]
 marks <- snakemake@params[["marks"]]
 min_copies <- snakemake@params[["min_copies"]]
-max_subfamilies <- snakemake@params[["max_subfamilies"]]
+max_per_class <- snakemake@params[["max_per_class"]]
 
 profile_entries <- unlist(snakemake@params[["profile_entries"]])
 # All counted subfamilies (resources/te/subfamilies.tsv)
@@ -50,10 +53,10 @@ rna <- read.delim(
 rna <- rna[rna$type == "te" & rna$rna_change != "not tested", ]
 signal <- read.delim(snakemake@input[["signal"]], check.names = FALSE)
 
-# Subfamilies of the profiles (te: profile: subfamilies), always plotted: a
+# Subfamilies of the profiles (te: profile: subfamilies), own heatmap: a
 # subfamily, or the subfamilies <entry>_* if no subfamily has that name (as
-# for the profiles); not family: and class: entries, which would fill the
-# heatmap. Also those without full-length copies or data in a data set
+# for the profiles); not family: and class: entries, which would be too
+# many. Also those without full-length copies or data in a data set
 # (missing values are grey)
 profile_subfamilies <- character()
 for (entry in profile_entries) {
@@ -149,7 +152,8 @@ for (mark in names(marks)) {
 }
 
 
-# Heatmap rows: significant in ATAC-seq or RNA-seq, most significant first
+# Heatmap rows: significant in ATAC-seq or RNA-seq, at most max_per_class
+# per class, most significant first
 atac_significant <- subfamilies$atac_change %in%
   c("more accessible", "less accessible")
 significant <- subfamilies$n_copies >= min_copies &
@@ -163,20 +167,23 @@ best_padj <- pmin(
   ),
   na.rm = TRUE
 )
-ranked <- which(significant & !subfamilies$profile)
+ranked <- which(significant)
 ranked <- ranked[order(best_padj[ranked])]
-n_free <- max(0, max_subfamilies - sum(subfamilies$profile))
-selected <- c(which(subfamilies$profile), head(ranked, n_free))
+selected <- unlist(lapply(
+  split(ranked, subfamilies$class[ranked]),
+  head,
+  max_per_class
+))
 subfamilies$in_heatmap <- seq_len(nrow(subfamilies)) %in% selected
 cat(sprintf(
   paste(
     "%d subfamilies (at least %d copies) significant in ATAC-seq or",
-    "RNA-seq; %d in the heatmap, %d of them from te: profile: subfamilies\n"
+    "RNA-seq; %d in the heatmap (at most %d per class)\n"
   ),
   sum(significant),
   min_copies,
   length(selected),
-  sum(subfamilies$profile)
+  max_per_class
 ))
 
 subfamilies <- subfamilies[
@@ -191,22 +198,8 @@ write.table(
   na = "NA"
 )
 
-# Heatmap
+# Heatmaps
 # -----------------------------------------------------
-data <- subfamilies[subfamilies$in_heatmap, ]
-if (nrow(data) == 0) {
-  pdf(snakemake@output[["heatmap"]], width = 6, height = 4)
-  grid.text(
-    "No subfamily with a significant change in accessibility or expression"
-  )
-  dev.off()
-  quit(save = "no")
-}
-# Classes in order of their number of subfamilies
-class_order <- names(sort(table(data$class), decreasing = TRUE))
-data$class <- factor(data$class, levels = class_order)
-data <- data[order(data$class, -data$atac_log2FoldChange_shrunken), ]
-
 # Diverging colours (blue: decrease, red: increase), limit: the largest
 # absolute value up to the 95th percentile
 diverging <- function(values) {
@@ -225,121 +218,6 @@ star <- function(significant) {
     }
   }
 }
-column <- function(values, name, label, title, significant = NULL) {
-  Heatmap(
-    matrix(values, ncol = 1, dimnames = list(data$subfamily, label)),
-    name = name,
-    col = diverging(values),
-    na_col = "grey90",
-    width = cell_width,
-    height = cell_height * nrow(data),
-    cluster_rows = FALSE,
-    cluster_columns = FALSE,
-    show_row_names = FALSE,
-    column_names_rot = 45,
-    column_names_gp = gpar(fontsize = 10),
-    rect_gp = gpar(col = "white", lwd = 0.5),
-    cell_fun = if (is.null(significant)) NULL else star(significant),
-    heatmap_legend_param = list(title = title, title_gp = gpar(fontsize = 9))
-  )
-}
-
-bar_annotations <- lapply(names(bars), function(column) {
-  anno_barplot(
-    data[[column]],
-    which = "row",
-    gp = gpar(fill = "grey40", col = NA),
-    border = FALSE,
-    width = unit(18, "mm"),
-    axis_param = list(gp = gpar(fontsize = 7), side = "bottom")
-  )
-})
-names(bar_annotations) <- names(bars)
-right <- do.call(
-  rowAnnotation,
-  c(
-    bar_annotations,
-    list(
-      annotation_label = sprintf("%s\n(%% copies)", unlist(bars)),
-      annotation_name_side = "top",
-      annotation_name_rot = 0,
-      annotation_name_gp = gpar(fontsize = 8),
-      gap = unit(4, "mm")
-    )
-  )
-)
-
-# The first heatmap splits the rows by class; row names after the last one
-heatmaps <- Heatmap(
-  matrix(
-    data$atac_log2FoldChange_shrunken,
-    ncol = 1,
-    dimnames = list(data$subfamily, "ATAC-seq")
-  ),
-  name = "atac",
-  col = diverging(data$atac_log2FoldChange_shrunken),
-  na_col = "grey90",
-  width = cell_width,
-  height = cell_height * nrow(data),
-  cluster_rows = FALSE,
-  cluster_columns = FALSE,
-  row_split = data$class,
-  row_title_rot = 0,
-  row_title_gp = gpar(fontsize = 10),
-  row_gap = unit(2, "mm"),
-  show_row_names = FALSE,
-  column_names_rot = 45,
-  column_names_gp = gpar(fontsize = 10),
-  rect_gp = gpar(col = "white", lwd = 0.5),
-  cell_fun = star(
-    data$atac_change %in% c("more accessible", "less accessible")
-  ),
-  heatmap_legend_param = list(
-    title = "ATAC-seq\nlog2 FC",
-    title_gp = gpar(fontsize = 9)
-  )
-) +
-  column(
-    data$rna_log2FoldChange,
-    "rna",
-    "RNA-seq",
-    "RNA-seq\nlog2 FC",
-    data$rna_change %in% c("up", "down")
-  ) +
-  column(
-    data$h3k9me3_log2ratio,
-    "h3k9me3",
-    "H3K9me3",
-    "H3K9me3\nlog2 ratio"
-  ) +
-  Heatmap(
-    matrix(
-      data$methylation_difference,
-      ncol = 1,
-      dimnames = list(data$subfamily, "CpG methylation")
-    ),
-    name = "methylation",
-    col = diverging(data$methylation_difference),
-    na_col = "grey90",
-    width = cell_width,
-    height = cell_height * nrow(data),
-    cluster_rows = FALSE,
-    cluster_columns = FALSE,
-    column_names_rot = 45,
-    column_names_gp = gpar(fontsize = 10),
-    rect_gp = gpar(col = "white", lwd = 0.5),
-    right_annotation = right,
-    show_row_names = TRUE,
-    row_names_gp = gpar(
-      fontsize = 9,
-      fontface = ifelse(data$profile, "bold", "plain")
-    ),
-    heatmap_legend_param = list(
-      title = "Methylation\ndifference",
-      title_gp = gpar(fontsize = 9)
-    )
-  )
-
 significance <- Legend(
   labels = "padj < FDR (DESeq2)",
   type = "points",
@@ -349,17 +227,155 @@ significance <- Legend(
   title = sprintf("%s vs %s", treatment, control),
   title_gp = gpar(fontsize = 9)
 )
-height <- 1.5 + 0.18 * nrow(data) + 0.08 * nlevels(droplevels(data$class))
-pdf(
+
+# Heatmap of the four changes of the subfamilies in data, split by class
+# (classes with the most subfamilies first), sorted by the ATAC-seq fold
+# change; profile subfamilies in bold
+plot_heatmap <- function(data, file, empty) {
+  if (nrow(data) == 0) {
+    pdf(file, width = 6, height = 4)
+    grid.text(empty)
+    dev.off()
+    return(invisible())
+  }
+  class_order <- names(sort(table(data$class), decreasing = TRUE))
+  data$class <- factor(data$class, levels = class_order)
+  data <- data[order(data$class, -data$atac_log2FoldChange_shrunken), ]
+
+  column <- function(values, name, label, title, significant = NULL) {
+    Heatmap(
+      matrix(values, ncol = 1, dimnames = list(data$subfamily, label)),
+      name = name,
+      col = diverging(values),
+      na_col = "grey90",
+      width = cell_width,
+      height = cell_height * nrow(data),
+      cluster_rows = FALSE,
+      cluster_columns = FALSE,
+      show_row_names = FALSE,
+      column_names_rot = 45,
+      column_names_gp = gpar(fontsize = 10),
+      rect_gp = gpar(col = "white", lwd = 0.5),
+      cell_fun = if (is.null(significant)) NULL else star(significant),
+      heatmap_legend_param = list(title = title, title_gp = gpar(fontsize = 9))
+    )
+  }
+
+  bar_annotations <- lapply(names(bars), function(column) {
+    anno_barplot(
+      data[[column]],
+      which = "row",
+      gp = gpar(fill = "grey40", col = NA),
+      border = FALSE,
+      width = unit(18, "mm"),
+      axis_param = list(gp = gpar(fontsize = 7), side = "bottom")
+    )
+  })
+  names(bar_annotations) <- names(bars)
+  right <- do.call(
+    rowAnnotation,
+    c(
+      bar_annotations,
+      list(
+        annotation_label = sprintf("%s\n(%% copies)", unlist(bars)),
+        annotation_name_side = "top",
+        annotation_name_rot = 0,
+        annotation_name_gp = gpar(fontsize = 8),
+        gap = unit(4, "mm")
+      )
+    )
+  )
+
+  # The first heatmap splits the rows by class; row names after the last one
+  heatmaps <- Heatmap(
+    matrix(
+      data$atac_log2FoldChange_shrunken,
+      ncol = 1,
+      dimnames = list(data$subfamily, "ATAC-seq")
+    ),
+    name = "atac",
+    col = diverging(data$atac_log2FoldChange_shrunken),
+    na_col = "grey90",
+    width = cell_width,
+    height = cell_height * nrow(data),
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    row_split = data$class,
+    row_title_rot = 0,
+    row_title_gp = gpar(fontsize = 10),
+    row_gap = unit(2, "mm"),
+    show_row_names = FALSE,
+    column_names_rot = 45,
+    column_names_gp = gpar(fontsize = 10),
+    rect_gp = gpar(col = "white", lwd = 0.5),
+    cell_fun = star(
+      data$atac_change %in% c("more accessible", "less accessible")
+    ),
+    heatmap_legend_param = list(
+      title = "ATAC-seq\nlog2 FC",
+      title_gp = gpar(fontsize = 9)
+    )
+  ) +
+    column(
+      data$rna_log2FoldChange,
+      "rna",
+      "RNA-seq",
+      "RNA-seq\nlog2 FC",
+      data$rna_change %in% c("up", "down")
+    ) +
+    column(
+      data$h3k9me3_log2ratio,
+      "h3k9me3",
+      "H3K9me3",
+      "H3K9me3\nlog2 ratio"
+    ) +
+    Heatmap(
+      matrix(
+        data$methylation_difference,
+        ncol = 1,
+        dimnames = list(data$subfamily, "CpG methylation")
+      ),
+      name = "methylation",
+      col = diverging(data$methylation_difference),
+      na_col = "grey90",
+      width = cell_width,
+      height = cell_height * nrow(data),
+      cluster_rows = FALSE,
+      cluster_columns = FALSE,
+      column_names_rot = 45,
+      column_names_gp = gpar(fontsize = 10),
+      rect_gp = gpar(col = "white", lwd = 0.5),
+      right_annotation = right,
+      show_row_names = TRUE,
+      row_names_gp = gpar(
+        fontsize = 9,
+        fontface = ifelse(data$profile, "bold", "plain")
+      ),
+      heatmap_legend_param = list(
+        title = "Methylation\ndifference",
+        title_gp = gpar(fontsize = 9)
+      )
+    )
+
+  height <- 1.5 + 0.18 * nrow(data) + 0.08 * nlevels(droplevels(data$class))
+  pdf(file, width = 7 + 0.9 * length(bars), height = max(4, height))
+  draw(
+    heatmaps,
+    annotation_legend_list = list(significance),
+    merge_legend = TRUE,
+    ht_gap = unit(1, "mm")
+  )
+  dev.off()
+}
+
+plot_heatmap(
+  subfamilies[subfamilies$in_heatmap, ],
   snakemake@output[["heatmap"]],
-  width = 7 + 0.9 * length(bars),
-  height = max(4, height)
+  "No subfamily with a significant change in accessibility or expression"
 )
-draw(
-  heatmaps,
-  annotation_legend_list = list(significance),
-  merge_legend = TRUE,
-  ht_gap = unit(1, "mm")
+plot_heatmap(
+  subfamilies[subfamilies$profile, ],
+  snakemake@output[["profile_heatmap"]],
+  "No subfamily of te: profile: subfamilies"
 )
-dev.off()
 cat("Done!\n")

@@ -730,7 +730,7 @@ def multiomics_config():
     return {
         "enable": section.get("enable", False),
         "min_copies": section.get("min_copies", 20),
-        "max_subfamilies": section.get("max_subfamilies", 60),
+        "max_per_class": section.get("max_per_class", 10),
         "max_combinations": section.get("max_combinations", 25),
     }
 
@@ -796,9 +796,14 @@ def multiomics_targets():
         "peaks/upset.pdf",
         "peaks/enrichment.pdf",
     ]
-    # Full-length copies only with te: profile: subfamilies
+    # Profile subfamilies and full-length copies only with te: profile:
+    # subfamilies
     if te_profile_config()["subfamilies"]:
-        files += ["copies/heatmap.pdf", "copies/profile.pdf"]
+        files += [
+            "subfamilies/profile_heatmap.pdf",
+            "copies/heatmap.pdf",
+            "copies/profile.pdf",
+        ]
     return expand(
         "results/te/integration/multiomics/{contrast}/{file}",
         contrast=multiomics_contrasts(),

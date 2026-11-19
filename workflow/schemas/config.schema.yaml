@@ -427,10 +427,10 @@ properties:
         type: integer
         minimum: 1
         default: 20
-      max_subfamilies:
+      max_per_class:
         type: integer
         minimum: 1
-        default: 60
+        default: 10
       max_combinations:
         type: integer
         minimum: 1

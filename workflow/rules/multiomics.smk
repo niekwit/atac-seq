@@ -62,13 +62,14 @@ rule te_multiomics_subfamilies:
     output:
         table="results/te/integration/multiomics/{contrast}/subfamilies/subfamilies.tsv",
         heatmap="results/te/integration/multiomics/{contrast}/subfamilies/heatmap.pdf",
+        profile_heatmap="results/te/integration/multiomics/{contrast}/subfamilies/profile_heatmap.pdf",
     params:
         treatment=lambda w: deseq2_contrasts()[w.contrast][0],
         control=lambda w: deseq2_contrasts()[w.contrast][1],
         marks=lambda w: multiomics_marks(w.contrast),
         min_copies=multiomics_config()["min_copies"],
-        max_subfamilies=multiomics_config()["max_subfamilies"],
-        # Subfamilies of these entries are always in the heatmap
+        max_per_class=multiomics_config()["max_per_class"],
+        # Subfamilies of these entries: profile_heatmap.pdf
         profile_entries=te_profile_config()["subfamilies"],
     threads: 1
     resources:

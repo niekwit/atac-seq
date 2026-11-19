@@ -307,11 +307,12 @@ methylation:
 multiomics:
   enable: false
   # Subfamilies with at least this many copies in the genome are in the
-  # heatmap if their accessibility or expression changes significantly
+  # heatmap of the significant subfamilies if their accessibility or
+  # expression changes significantly
   min_copies: 20
-  # Most subfamilies in the heatmap (smallest adjusted p-value first); the
-  # subfamilies of te: profile: subfamilies are always shown
-  max_subfamilies: 60
+  # Most subfamilies per class in that heatmap (smallest adjusted p-value
+  # first); the subfamilies of te: profile: subfamilies have their own heatmap
+  max_per_class: 10
   # Largest combinations of sets in the UpSet plot of the TE peaks
   max_combinations: 25
 

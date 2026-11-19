@@ -87,7 +87,8 @@ All files are listed in [Integration with DNA methylation](methylation_integrati
 
 | Path (in `results/`) | Content |
 | -------------------- | ------- |
-| `te/integration/multiomics/{contrast}/subfamilies/heatmap.pdf` | change in accessibility, expression, H3K9me3 and methylation per repeat subfamily |
+| `te/integration/multiomics/{contrast}/subfamilies/heatmap.pdf` | change in accessibility, expression, H3K9me3 and methylation of the significant repeat subfamilies |
+| `te/integration/multiomics/{contrast}/subfamilies/profile_heatmap.pdf` | the same for the `te: profile: subfamilies` subfamilies |
 | `te/integration/multiomics/{contrast}/peaks/upset.pdf` | UpSet plot of the TE peaks by accessibility, mark changes and nearest gene |
 | `te/integration/multiomics/{contrast}/peaks/enrichment.pdf` | accessibility and expression by combination of the marks |
 | `te/integration/multiomics/{contrast}/copies/{heatmap,profile}.pdf` | signal of all data sets over the full-length copies (with `te: profile: subfamilies`) |

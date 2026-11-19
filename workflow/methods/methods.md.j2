@@ -464,11 +464,12 @@ log2 ratio of the treatment over the control (pseudocount: 1% of the median
 signal of the subfamilies), and the change in methylation as the difference in
 percentage points. Subfamilies with at least {{ multiomics_min_copies }} copies
 and a significant change in accessibility or expression (at most
-{{ multiomics_max_subfamilies }}, smallest adjusted p-value first), and the
-profile subfamilies, were shown in a heatmap of the shrunken ATAC-seq log2
-fold change, the RNA-seq log2 fold change and the changes in H3K9me3 and
-methylation, with the percentage of copies in the regions where each mark
-changed, made with {{ tool("complexheatmap") }}.
+{{ multiomics_max_per_class }} per class, smallest adjusted p-value first)
+were shown in a heatmap of the shrunken ATAC-seq log2 fold change, the RNA-seq
+log2 fold change and the changes in H3K9me3 and methylation, with the
+percentage of copies in the regions where each mark changed, made with
+{{ tool("complexheatmap") }}{% if profile["subfamilies"] %}; the profile
+subfamilies were shown in a separate heatmap{% endif %}.
 TE peaks tested by DESeq2 were assigned the change of each mark in the region
 they overlapped most, and the differential expression of the gene of their
 nearest TSS (within {{ rnaseq_max }}). Their overlaps were shown as an UpSet
