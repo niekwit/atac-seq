@@ -210,7 +210,8 @@ diverging <- function(values) {
   colorRamp2(c(-limit, 0, limit), c("#377EB8", "white", "#dd3b3b"))
 }
 cell_height <- unit(4.5, "mm")
-cell_width <- unit(10, "mm")
+# Square cells
+cell_width <- cell_height
 star <- function(significant) {
   function(j, i, x, y, width, height, fill) {
     if (significant[i]) {
@@ -253,7 +254,7 @@ plot_heatmap <- function(data, file, empty) {
       cluster_rows = FALSE,
       cluster_columns = FALSE,
       show_row_names = FALSE,
-      column_names_rot = 45,
+      column_names_rot = 90,
       column_names_gp = gpar(fontsize = 10),
       rect_gp = gpar(col = "white", lwd = 0.5),
       cell_fun = if (is.null(significant)) NULL else star(significant),
@@ -305,7 +306,7 @@ plot_heatmap <- function(data, file, empty) {
     row_title_gp = gpar(fontsize = 10),
     row_gap = unit(2, "mm"),
     show_row_names = FALSE,
-    column_names_rot = 45,
+    column_names_rot = 90,
     column_names_gp = gpar(fontsize = 10),
     rect_gp = gpar(col = "white", lwd = 0.5),
     cell_fun = star(
@@ -342,7 +343,7 @@ plot_heatmap <- function(data, file, empty) {
       height = cell_height * nrow(data),
       cluster_rows = FALSE,
       cluster_columns = FALSE,
-      column_names_rot = 45,
+      column_names_rot = 90,
       column_names_gp = gpar(fontsize = 10),
       rect_gp = gpar(col = "white", lwd = 0.5),
       right_annotation = right,
@@ -358,7 +359,7 @@ plot_heatmap <- function(data, file, empty) {
     )
 
   height <- 1.5 + 0.18 * nrow(data) + 0.08 * nlevels(droplevels(data$class))
-  pdf(file, width = 7 + 0.9 * length(bars), height = max(4, height))
+  pdf(file, width = 6 + 0.9 * length(bars), height = max(4, height))
   draw(
     heatmaps,
     annotation_legend_list = list(significance),
