@@ -118,9 +118,10 @@ treatment over the control, most gained accessibility at the top. So a band of c
 up can be compared directly with their H3K9me3 and methylation in the columns next to them.
 
 `copies/profile.pdf` shows the mean signal of each group (columns) and data set (rows), control
-in grey and treatment in red. The y axis titles give the units: ATAC-seq Tn5 insertions per million
-(as in the other profiles), H3K9me3 `h3k9me3: bigwig_units` (e.g. CPM;
-`signal` by default) and methylation %.
+in grey and treatment in red. The y-axis titles give the units: ATAC-seq Tn5 insertions per million
+(as in the other profiles; with `te: bigwig_normalisation: deseq2`, scaled with the DESeq2 size
+factors of the TE consensus peaks, labelled "Tn5 insertions per million (DESeq2)"), H3K9me3
+`h3k9me3: bigwig_units` (e.g. CPM; `signal` by default) and methylation %.
 
 ## Output
 
