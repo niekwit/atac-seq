@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="ea907ca93728cb18a38b15a535aa7c9e201b82ba927463c0a78a18a03d871adf"
+LABEL io.github.snakemake.conda_env_hash="e79739fa6a54026b127bc3687a9668f0353192016dc8cea6fa2373bcb232b72f"
 
 # Step 2: Retrieve conda environments
 
@@ -176,6 +176,26 @@ RUN mkdir -p /conda-envs/06ce3aa372654153d9fb942c443e5803
 COPY workflow/envs/methods.yaml /conda-envs/06ce3aa372654153d9fb942c443e5803/environment.yaml
 
 # Conda environment:
+#   source: workflow/envs/multiomics.yaml
+#   prefix: /conda-envs/376f7b8aff277138bab9c3da665bfa50
+#   # Plots of the integration of all data sets of a contrast (ATAC-seq, RNA-seq,
+#   # H3K9me3, DNA methylation): ComplexHeatmap heatmap and UpSet plot, ggplot2
+#   # with the cowplot theme (R as in the integration environment)
+#   name: multiomics
+#   channels:
+#     - conda-forge
+#     - bioconda
+#     - nodefaults
+#   dependencies:
+#     - conda-forge::r-base=4.5.3
+#     - conda-forge::r-ggplot2=4.0.3
+#     - conda-forge::r-cowplot=1.2.0
+#     - conda-forge::r-circlize=0.4.18
+#     - bioconda::bioconductor-complexheatmap=2.26.1
+RUN mkdir -p /conda-envs/376f7b8aff277138bab9c3da665bfa50
+COPY workflow/envs/multiomics.yaml /conda-envs/376f7b8aff277138bab9c3da665bfa50/environment.yaml
+
+# Conda environment:
 #   source: workflow/envs/qc.yaml
 #   prefix: /conda-envs/f7d20974e82d452ad6b06c7558708582
 #   # ENCODE ATAC-seq QC: fragment length, GC bias, JSD and annotated regions
@@ -281,6 +301,7 @@ RUN conda env create --prefix /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c --fil
     conda env create --prefix /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea --file /conda-envs/1a1dc383e0de1d50a7410d78aad7d1ea/environment.yaml && \
     conda env create --prefix /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844 --file /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844/environment.yaml && \
     conda env create --prefix /conda-envs/06ce3aa372654153d9fb942c443e5803 --file /conda-envs/06ce3aa372654153d9fb942c443e5803/environment.yaml && \
+    conda env create --prefix /conda-envs/376f7b8aff277138bab9c3da665bfa50 --file /conda-envs/376f7b8aff277138bab9c3da665bfa50/environment.yaml && \
     conda env create --prefix /conda-envs/f7d20974e82d452ad6b06c7558708582 --file /conda-envs/f7d20974e82d452ad6b06c7558708582/environment.yaml && \
     conda env create --prefix /conda-envs/309f933dc6e56cf74268a569ddd265d4 --file /conda-envs/309f933dc6e56cf74268a569ddd265d4/environment.yaml && \
     conda env create --prefix /conda-envs/69c6246d338f3230d62ca85ccdfabd04 --file /conda-envs/69c6246d338f3230d62ca85ccdfabd04/environment.yaml && \
