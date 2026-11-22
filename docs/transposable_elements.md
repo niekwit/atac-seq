@@ -17,8 +17,13 @@ it needs), not the ENCODE peaks, signal tracks, QC and DESeq2 of the peaks.
 
 QC of the TE alignments is always made (`results/te/qc/`, `results/te/multiqc/`): FastQC,
 cutadapt, bowtie2 and `samtools stats` in a MultiQC report, and TSS enrichment, fragment length
-distribution (nucleosome-free fraction) and GC bias as in the ENCODE QC. These alignments
-include multimappers, so the values are close to, but not the same as, the ENCODE QC.
+distribution (nucleosome-free fraction), GC bias and FRiP (fraction of the reads in the TE peaks
+of the sample, blacklist-filtered) as in the ENCODE QC. The fraction of mitochondrial reads is
+that of the deduplicated read pairs on `filter_chrs` (only the mitochondrial chromosome by
+default; with other chromosomes in `filter_chrs` the column is labelled "TE filter chrs").
+These alignments include multimappers, so the values are close to, but not the same as, the
+ENCODE QC (whose mitochondrial fraction also counts duplicates). The ataqv report is not made
+for the TE alignments.
 
 ## Steps
 
@@ -225,7 +230,7 @@ In `results/te/`:
 | `te_family.tsv`          | per family (repFamily, e.g. L1, ERVK, Alu)                              |
 | `te_class.tsv`           | per class (repClass, e.g. LINE, LTR, SINE)                              |
 | `te_library_stats.tsv`   | read pairs kept, duplicates, multimappers and fraction of insertions in repeats |
-| `qc/te_qc_summary.tsv`   | per sample: read pairs, duplicates, multimappers, insertions in repeats, TSS enrichment, fraction of reads in nucleosome-free regions |
+| `qc/te_qc_summary.tsv`   | per sample: read pairs, duplicates, multimappers, fraction on `filter_chrs` (mitochondrial), insertions in repeats, TSS enrichment, fraction of reads in nucleosome-free regions, FRiP |
 | `multiqc/multiqc_report.html` | MultiQC report of the TE alignments, with the QC summary in the general statistics |
 | `bigwig/{sample}.{cpm,deseq2}.bigwig` | Tn5 insertions per million, including multimappers, scaled with `te: bigwig_normalisation` (see the caveats below) |
 | `bigwig/mean/{condition}.{cpm,deseq2}.bigwig` | mean of the replicates of a condition |

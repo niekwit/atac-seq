@@ -60,7 +60,7 @@ use rule macs2_callpeak as te_macs2_callpeak with:
 
 use rule blacklist_filter as te_blacklist_filter with:
     wildcard_constraints:
-        stem=r"results/te/macs2/pooled/[a-zA-Z0-9_]+",
+        stem=r"results/te/macs2/(pooled/)?[a-zA-Z0-9_]+",
 
 
 # Peaks of the pooled replicates that overlap a peak of at least

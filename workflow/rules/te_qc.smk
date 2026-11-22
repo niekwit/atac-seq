@@ -43,6 +43,20 @@ use rule gc_bias as te_gc_bias with:
         "logs/te/qc/gc_bias_{sample}.log",
 
 
+# Fraction of the Tn5-shifted reads in the blacklist-filtered peaks of each
+# sample (TE peaks), as the ENCODE FRiP
+use rule frip as te_frip with:
+    input:
+        peak="results/te/macs2/{sample}.bfilt.narrowPeak",
+        ta="results/te/tagalign/{sample}.tagAlign.gz",
+    output:
+        "results/te/qc/{sample}.frip.qc",
+    wildcard_constraints:
+        sample=r"[a-zA-Z0-9_]+",
+    log:
+        "logs/te/qc/frip_{sample}.log",
+
+
 rule te_samtools_stats:
     input:
         "results/te/{sample}.sorted.bam",
@@ -60,19 +74,23 @@ rule te_samtools_stats:
         "samtools stats {input} > {output} 2> {log}"
 
 
-# Summary per sample: read pairs, duplicates, multimappers, TSS enrichment and
-# nucleosome-free fraction, also as MultiQC custom content
+# Summary per sample: read pairs, duplicates, multimappers, mitochondrial
+# fraction, TSS enrichment, nucleosome-free fraction and FRiP, also as MultiQC
+# custom content
 # -----------------------------------------------------
 rule te_qc_summary:
     input:
         stats="results/te/te_library_stats.tsv",
         tss=expand("results/te/qc/{sample}.tss_enrich.qc", sample=SAMPLES),
         nucleosomal=expand("results/te/qc/{sample}.nucleosomal.qc", sample=SAMPLES),
+        frip=expand("results/te/qc/{sample}.frip.qc", sample=SAMPLES),
     output:
         summary="results/te/qc/te_qc_summary.tsv",
         mqc="results/te/qc/te_qc_summary_mqc.tsv",
     params:
         samples=SAMPLES,
+        filter_chrs=config["filter"]["filter_chrs"],
+        mito=config["mito_chr_name"],
     threads: 1
     resources:
         runtime=runtime(10),
