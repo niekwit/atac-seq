@@ -286,12 +286,16 @@ Euler diagrams with {{ tool("eulerr") }}.
 
 {% if te_only %}
 QC of the TE alignments: TSS enrichment as in ENCODE ({{ tss_text() | trim }}),
-fragment length distribution and GC bias with
+the fraction of reads in the peaks of each sample (FRiP), the fraction of
+deduplicated read pairs on {{ filter_chrs | join_and }}, fragment length
+distribution and GC bias with
 {{ tool("picard", "CollectInsertSizeMetrics and CollectGcBiasMetrics") }} and
 SAMtools stats, combined with {{ tool("multiqc") }}.
 {% else %}
-QC of the TE alignments (TSS enrichment, fragment length distribution, GC bias
-and SAMtools stats) was done as above and combined with MultiQC.
+QC of the TE alignments (TSS enrichment, FRiP in the TE peaks of each sample,
+fragment length distribution, GC bias and SAMtools stats, and the fraction of
+deduplicated read pairs on {{ filter_chrs | join_and }}) was done as above and
+combined with MultiQC.
 {% endif %}
 {% endif %}
 
