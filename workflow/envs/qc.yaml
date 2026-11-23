@@ -5,7 +5,7 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - conda-forge::python=3.11
+  - conda-forge::python=3.12
   - conda-forge::numpy=2.4
   - conda-forge::scipy=1.17
   - conda-forge::pandas=3.0
@@ -13,6 +13,6 @@ dependencies:
   # Picard needs R for its histogram and GC charts
   - conda-forge::r-base=4.6
   - bioconda::picard=3.4.0
-  - bioconda::deeptools=3.5.6
+  - bioconda::deeptools=4.1.0
   - bioconda::bedtools=2.31.1
-  - bioconda::samtools=1.21
+  - bioconda::samtools=1.25

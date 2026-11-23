@@ -303,14 +303,8 @@ rule te_profile_matrix:
         "logs/te/te_profile_matrix_{level}.log",
     conda:
         "../envs/qc.yaml"
-    shell:
-        "computeMatrix scale-regions -R {input.bed} -S {input.bigwigs} "
-        "--samplesLabel {params.labels} "
-        "--regionBodyLength {params.body_length} "
-        "--beforeRegionStartLength {params.flank} "
-        "--afterRegionStartLength {params.flank} "
-        "--binSize 50 --missingDataAsZero {params.extra} -p {threads} "
-        "-o {output} > {log} 2>&1"
+    script:
+        "../scripts/te_profile_matrix.py"
 
 
 rule te_profile_plot:
