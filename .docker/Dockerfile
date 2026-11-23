@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="e79739fa6a54026b127bc3687a9668f0353192016dc8cea6fa2373bcb232b72f"
+LABEL io.github.snakemake.conda_env_hash="a253c24d2e9bd8fb5a28a1f37691e053c6899eeaf79f511da3062a4837f19b6f"
 
 # Step 2: Retrieve conda environments
 
@@ -197,7 +197,7 @@ COPY workflow/envs/multiomics.yaml /conda-envs/376f7b8aff277138bab9c3da665bfa50/
 
 # Conda environment:
 #   source: workflow/envs/qc.yaml
-#   prefix: /conda-envs/f7d20974e82d452ad6b06c7558708582
+#   prefix: /conda-envs/c6251b7c37c4213b16f12712fafd73ca
 #   # ENCODE ATAC-seq QC: fragment length, GC bias, JSD and annotated regions
 #   name: qc
 #   channels:
@@ -205,7 +205,7 @@ COPY workflow/envs/multiomics.yaml /conda-envs/376f7b8aff277138bab9c3da665bfa50/
 #     - bioconda
 #     - nodefaults
 #   dependencies:
-#     - conda-forge::python=3.11
+#     - conda-forge::python=3.12
 #     - conda-forge::numpy=2.4
 #     - conda-forge::scipy=1.17
 #     - conda-forge::pandas=3.0
@@ -213,11 +213,11 @@ COPY workflow/envs/multiomics.yaml /conda-envs/376f7b8aff277138bab9c3da665bfa50/
 #     # Picard needs R for its histogram and GC charts
 #     - conda-forge::r-base=4.6
 #     - bioconda::picard=3.4.0
-#     - bioconda::deeptools=3.5.6
+#     - bioconda::deeptools=4.1.0
 #     - bioconda::bedtools=2.31.1
-#     - bioconda::samtools=1.21
-RUN mkdir -p /conda-envs/f7d20974e82d452ad6b06c7558708582
-COPY workflow/envs/qc.yaml /conda-envs/f7d20974e82d452ad6b06c7558708582/environment.yaml
+#     - bioconda::samtools=1.25
+RUN mkdir -p /conda-envs/c6251b7c37c4213b16f12712fafd73ca
+COPY workflow/envs/qc.yaml /conda-envs/c6251b7c37c4213b16f12712fafd73ca/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/r.yaml
@@ -302,7 +302,7 @@ RUN conda env create --prefix /conda-envs/3fa5a6410b3ad1a25bf4aa1f6ecdbb6c --fil
     conda env create --prefix /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844 --file /conda-envs/ad0fd93fc15de5b62ea2f16b5370f844/environment.yaml && \
     conda env create --prefix /conda-envs/06ce3aa372654153d9fb942c443e5803 --file /conda-envs/06ce3aa372654153d9fb942c443e5803/environment.yaml && \
     conda env create --prefix /conda-envs/376f7b8aff277138bab9c3da665bfa50 --file /conda-envs/376f7b8aff277138bab9c3da665bfa50/environment.yaml && \
-    conda env create --prefix /conda-envs/f7d20974e82d452ad6b06c7558708582 --file /conda-envs/f7d20974e82d452ad6b06c7558708582/environment.yaml && \
+    conda env create --prefix /conda-envs/c6251b7c37c4213b16f12712fafd73ca --file /conda-envs/c6251b7c37c4213b16f12712fafd73ca/environment.yaml && \
     conda env create --prefix /conda-envs/309f933dc6e56cf74268a569ddd265d4 --file /conda-envs/309f933dc6e56cf74268a569ddd265d4/environment.yaml && \
     conda env create --prefix /conda-envs/69c6246d338f3230d62ca85ccdfabd04 --file /conda-envs/69c6246d338f3230d62ca85ccdfabd04/environment.yaml && \
     conda env create --prefix /conda-envs/5beefbf5e42bcd760dfc74810c91cc46 --file /conda-envs/5beefbf5e42bcd760dfc74810c91cc46/environment.yaml && \
