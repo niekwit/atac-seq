@@ -21,12 +21,14 @@ bed_file = snakemake.input["bed"]
 bigwigs = list(snakemake.input["bigwigs"])
 out_matrix = snakemake.output[0]
 log = snakemake.log[0]
+open(log, "w").close()
 
 logging.basicConfig(
     format="%(levelname)s:%(asctime)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.INFO,
-    handlers=[logging.FileHandler(log, mode="w")],
+    # Append mode, as the command output: one write position in the log
+    handlers=[logging.FileHandler(log, mode="a")],
     force=True,
 )
 
