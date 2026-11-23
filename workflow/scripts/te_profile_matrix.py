@@ -3,10 +3,14 @@ deepTools computeMatrix scale-regions matrix of the TE signal tracks over the
 full-length copies of the te: profile: subfamilies entries
 (resources/te/full_length_copies.bed). The copies of an entry are followed by
 "#<entry> (n=...)", which deepTools 4 no longer reads as a group label, so the
-copies are split into one BED file per entry, named after the label (deepTools
-group label: the file name).
+copies are split into one BED file per entry. deepTools labels a group with
+the file name, and labels can contain characters that are not safe in file
+names (e.g. ALR/Alpha), so the files are numbered and the labels restored
+with computeMatrixOperations relabel.
 """
 
+import gzip
+import json
 import logging
 import os
 import shlex
@@ -27,11 +31,11 @@ logging.basicConfig(
 )
 
 with tempfile.TemporaryDirectory(dir=os.path.dirname(out_matrix)) as tmp:
-    beds, pending = [], []
+    beds, labels, pending = [], [], []
     for line in open(bed_file):
         if line.startswith("#"):
-            label = line[1:].split("\t")[0].strip()
-            path = os.path.join(tmp, f"{label}.bed")
+            labels.append(line[1:].split("\t")[0].strip())
+            path = os.path.join(tmp, f"group{len(beds)}.bed")
             with open(path, "w") as fh:
                 fh.writelines(pending)
             beds.append(path)
@@ -41,30 +45,51 @@ with tempfile.TemporaryDirectory(dir=os.path.dirname(out_matrix)) as tmp:
     if pending:
         raise ValueError(f"{bed_file}: copies after the last group label")
 
-    command = [
-        "computeMatrix",
-        "scale-regions",
-        "-R",
-        *beds,
-        "-S",
-        *bigwigs,
-        "--samplesLabel",
-        *snakemake.params["labels"],
-        "--regionBodyLength",
-        str(snakemake.params["body_length"]),
-        "--beforeRegionStartLength",
-        str(snakemake.params["flank"]),
-        "--afterRegionStartLength",
-        str(snakemake.params["flank"]),
-        "--binSize",
-        "50",
-        "--missingDataAsZero",
-        *shlex.split(snakemake.params["extra"]),
-        "-p",
-        str(snakemake.threads),
-        "-o",
-        out_matrix,
-    ]
-    logging.info(shlex.join(command))
-    with open(log, "a") as fh:
-        subprocess.run(command, check=True, stdout=fh, stderr=fh)
+    def run(command):
+        logging.info(shlex.join(command))
+        with open(log, "a") as fh:
+            subprocess.run(command, check=True, stdout=fh, stderr=fh)
+
+    matrix = os.path.join(tmp, "matrix.gz")
+    run(
+        [
+            "computeMatrix",
+            "scale-regions",
+            "-R",
+            *beds,
+            "-S",
+            *bigwigs,
+            "--samplesLabel",
+            *snakemake.params["labels"],
+            "--regionBodyLength",
+            str(snakemake.params["body_length"]),
+            "--beforeRegionStartLength",
+            str(snakemake.params["flank"]),
+            "--afterRegionStartLength",
+            str(snakemake.params["flank"]),
+            "--binSize",
+            "50",
+            "--missingDataAsZero",
+            *shlex.split(snakemake.params["extra"]),
+            "-p",
+            str(snakemake.threads),
+            "-o",
+            matrix,
+        ]
+    )
+    # Groups in the matrix (fewer with, e.g., --skipZeros in extra:
+    # computematrix) by file name
+    with gzip.open(matrix, "rt") as fh:
+        groups = json.loads(fh.readline()[1:])["group_labels"]
+    run(
+        [
+            "computeMatrixOperations",
+            "relabel",
+            "-m",
+            matrix,
+            "-o",
+            out_matrix,
+            "--groupLabels",
+            *[labels[int(g.removeprefix("group"))] for g in groups],
+        ]
+    )
