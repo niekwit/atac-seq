@@ -9,7 +9,9 @@ and CpG methylation of the control and the treatment.
   files (copies scaled to body_length bp, 5' to 3', with flank bp on each
   side). Coverage signal (ATAC-seq, H3K9me3) is computed with
   --missingDataAsZero, methylation without (bins without a CpG are missing),
-  so in two runs joined with computeMatrixOperations cbind. Within each group,
+  in separate computeMatrix runs (also per chromosome naming of the BigWig
+  files, Ensembl or UCSC, which deepTools 4 does not match) joined with
+  computeMatrixOperations cbind. Within each group,
   the copies are sorted by the change in accessibility (below).
 - copies.tsv: per copy, the mean of the body bins of each BigWig file, the
   log2 ratio of the ATAC-seq signal of the treatment and the control (with a
@@ -99,12 +101,16 @@ copies = pd.DataFrame(
 groups = list(dict.fromkeys(copies["group"]))
 
 # Copies on chromosomes of all BigWig files (Ensembl or UCSC names)
+ucsc_names = []
 for path in bigwigs:
     bw = pyBigWig.open(path)
     chroms = set(bw.chroms())
     bw.close()
     ucsc = ("chr" + copies["chr"]).replace({"chrMT": "chrM"})
     present = copies["chr"].isin(chroms) | ucsc.isin(chroms)
+    ucsc_names.append(
+        bool(ucsc.isin(chroms).any() and not copies["chr"].isin(chroms).any())
+    )
     if not present.all():
         logging.warning(
             f"{path}: {(~present).sum()} copies on chromosomes not in the file "
@@ -119,31 +125,43 @@ groups = [g for g in groups if (copies["group"] == g).any()]
 if not groups:
     raise ValueError("No full-length copies on the chromosomes of the BigWigs")
 
-# BED file per group (deepTools group label: the file name)
-beds = []
-for i, group in enumerate(groups):
-    path = os.path.join(tmp, f"group{i}.bed")
-    selected = copies[copies["group"] == group]
-    selected.assign(score=0)[
-        ["chr", "start", "end", "copy_id", "score", "strand"]
-    ].to_csv(path, sep="\t", header=False, index=False)
-    beds.append(path)
+# BED file per group (deepTools group label: the file name), with Ensembl and
+# with UCSC chromosome names (same file names, so cbind matches the groups)
+beds = {}
+for ucsc in (False, True):
+    os.makedirs(os.path.join(tmp, f"ucsc{int(ucsc)}"))
+    beds[ucsc] = []
+    for i, group in enumerate(groups):
+        path = os.path.join(tmp, f"ucsc{int(ucsc)}", f"group{i}.bed")
+        selected = copies[copies["group"] == group]
+        if ucsc:
+            selected = selected.assign(
+                chr=("chr" + selected["chr"]).replace({"chrMT": "chrM"})
+            )
+        selected.assign(score=0)[
+            ["chr", "start", "end", "copy_id", "score", "strand"]
+        ].to_csv(path, sep="\t", header=False, index=False)
+        beds[ucsc].append(path)
 
 # Matrix: coverage and methylation signal, joined
 # -----------------------------------------------------
 labels = [f"{d} {c}" for d, c in zip(datasets, conditions)]
 parts = []
-for as_zero in (True, False):
-    selected = [i for i, z in enumerate(missing_as_zero) if z == as_zero]
+for as_zero, ucsc in [(z, u) for z in (True, False) for u in (False, True)]:
+    selected = [
+        i
+        for i in range(len(bigwigs))
+        if missing_as_zero[i] == as_zero and ucsc_names[i] == ucsc
+    ]
     if not selected:
         continue
-    path = os.path.join(tmp, f"matrix_{int(as_zero)}.gz")
+    path = os.path.join(tmp, f"matrix_{int(as_zero)}_{int(ucsc)}.gz")
     run(
         [
             "computeMatrix",
             "scale-regions",
             "-R",
-            *beds,
+            *beds[ucsc],
             "-S",
             *[bigwigs[i] for i in selected],
             "--samplesLabel",

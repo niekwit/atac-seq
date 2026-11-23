@@ -18,7 +18,8 @@ filter_chrs or on chromosomes not in the genome are removed, as in
 prepare_te_annotation.py.
 
 In the BED file, each group of regions is followed by a line "#<label>",
-which deepTools uses as the group label.
+the group label (te_profile_matrix.py splits the groups into one BED file per
+label for computeMatrix).
 """
 
 import logging
