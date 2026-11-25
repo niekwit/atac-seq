@@ -109,6 +109,14 @@ What this means:
 `logs/te/te_full_length_copies.log` lists, for each entry, its subfamilies and its number of
 full-length copies out of all its copies, and the BED file has the covered fraction of each copy (column 5).
 
+`results/te/profile/copy_lengths.pdf` shows the genomic length of the full-length copies of each
+entry (one panel per entry), with their median length (red, dashed) and the length that
+computeMatrix scales every copy to in the profile (`te: profile: body_length`, black, dotted);
+the legend explains both lines.
+Use it to check that the copies have the expected length, e.g. about 6–7 kb for young mouse
+LINE-1s, and to spot groups with a second, shorter set of copies (e.g. copies of an `-int`
+subfamily with a deletion), which then add to the same scaled profile.
+
 ### Scaling of the signal tracks
 
 `te: bigwig_normalisation` sets how the signal tracks, and so the profiles made from them

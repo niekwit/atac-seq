@@ -333,6 +333,28 @@ rule te_profile_plot:
         "plotProfile -m {input} -o {output} {params.options} {params.extra} > {log} 2>&1"
 
 
+# QC of the full-length copies: histogram of their genomic lengths per entry
+# of te: profile: subfamilies, with the length they are scaled to
+# -----------------------------------------------------
+rule te_profile_lengths:
+    input:
+        bed="resources/te/full_length_copies.bed",
+    output:
+        "results/te/profile/copy_lengths.pdf",
+    params:
+        body_length=te_profile_config()["body_length"],
+    threads: 1
+    resources:
+        runtime=runtime(15),
+        mem_mb=2000,
+    log:
+        "logs/te/te_profile_lengths.log",
+    conda:
+        "../envs/integration.yaml"
+    script:
+        "../scripts/te_profile_lengths.R"
+
+
 # PCA and sample correlation from the subfamily counts (vst, blind to the
 # conditions), as for the ENCODE consensus peaks
 # -----------------------------------------------------
