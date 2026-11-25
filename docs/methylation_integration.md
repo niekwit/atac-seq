@@ -137,8 +137,8 @@ of the more and less accessible peaks against the unchanged peaks.
 
 **Distribution** (`peaks/distribution.pdf`): the cumulative distribution of the shrunken ATAC-seq
 log2 fold changes of all tested TE peaks in the hypomethylated regions and outside them, with a Wilcoxon
-rank-sum test. A curve to the right of the "outside" curve means that the peaks gain
-accessibility in the knockout.
+rank-sum test. A curve to the right of the "outside" curve means larger log2
+fold changes than the peaks outside the regions, not by itself that the peaks gain accessibility.
 
 ![Morc1: CpG methylation around the differential peaks](images/methylation_integration/morc1_signal_profile.png)
 

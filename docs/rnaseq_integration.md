@@ -122,7 +122,7 @@ subfamily:
 The output has the correlation of the subfamily log2 fold changes (all subfamilies and per class),
 the cumulative distributions of the RNA-seq log2 fold changes per accessibility group (Wilcoxon
 tests against unchanged subfamilies: a curve to the right of that of the unchanged subfamilies
-means higher expression) and Fisher's exact tests. With a few hundred subfamilies,
+means larger RNA-seq log2 fold changes than theirs) and Fisher's exact tests. With a few hundred subfamilies,
 these tests have less power than those of the genes.
 
 ## Output

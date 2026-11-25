@@ -89,7 +89,8 @@ region). The analyses:
 2. **Distribution** (`distribution.pdf`, `distribution_tests.tsv`): the cumulative distribution
    of the shrunken ATAC-seq log2 fold changes of the peaks by H3K9me3 change, with a Wilcoxon
    rank-sum test of each group against the peaks outside the regions. A curve to the right of
-   the "outside" curve means the peaks gain accessibility. This uses all peaks, not only those
+   the "outside" curve means larger log2 fold changes than the peaks outside the regions
+   (more gain or less loss of accessibility), not by itself that the peaks gain accessibility. This uses all peaks, not only those
    called differential, so it often shows a shift where the enrichment test has too few
    differential peaks.
 3. **ATAC-seq signal over the H3K9me3 regions** (TE module, `atac_profile.pdf`,
@@ -211,8 +212,8 @@ of the more and less accessible peaks against the unchanged peaks.
 
 **Distribution** (`peaks/distribution.pdf`): the cumulative distribution of the shrunken ATAC-seq
 log2 fold changes of all tested TE peaks in the regions that lose H3K9me3 and outside them, with a Wilcoxon
-rank-sum test. A curve to the right of the "outside" curve means that the peaks gain
-accessibility in the knockout.
+rank-sum test. A curve to the right of the "outside" curve means larger log2
+fold changes than the peaks outside the regions, not by itself that the peaks gain accessibility.
 
 ![Morc1: H3K9me3 around the differential peaks](images/h3k9me3_integration/morc1_signal_profile.png)
 
