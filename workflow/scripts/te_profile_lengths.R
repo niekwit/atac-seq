@@ -96,5 +96,8 @@ ggsave(
   p,
   width = 11,
   height = 1 + 2.5 * n_rows,
-  bg = "white"
+  bg = "white",
+  # Height grows with the number of entries, beyond ggsave's 50 inch limit
+  # from about 58 entries
+  limitsize = FALSE
 )
