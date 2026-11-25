@@ -195,8 +195,10 @@ CPM-normalised insertion tracks were made with
 and averaged per condition (bigwigAverage).
 {% endif %}
 {% if profile["subfamilies"] %}
-Insertion profiles over full-length copies (covering ≥
-{{ percent(profile["min_consensus_fraction"]) }} of the consensus) of selected
+Insertion profiles over full-length copies (one RepeatMasker alignment covering
+≥ {{ percent(profile["min_consensus_fraction"]) }} of the subfamily consensus,
+with the consensus length taken as the most common length implied by the
+alignments of the subfamily in the UCSC rmsk table) of selected
 subfamilies were calculated with computeMatrix scale-regions (body
 {{ number(profile["body_length"]) }} bp, flanks {{ number(profile["flank"]) }}
 bp, 50 bp bins) and plotted with plotProfile.

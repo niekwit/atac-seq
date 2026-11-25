@@ -204,6 +204,7 @@ if te_enabled():
         TE_TARGETS += expand(
             "results/te/profile/{level}.pdf", level=["conditions", "samples"]
         )
+        TE_TARGETS.append("results/te/profile/copy_lengths.pdf")
 
 
 localrules:

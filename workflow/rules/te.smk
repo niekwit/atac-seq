@@ -253,6 +253,7 @@ rule te_full_length_copies:
         chrom_sizes="resources/chrom_sizes.txt",
     output:
         bed="resources/te/full_length_copies.bed",
+        copies="resources/te/profile_copies.tsv.gz",
     params:
         subfamilies=te_profile_config()["subfamilies"],
         min_consensus_fraction=te_profile_config()["min_consensus_fraction"],
@@ -331,6 +332,26 @@ rule te_profile_plot:
         "../envs/qc.yaml"
     shell:
         "plotProfile -m {input} -o {output} {params.options} {params.extra} > {log} 2>&1"
+
+
+# QC of the full-length copies: length distribution of the full-length copies
+# and of all copies per entry of te: profile: subfamilies
+# -----------------------------------------------------
+rule te_profile_lengths:
+    input:
+        copies="resources/te/profile_copies.tsv.gz",
+    output:
+        "results/te/profile/copy_lengths.pdf",
+    threads: 1
+    resources:
+        runtime=runtime(15),
+        mem_mb=2000,
+    log:
+        "logs/te/te_profile_lengths.log",
+    conda:
+        "../envs/integration.yaml"
+    script:
+        "../scripts/te_profile_lengths.R"
 
 
 # PCA and sample correlation from the subfamily counts (vst, blind to the

@@ -82,7 +82,15 @@ covered fraction = consensus bases covered by the alignment / length of the cons
 
 Both numbers come from the `repStart`, `repEnd` and `repLeft` columns of `rmsk`, which give the
 part of the consensus that the copy aligns to and how many consensus bases come after it (on
-the minus strand `repStart` and `repLeft` swap roles). For example, a copy of a subfamily with a
+the minus strand `repStart` and `repLeft` swap roles). `rmsk` has no column with the consensus
+length: each row implies one (its last aligned consensus position plus the bases after it), and
+the rows of a subfamily don't always agree. For example, most `L1MdTf_I` rows of mm39 imply
+6,579 bp, but some imply 3,914–8,042 bp, and about a fifth of the `IAPEz-int` rows imply
+another length than 6,481 bp, some only about 1.4 kb. The consensus length of a subfamily is
+therefore the most common length implied by its rows (the largest if tied), and the covered
+fraction of every copy is relative to that length. Otherwise a short copy whose row implies a
+short consensus would count as full-length. `logs/te/te_full_length_copies.log` lists the
+consensus length of each subfamily and how many of its rows imply another length. For example, a copy of a subfamily with a
 6,000 bp consensus that aligns to consensus positions 301–6,000 covers 5,700 / 6,000 = 95% and
 is full-length. A copy that aligns to positions 1,501–6,000 covers 75%: it is 5'-truncated, as
 most LINE-1 copies are, and is left out.
@@ -108,6 +116,15 @@ What this means:
 
 `logs/te/te_full_length_copies.log` lists, for each entry, its subfamilies and its number of
 full-length copies out of all its copies, and the BED file has the covered fraction of each copy (column 5).
+
+`results/te/profile/copy_lengths.pdf` shows, per entry (one panel per entry), the length
+distribution of its full-length copies (red) and of all its copies (grey), with the median
+length of both (dashed). The histograms are scaled to the same area (density), as most copies
+are not full-length. Use it to check that the full-length copies have the expected length (e.g.
+about 6–7 kb for young mouse LINE-1s) and how they compare with all copies (mostly 5'-truncated
+for LINE-1s), and to spot entries with a second, shorter set of full-length copies, which then
+add to the same scaled profile. `resources/te/profile_copies.tsv.gz` has all copies of each entry
+with their length, consensus length, covered fraction and whether they are full-length.
 
 ### Scaling of the signal tracks
 
