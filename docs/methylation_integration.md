@@ -100,6 +100,77 @@ hypo- and hypermethylated regions (`n_copies_hypo`, `n_copies_hyper`). `decrease
 (hypomethylated) and `increased.bed` (hypermethylated) are next to `regions.tsv`, and
 `input_tables/` has an unchanged copy of the `regions` file.
 
+## Example: Morc1 knockout gonocytes
+
+These figures show the output of the integration on public data of *Morc1* knockout and
+heterozygous gonocytes: the ATAC-seq data of the
+[Transposable elements example](transposable_elements.md#example-morc1-knockout-gonocytes) (TE
+module, `KO_vs_het`; [Uneme et al., 2024](https://doi.org/10.1073/pnas.2317095121)) and DNA methylation data of *Morc1* knockout and heterozygous germ
+cells ([Pastor et al., 2014](https://doi.org/10.1038/ncomms6795); GEO [GSE63048](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63048)),
+aligned to GRCm39. For the biology, see the publications. The DMRs are the hypomethylated 1 kb
+tiles of a methylKit analysis, with adjacent tiles merged (`bedtools merge -d 0`) so that a long
+hypomethylated element counts as one region. A BED file has no methylation differences, so
+there is no fold change scatter. The BigWig files are the CpG methylation (%) of each
+condition:
+
+```yaml
+methylation:
+  contrasts:
+    KO_vs_het:
+      regions: /path/to/hypomethylated_DMRs_merged.bed
+      methylkit: false
+      direction: hypo
+      bigwigs:
+        control: /path/to/methylation_het.bw
+        treatment: /path/to/methylation_KO.bw
+```
+
+### TE peaks
+
+![Morc1: TE peaks in the hypomethylated regions](images/methylation_integration/morc1_enrichment.png)
+
+**Enrichment** (`peaks/enrichment.pdf`): the percentage of the more, less and unchanged accessible
+TE peaks that are in the hypomethylated regions, with the numbers above the bars and Fisher's exact tests
+of the more and less accessible peaks against the unchanged peaks.
+
+![Morc1: accessibility change of the peaks by methylation change](images/methylation_integration/morc1_distribution.png)
+
+**Distribution** (`peaks/distribution.pdf`): the cumulative distribution of the shrunken ATAC-seq
+log2 fold changes of all tested TE peaks in the hypomethylated regions and outside them, with a Wilcoxon
+rank-sum test. A curve to the right of the "outside" curve means larger log2
+fold changes than the peaks outside the regions, not by itself that the peaks gain accessibility.
+
+![Morc1: CpG methylation around the differential peaks](images/methylation_integration/morc1_signal_profile.png)
+
+**CpG methylation around the differential peaks** (`peaks/signal_profile.pdf`): the CpG methylation (%) of the
+heterozygous (grey) and knockout (red) gonocytes within 5 kb of the centre of the more, less and
+unchanged accessible TE peaks.
+
+![Morc1: accessibility over the hypomethylated regions](images/methylation_integration/morc1_atac_profile.png)
+
+**ATAC-seq over the regions** (`atac_profile.pdf`): Tn5 insertions per million of each condition
+over the hypomethylated regions, scaled to the same length, with 5 kb flanks.
+
+### Repeat subfamilies
+
+![Morc1: hypomethylated regions and accessibility of the subfamilies](images/methylation_integration/morc1_subfamilies_scatter.png)
+
+**Scatter** (`subfamilies/scatter.pdf`): each point is a subfamily with at least 20 copies, with
+the percentage of its copies (at least half of a copy in one region) in the hypomethylated regions against
+the shrunken ATAC-seq log2 fold change of the insertions in all its copies. Subfamilies that are
+differentially accessible are solid, and the dashed vertical line is the percentage of the genome
+in the regions.
+
+![Morc1: full-length copies by methylation change and accessibility](images/methylation_integration/morc1_full_length.png)
+
+**Full-length copies** (`subfamilies/full_length.pdf`): per `te: profile: subfamilies` entry, the
+percentage of its full-length copies in each combination of in the hypomethylated regions (any overlap)
+and overlapped by a more accessible TE peak, with the number of copies above the bar and a
+Fisher's exact test per entry. TE peaks are called from the signal at single copies, so for
+subfamilies whose copies are almost identical, where most reads are multimappers, few copies may
+have a peak even when the [profile](transposable_elements.md#morc1-full-length-copies) over all
+copies changes.
+
 ## Caveats
 
 - **Coverage:** methylKit tests only regions with enough coverage in enough samples, so

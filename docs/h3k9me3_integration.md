@@ -89,7 +89,8 @@ region). The analyses:
 2. **Distribution** (`distribution.pdf`, `distribution_tests.tsv`): the cumulative distribution
    of the shrunken ATAC-seq log2 fold changes of the peaks by H3K9me3 change, with a Wilcoxon
    rank-sum test of each group against the peaks outside the regions. A curve to the right of
-   the "outside" curve means the peaks gain accessibility. This uses all peaks, not only those
+   the "outside" curve means larger log2 fold changes than the peaks outside the regions
+   (more gain or less loss of accessibility), not by itself that the peaks gain accessibility. This uses all peaks, not only those
    called differential, so it often shows a shift where the enrichment test has too few
    differential peaks.
 3. **ATAC-seq signal over the H3K9me3 regions** (TE module, `atac_profile.pdf`,
@@ -172,6 +173,78 @@ In `results/te/integration/h3k9me3/{contrast}/` (TE module):
 `results/integration/h3k9me3/{contrast}/` (in `results/te/integration/h3k9me3/{contrast}/` with
 `te: only`). `input_tables/` next to them has an unchanged copy of the `regions` file, so the
 results keep the input they were made from. The BigWig files are not copied.
+
+## Example: Morc1 knockout gonocytes
+
+These figures show the output of the integration on public data of *Morc1* knockout and
+heterozygous gonocytes: the ATAC-seq data of the
+[Transposable elements example](transposable_elements.md#example-morc1-knockout-gonocytes) (TE
+module, `KO_vs_het`) and H3K9me3 ChIP-seq from the same study ([Uneme et al., 2024](https://doi.org/10.1073/pnas.2317095121); GEO
+[GSE235429](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235429)), aligned to GRCm39. For
+the biology, see the publication. H3K9me3 broad peaks were called with MACS2 (FDR 0.1) in the
+heterozygous samples with the knockout as control, so the consensus peaks are regions with more
+H3K9me3 in the heterozygous than in the knockout gonocytes. They are a BED file
+(`direction: lost`), so there are no unchanged or gained regions and no fold change scatter. The
+BigWig files are the CPM-scaled H3K9me3 signal of each condition:
+
+```yaml
+h3k9me3:
+  contrasts:
+    KO_vs_het:
+      regions: /path/to/H3K9me3_het_over_KO_peaks.bed
+      diffbind: false
+      direction: lost
+      bigwigs:
+        control: /path/to/H3K9me3_het.bw
+        treatment: /path/to/H3K9me3_KO.bw
+  bigwig_units: CPM
+```
+
+### TE peaks
+
+![Morc1: TE peaks in the regions that lose H3K9me3](images/h3k9me3_integration/morc1_enrichment.png)
+
+**Enrichment** (`peaks/enrichment.pdf`): the percentage of the more, less and unchanged accessible
+TE peaks that are in the regions that lose H3K9me3, with the numbers above the bars and Fisher's exact tests
+of the more and less accessible peaks against the unchanged peaks.
+
+![Morc1: accessibility change of the peaks by h3k9me3 change](images/h3k9me3_integration/morc1_distribution.png)
+
+**Distribution** (`peaks/distribution.pdf`): the cumulative distribution of the shrunken ATAC-seq
+log2 fold changes of all tested TE peaks in the regions that lose H3K9me3 and outside them, with a Wilcoxon
+rank-sum test. A curve to the right of the "outside" curve means larger log2
+fold changes than the peaks outside the regions, not by itself that the peaks gain accessibility.
+
+![Morc1: H3K9me3 around the differential peaks](images/h3k9me3_integration/morc1_signal_profile.png)
+
+**H3K9me3 around the differential peaks** (`peaks/signal_profile.pdf`): the H3K9me3 signal (CPM) of the
+heterozygous (grey) and knockout (red) gonocytes within 5 kb of the centre of the more, less and
+unchanged accessible TE peaks.
+
+![Morc1: accessibility over the regions that lose H3K9me3](images/h3k9me3_integration/morc1_atac_profile.png)
+
+**ATAC-seq over the regions** (`atac_profile.pdf`): Tn5 insertions per million of each condition
+over the regions that lose H3K9me3, scaled to the same length, with 5 kb flanks.
+
+### Repeat subfamilies
+
+![Morc1: regions that lose H3K9me3 and accessibility of the subfamilies](images/h3k9me3_integration/morc1_subfamilies_scatter.png)
+
+**Scatter** (`subfamilies/scatter.pdf`): each point is a subfamily with at least 20 copies, with
+the percentage of its copies (at least half of a copy in one region) in the regions that lose H3K9me3 against
+the shrunken ATAC-seq log2 fold change of the insertions in all its copies. Subfamilies that are
+differentially accessible are solid, and the dashed vertical line is the percentage of the genome
+in the regions.
+
+![Morc1: full-length copies by h3k9me3 change and accessibility](images/h3k9me3_integration/morc1_full_length.png)
+
+**Full-length copies** (`subfamilies/full_length.pdf`): per `te: profile: subfamilies` entry, the
+percentage of its full-length copies in each combination of in the regions that lose H3K9me3 (any overlap)
+and overlapped by a more accessible TE peak, with the number of copies above the bar and a
+Fisher's exact test per entry. TE peaks are called from the signal at single copies, so for
+subfamilies whose copies are almost identical, where most reads are multimappers, few copies may
+have a peak even when the [profile](transposable_elements.md#morc1-full-length-copies) over all
+copies changes.
 
 ## Caveats
 

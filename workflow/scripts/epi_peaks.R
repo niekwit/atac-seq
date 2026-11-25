@@ -160,8 +160,8 @@ if (nrow(plot_data) == 0) {
       y = paste0("Peaks in the ", labels[["regions"]], " (%)"),
       caption = paste0(
         peak_set,
-        "\nFisher's exact test against the unchanged peaks; ",
-        "BH-adjusted p: * < 0.05, ** < 0.01, *** < 0.001"
+        "\nFisher's exact test against the unchanged peaks",
+        "\nBH-adjusted p: * < 0.05, ** < 0.01, *** < 0.001"
       )
     ) +
     theme_cowplot(12) +

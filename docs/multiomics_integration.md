@@ -143,6 +143,68 @@ In `results/te/integration/multiomics/{contrast}/`:
 `subfamilies/profile_heatmap.pdf` and the `copies/` files are made only with
 `te: profile: subfamilies`.
 
+## Example: Morc1 knockout gonocytes
+
+These figures show the output on public data of *Morc1* knockout and heterozygous gonocytes,
+combining the four data sets of the other examples for the contrast `KO_vs_het`: ATAC-seq
+([Transposable elements](transposable_elements.md#example-morc1-knockout-gonocytes)), RNA-seq
+([RNA-seq](rnaseq_integration.md#example-morc1-knockout-gonocytes)) and H3K9me3
+([H3K9me3](h3k9me3_integration.md#example-morc1-knockout-gonocytes)) from [Uneme et al., 2024](https://doi.org/10.1073/pnas.2317095121), and DNA
+methylation ([DNA methylation](methylation_integration.md#example-morc1-knockout-gonocytes)) from
+[Pastor et al., 2014](https://doi.org/10.1038/ncomms6795). For the biology, see the publications. The settings are the defaults:
+
+```yaml
+multiomics:
+  enable: true
+```
+
+### Morc1: repeat subfamilies
+
+![Morc1: changes of the significant subfamilies in all data sets](images/multiomics_integration/morc1_subfamilies_heatmap.png)
+
+**Significant subfamilies** (`subfamilies/heatmap.pdf`): the subfamilies with at least 20 copies
+and a significant change in accessibility or expression, at most 10 per class, with one column per
+data set: ATAC-seq and RNA-seq log2 fold changes, H3K9me3 log2 ratio and methylation difference
+over all copies (knockout vs heterozygous), each with its own colour scale. Stars mark significant
+changes in accessibility or expression, and profile subfamilies are bold. The bars give the
+percentage of copies in the regions that lose H3K9me3 and in the hypomethylated regions.
+
+![Morc1: changes of the profile subfamilies](images/multiomics_integration/morc1_profile_heatmap.png)
+
+**Profile subfamilies** (`subfamilies/profile_heatmap.pdf`): the same for all
+`te: profile: subfamilies` subfamilies, whether they change or not.
+
+### Morc1: TE peaks
+
+![Morc1: UpSet plot of the TE peaks](images/multiomics_integration/morc1_upset.png)
+
+**UpSet plot** (`peaks/upset.pdf`): the tested TE peaks by their combination of changes (more or
+less accessible, H3K9me3 lost, hypomethylated, nearest gene up- or downregulated). Each peak is
+counted in one combination (bar at the top), and the set sizes are on the right. Combinations with
+more accessible peaks are red.
+
+![Morc1: accessibility and expression by the changes of the marks](images/multiomics_integration/morc1_peaks_enrichment.png)
+
+**Enrichment** (`peaks/enrichment.pdf`): the TE peaks grouped by the changes of the marks (both,
+H3K9me3 lost only, hypomethylated only, neither). For each group, the percentage of peaks that are
+more or less accessible, and of the peaks with a tested nearest gene, the percentage whose gene is
+up- or downregulated, with the number of peaks above the bar. Each group is compared with
+"Neither" (Fisher's exact test).
+
+### Morc1: full-length copies
+
+![Morc1: signal of each full-length copy](images/multiomics_integration/morc1_copies_heatmap.png)
+
+**Heatmap of the copies** (`copies/heatmap.pdf`): ATAC-seq, H3K9me3 and CpG methylation of the
+heterozygous and knockout gonocytes over each full-length copy of the profile subfamilies, scaled
+from 5' to 3' with 2 kb flanks. Within each subfamily, the copies are sorted by the log2 ratio of
+their mean ATAC-seq signal, knockout over heterozygous, most gained accessibility at the top.
+
+![Morc1: mean signal over the full-length copies](images/multiomics_integration/morc1_copies_profile.png)
+
+**Mean profiles** (`copies/profile.pdf`): the mean of the heatmap per subfamily (columns) and data
+set (rows), heterozygous in grey and knockout in red, with the units on the y axes.
+
 ## Caveats
 
 - **Repeats and mappability:** the H3K9me3 and methylation signal of young repeats depends on how

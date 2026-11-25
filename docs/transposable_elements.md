@@ -277,6 +277,70 @@ For each sample the `te_{subfamily,family,class}.tsv` tables have:
 | `{sample}_CPM`               | insertions per million insertions of the sample                            |
 | `{sample}_log2_enrichment`   | log2 of the fraction of insertions in the repeat over the fraction of the genome it covers; > 0: more accessible than the genome average |
 
+## Example: Morc1 knockout gonocytes
+
+These figures show the output of the TE module on public data: ATAC-seq of P0 *Morc1* knockout
+and heterozygous gonocytes ([Uneme et al., 2024](https://doi.org/10.1073/pnas.2317095121); GEO
+[GSE235429](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235429)), 2 replicates each,
+run with `te: only: true` on GRCm39 (Ensembl 115). For the biology, see the publication. The
+contrast is `KO_vs_het`, with these settings:
+
+```yaml
+te:
+  enable: true
+  only: true
+  normalisation: insertions
+  profile:
+    subfamilies: ["L1MdTf_I", "L1MdTf_II", "L1MdTf_III", "L1MdA_I", "L1MdA_II", "L1MdGf_I", "IAPEz-int"]
+```
+
+### Morc1: repeat subfamilies
+
+![Morc1: PCA of the subfamily counts](images/te/morc1_subfamilies_pca.png)
+
+**PCA** (`deseq2/pca.pdf`): the samples on the first two principal components of the
+variance-stabilised subfamily counts, coloured by condition, with the percentage of the variance
+that each component explains.
+
+![Morc1: differential accessibility of the subfamilies](images/te/morc1_subfamilies_volcano.png)
+
+**Volcano plot** (`deseq2/KO_vs_het/volcano_plot.pdf`): each point is a subfamily, with its
+shrunken log2 fold change (insertions in all its copies, knockout over heterozygous) and p-value.
+Subfamilies that are more or less accessible (`padj` below `fdr`) are coloured, and the most
+significant are labelled.
+
+![Morc1: heatmap of the significant subfamilies](images/te/morc1_subfamilies_heatmap.png)
+
+**Heatmap** (`deseq2/KO_vs_het/heatmap_classes.pdf`): row z-scores of the variance-stabilised
+insertions of the significant subfamilies (at most 25 per class), one column per sample, grouped
+by class and condition.
+
+A subfamily count includes all copies of the subfamily. For subfamilies whose copies are mostly
+5'-truncated, such as LINE-1s, a change at the 5' end of the few full-length copies is a small part
+of the count; the profile over the full-length copies below shows that part separately.
+
+### Morc1: TE peaks
+
+![Morc1: differential accessibility of the TE peaks](images/te/morc1_peaks_volcano.png)
+
+**Volcano plot of the TE peaks** (`peaks/deseq2/KO_vs_het/volcano_plot.pdf`): as for the
+subfamilies, but each point is a TE consensus peak. These peaks are called from the TE alignments,
+which keep multimappers, so they include peaks in young repeats.
+
+### Morc1: full-length copies
+
+![Morc1: profile over the full-length copies](images/te/morc1_profile.png)
+
+**Profile** (`profile/conditions.pdf`): mean Tn5 insertions per million over the full-length
+copies of each `te: profile: subfamilies` entry (number of copies in the panel title), scaled from
+5' to 3' with 2 kb flanks, one line per condition. `profile/samples.pdf` has one line per sample.
+
+![Morc1: lengths of the copies](images/te/morc1_copy_lengths.png)
+
+**Copy lengths** (`profile/copy_lengths.pdf`): the length distribution of the full-length copies
+(red) and of all copies (grey) of each entry, with their median lengths (dashed). Use it to check
+that the full-length copies have the expected length.
+
 ## Caveats
 
 - Counts are per repeat subfamily, family or class, not per copy: a multimapper is assigned to
