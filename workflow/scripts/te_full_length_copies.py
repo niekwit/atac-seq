@@ -11,15 +11,22 @@ e.g. family:L1) or class (repClass, e.g. class:LINE).
 
 A copy is full-length if its alignment covers at least min_consensus_fraction
 of the subfamily's consensus sequence (repStart, repEnd and repLeft of the
-rmsk table). RepeatMasker can split one element into several rows; these are
-not joined, so an element counts only if one row covers enough of the
-consensus. Chromosome names are converted to Ensembl names and copies on
+rmsk table). The consensus length is not a column of rmsk: each row gives it
+as its last aligned consensus position plus the consensus bases after it, and
+rows of one subfamily do not always agree (e.g. 6,579 bp for most L1MdTf_I
+rows, but 3,914 to 8,042 bp for some). The consensus length of a subfamily is
+therefore the most common value of its rows (the largest if tied), so that a
+row reporting a shorter consensus does not pass as full-length. RepeatMasker
+can split one element into several rows; these are not joined, so an element
+counts only if one row covers enough of the consensus. Chromosome names are converted to Ensembl names and copies on
 filter_chrs or on chromosomes not in the genome are removed, as in
 prepare_te_annotation.py.
 
 In the BED file, each group of regions is followed by a line "#<label>",
 the group label (te_profile_matrix.py splits the groups into one BED file per
-label for computeMatrix).
+label for computeMatrix). The TSV file has all copies of each entry
+(full-length or not) with their length and covered fraction, for the length QC
+plot (te_profile_lengths.R).
 """
 
 import logging
@@ -30,6 +37,7 @@ import pandas as pd
 rmsk = snakemake.input["rmsk"]
 chrom_sizes = snakemake.input["chrom_sizes"]
 bed_out = snakemake.output["bed"]
+copies_out = snakemake.output["copies"]
 subfamilies = snakemake.params["subfamilies"]
 min_fraction = snakemake.params["min_consensus_fraction"]
 filter_chrs = snakemake.params["filter_chrs"]
@@ -90,11 +98,6 @@ for entry, group in groups.items():
         logging.info(f"{entry}: {len(group)} subfamilies: {', '.join(group)}")
 df = df[df["subfamily"].isin({name for group in groups.values() for name in group})]
 
-# Ensembl chromosome names
-df["chrom"] = df["chrom"].str.removeprefix("chr").replace({"M": "MT"})
-chroms = pd.read_csv(chrom_sizes, sep="\t", header=None, dtype={0: str})[0]
-df = df[df["chrom"].isin(set(chroms) - set(filter_chrs))]
-
 # Consensus positions covered by each copy. On the + strand the alignment
 # runs from repStart to repEnd and repLeft is minus the consensus bases after
 # it; on the - strand repStart is minus the bases after repEnd and repLeft is
@@ -102,9 +105,50 @@ df = df[df["chrom"].isin(set(chroms) - set(filter_chrs))]
 plus = df["strand"] == "+"
 first = df["rep_start"].where(plus, df["rep_left"])
 after = -df["rep_left"].where(plus, df["rep_start"])
-consensus_length = df["rep_end"] + after
-df["fraction"] = (df["rep_end"] - first + 1) / consensus_length
-full_length = df[df["fraction"] >= min_fraction]
+row_consensus_length = df["rep_end"] + after
+
+
+def most_common(lengths):
+    """
+    Most common consensus length of the rows of a subfamily (the largest if
+    tied)
+    """
+    counts = lengths.value_counts()
+    return counts[counts == counts.max()].index.max()
+
+
+# Consensus length per subfamily, from all its rows (before the chromosome
+# filter)
+consensus_lengths = row_consensus_length.groupby(df["subfamily"]).agg(most_common)
+for name, length in consensus_lengths.items():
+    rows = df["subfamily"] == name
+    other = (row_consensus_length[rows] != length).sum()
+    logging.info(
+        f"{name}: consensus length {length} bp ({other} of {rows.sum()} rows "
+        "report another length)"
+    )
+df["consensus_length"] = df["subfamily"].map(consensus_lengths)
+df["fraction"] = (df["rep_end"] - first + 1) / df["consensus_length"]
+
+# Ensembl chromosome names
+df["chrom"] = df["chrom"].str.removeprefix("chr").replace({"M": "MT"})
+chroms = pd.read_csv(chrom_sizes, sep="\t", header=None, dtype={0: str})[0]
+df = df[df["chrom"].isin(set(chroms) - set(filter_chrs))]
+
+df["full_length"] = df["fraction"] >= min_fraction
+full_length = df[df["full_length"]]
+
+# All copies of each entry, for the length QC plot
+copies = pd.concat(
+    [
+        df[df["subfamily"].isin(group)].assign(entry=entry)
+        for entry, group in groups.items()
+    ]
+)
+copies["length"] = copies["end"] - copies["start"]
+columns = ["entry", "subfamily", "chrom", "start", "end", "strand", "length"]
+columns += ["consensus_length", "fraction", "full_length"]
+copies[columns].to_csv(copies_out, sep="\t", index=False, float_format="%.3f")
 
 with open(bed_out, "w") as bed:
     for entry, group in groups.items():

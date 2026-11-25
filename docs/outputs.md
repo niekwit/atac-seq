@@ -44,7 +44,7 @@ All files are listed in [Comparing samples](comparing_samples.md#output).
 | `te/deseq2/{contrast}/differential_subfamilies.tsv`    | differential accessibility of repeat subfamilies (with `deseq2: enable`) |
 | `te/deseq2/{contrast}/heatmap_classes.pdf`             | heatmap of repeat subfamilies, faceted by class (with `deseq2: enable`) |
 | `te/profile/{conditions,samples}.pdf`                  | profile of the TE signal tracks over full-length copies of `te: profile: subfamilies` |
-| `te/profile/copy_lengths.pdf`                          | histogram of the genomic lengths of the full-length copies in the profile, per entry of `te: profile: subfamilies` |
+| `te/profile/copy_lengths.pdf`                          | length distribution of the full-length copies in the profile and of all copies, per entry of `te: profile: subfamilies` |
 | `te/multiqc/multiqc_report.html`, `te/qc/`             | QC of the TE alignments (also with `te: only`)                  |
 | `te/peaks/consensus_peaks_repeats.tsv`                 | TE consensus peaks with their repeat and fraction of uniquely mapping insertions |
 | `te/peaks/deseq2/pca.pdf`, `te/peaks/deseq2/sample_correlation.pdf` | PCA and sample correlation from the TE peak counts (with `deseq2: enable`) |

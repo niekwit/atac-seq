@@ -3,91 +3,98 @@ log <- file(snakemake@log[[1]], open = "wt")
 sink(log, type = "output")
 sink(log, type = "message")
 
-# QC of the full-length copies of the te: profile: subfamilies entries
-# (resources/te/full_length_copies.bed): histogram of their genomic lengths,
-# one panel per entry, with the median length (dashed) and the length that
-# computeMatrix scale-regions scales each copy to (te: profile: body_length,
-# dotted), explained in the legend. Copies of an entry are followed by a line
-# "#<entry> (n=...)".
+# QC of the full-length copies of the te: profile: subfamilies entries: length
+# distribution of the full-length copies (red) and of all copies (grey) of each
+# entry, one panel per entry, with the median length of both (dashed). The
+# histograms are scaled to the same area (density), as an entry has many more
+# copies than full-length copies.
 
 library(ggplot2)
 library(cowplot)
 
-body_length <- snakemake@params[["body_length"]]
-
-# Copies with the label of their entry
-lines <- readLines(snakemake@input[["bed"]])
-is_label <- startsWith(lines, "#")
-labels <- sub("^#", "", lines[is_label])
-# Entry of each line: the next label line (the label follows its copies)
-entry <- labels[length(labels) - rev(cumsum(rev(is_label))) + 1]
 copies <- read.delim(
-  text = lines[!is_label],
-  header = FALSE,
-  colClasses = c(
-    "character",
-    "integer",
-    "integer",
-    "character",
-    "numeric",
-    "character"
+  snakemake@input[["copies"]],
+  colClasses = c(entry = "character", chrom = "character")
+)
+copies$length <- copies$length / 1000
+copies$full_length <- as.logical(copies$full_length)
+
+# Panel labels with the number of full-length copies out of all copies
+entries <- unique(copies$entry)
+n_all <- table(factor(copies$entry, levels = entries))
+n_full <- tapply(
+  copies$full_length,
+  factor(copies$entry, levels = entries),
+  sum
+)
+panel_labels <- sprintf(
+  "%s (%s of %s full-length)",
+  entries,
+  format(n_full, big.mark = ",", trim = TRUE),
+  format(as.vector(n_all), big.mark = ",", trim = TRUE)
+)
+names(panel_labels) <- entries
+
+# All copies and the full-length copies as two sets
+all_label <- "All copies"
+full_label <- "Full-length copies"
+sets <- rbind(
+  data.frame(entry = copies$entry, length = copies$length, set = all_label),
+  data.frame(
+    entry = copies$entry[copies$full_length],
+    length = copies$length[copies$full_length],
+    set = full_label
   )
 )
-copies$entry <- factor(entry[!is_label], levels = labels)
-copies$length <- (copies$V3 - copies$V2) / 1000
+sets$entry <- factor(panel_labels[sets$entry], levels = panel_labels)
+sets$set <- factor(sets$set, levels = c(all_label, full_label))
 
-medians <- aggregate(length ~ entry, data = copies, FUN = median)
+medians <- aggregate(length ~ entry + set, data = sets, FUN = median)
 for (i in seq_len(nrow(medians))) {
   message(sprintf(
-    "%s: median length %.2f kb",
+    "%s, %s: median length %.2f kb",
     medians$entry[i],
+    medians$set[i],
     medians$length[i]
   ))
 }
 
-# Vertical lines with a legend: median per entry and the scaled length
-median_label <- "Median length"
-body_label <- sprintf(
-  "Scaled length in the profile (%g kb)",
-  body_length / 1000
-)
-lines_df <- rbind(
-  data.frame(entry = medians$entry, x = medians$length, line = median_label),
-  data.frame(
-    entry = factor(labels, levels = labels),
-    x = body_length / 1000,
-    line = body_label
-  )
-)
-lines_df$line <- factor(lines_df$line, levels = c(median_label, body_label))
-
-p <- ggplot(copies, aes(x = length)) +
+colours <- setNames(c("#cccccc", "#dd3b3b"), c(all_label, full_label))
+p <- ggplot(sets, aes(x = length, fill = set)) +
   geom_histogram(
+    aes(y = after_stat(density)),
     bins = 50,
-    fill = "#cccccc",
+    position = "identity",
+    alpha = 0.7,
     colour = "black",
     linewidth = 0.2
   ) +
   geom_vline(
-    data = lines_df,
-    aes(xintercept = x, colour = line, linetype = line)
+    data = medians,
+    aes(xintercept = length, colour = set),
+    linetype = "dashed",
+    show.legend = FALSE
   ) +
+  scale_fill_manual(values = colours) +
+  # Darker grey than the bars for the median of all copies
   scale_colour_manual(
-    values = setNames(c("#dd3b3b", "black"), c(median_label, body_label))
-  ) +
-  scale_linetype_manual(
-    values = setNames(c("dashed", "dotted"), c(median_label, body_label))
+    values = setNames(c("grey40", "#dd3b3b"), c(all_label, full_label))
   ) +
   facet_wrap(~entry, scales = "free", ncol = 3) +
-  labs(x = "Copy length (kb)", y = "Copies", colour = NULL, linetype = NULL) +
+  labs(
+    x = "Copy length (kb)",
+    y = "Density",
+    fill = NULL,
+    caption = "Dashed lines: median length"
+  ) +
   theme_cowplot(12) +
   theme(strip.background = element_blank(), legend.position = "bottom")
 
-n_rows <- ceiling(length(labels) / 3)
+n_rows <- ceiling(length(entries) / 3)
 ggsave(
   snakemake@output[[1]],
   p,
-  width = 10,
+  width = 11,
   height = 1 + 2.5 * n_rows,
   bg = "white"
 )
