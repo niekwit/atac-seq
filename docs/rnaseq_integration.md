@@ -224,8 +224,9 @@ labelled. Spearman's rho per class is in `subfamilies/correlation.tsv`.
 
 **Cumulative distributions** (`subfamilies/cdf.pdf`): the RNA-seq log2 fold changes of the
 subfamilies, grouped by accessibility: on the left by the test of all copies, on the right by the
-differential TE peaks in the subfamily. A curve to the right of the unchanged group means higher
-expression in the knockout. The tests are in `subfamilies/cdf_tests.tsv` (Wilcoxon) and
+differential TE peaks in the subfamily. A curve to the right of the unchanged group means larger
+RNA-seq log2 fold changes (knockout over heterozygous) than in the unchanged group. It does not by
+itself mean that the group is upregulated, as both groups can have negative fold changes. The tests are in `subfamilies/cdf_tests.tsv` (Wilcoxon) and
 `subfamilies/enrichment.tsv` (Fisher's exact test).
 
 ## Caveats
