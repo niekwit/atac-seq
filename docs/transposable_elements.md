@@ -277,6 +277,75 @@ For each sample the `te_{subfamily,family,class}.tsv` tables have:
 | `{sample}_CPM`               | insertions per million insertions of the sample                            |
 | `{sample}_log2_enrichment`   | log2 of the fraction of insertions in the repeat over the fraction of the genome it covers; > 0: more accessible than the genome average |
 
+## Example: Morc1 knockout gonocytes
+
+These figures come from the public ATAC-seq data of P0 *Morc1* knockout and heterozygous
+gonocytes (Uneme et al., 2024; GEO
+[GSE235429](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235429)), 2 replicates each,
+run with `te: only: true` on GRCm39 (Ensembl 115). MORC1 silences young transposons in the male
+germline, so its loss should open TEs. The contrast is `KO_vs_het`, with
+`te: normalisation: insertions` and these profile subfamilies:
+
+```yaml
+te:
+  enable: true
+  only: true
+  normalisation: insertions
+  profile:
+    subfamilies: ["L1MdTf_I", "L1MdTf_II", "L1MdTf_III", "L1MdA_I", "L1MdA_II", "L1MdGf_I", "IAPEz-int"]
+```
+
+In the TE alignments, 32–44% of the kept read pairs are multimappers and 48–56% of the insertions
+are in repeats (`qc/te_qc_summary.tsv`), so a large part of the signal would be lost without them.
+
+### Morc1: repeat subfamilies
+
+![Morc1: PCA of the subfamily counts](images/te/morc1_subfamilies_pca.png)
+
+**PCA** (`deseq2/pca.pdf`): the first principal component (64% of the variance) separates the
+knockout from the heterozygous samples.
+
+![Morc1: differential accessibility of the subfamilies](images/te/morc1_subfamilies_volcano.png)
+
+**Volcano plot** (`deseq2/KO_vs_het/volcano_plot.pdf`): 59 of the 1,163 tested subfamilies are
+more accessible in the knockout and none less accessible. 58 of the 59 are LTR retrotransposons
+(the largest changes: IAPLTR2a/b, MMERGLN, RLTR1B, RLTR10), with L1MdA_II as the only LINE.
+
+![Morc1: heatmap of the significant subfamilies](images/te/morc1_subfamilies_heatmap.png)
+
+**Heatmap** (`deseq2/KO_vs_het/heatmap_classes.pdf`): row z-scores of the variance-stabilised
+insertions of the significant subfamilies (at most 25 per class), which are higher in both
+knockout samples.
+
+The young L1s that MORC1 is known to silence (L1MdTf, L1MdA_I) are not significant here, although
+their 5' ends open (see the profile below). A subfamily count includes all copies, and most L1
+copies are 5'-truncated and lack the 5' UTR promoter, so the change at the promoters of the few
+full-length copies is diluted by the many unchanged truncated copies.
+
+### Morc1: TE peaks
+
+![Morc1: differential accessibility of the TE peaks](images/te/morc1_peaks_volcano.png)
+
+**Volcano plot of the TE peaks** (`peaks/deseq2/KO_vs_het/volcano_plot.pdf`): of the 91,421 TE
+consensus peaks tested by DESeq2, 4,590 are more and 370 less accessible in the knockout. The
+peaks include young repeats that the ENCODE peaks leave out, as their reads are multimappers.
+
+### Morc1: full-length copies
+
+![Morc1: profile over the full-length copies](images/te/morc1_profile.png)
+
+**Profile** (`profile/conditions.pdf`): mean Tn5 insertions per million over the full-length
+copies of each subfamily, scaled from 5' to 3' with 2 kb flanks, heterozygous in black and
+knockout in red. The signal is at the 5' UTR promoter, and it is higher in the knockout for
+L1MdTf_I–III and L1MdA_I–II, most for L1MdA_I and L1MdTf_III. L1MdGf_I and the internal part of
+IAPEz (`IAPEz-int`, without its LTRs) don't change.
+
+![Morc1: lengths of the copies](images/te/morc1_copy_lengths.png)
+
+**Copy lengths** (`profile/copy_lengths.pdf`): the full-length copies (red) of the L1 subfamilies
+are 6–7 kb long, while most of their copies (grey) are shorter than 2 kb (5'-truncated). The
+full-length `IAPEz-int` copies are about 6.4 kb, the length of its consensus.
+
 ## Caveats
 
 - Counts are per repeat subfamily, family or class, not per copy: a multimapper is assigned to

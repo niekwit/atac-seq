@@ -209,7 +209,7 @@ regulated and near a less accessible peak.
 group, as the mean of the replicates. Upregulated genes have a broad signal (many are in or near
 repeats), while downregulated and unchanged genes have a sharp promoter peak. The heterozygous
 signal is higher in all three groups, by about as much at up- as at downregulated genes, and
-also at the unchanged genes (knockout/het at the TSS: 0.70, 0.78 and 0.86). So the profile shows
+also at the unchanged genes (knockout/het at the TSS: 0.74, 0.79 and 0.87). So the profile shows
 a change that applies to promoters in general, not one that follows expression: the 100
 upregulated genes with a more accessible peak at the promoter (see the enrichment above) are
 too few to change the mean of 4,898 genes.
@@ -225,8 +225,8 @@ distal, the same height in both conditions, and so widens the gap at promoters (
 
 ![Morc1: TSS profile with tracks scaled by DESeq2 size factors](images/rnaseq_integration/morc1_genes_tss_profile_deseq2.png)
 
-This agrees with DESeq2, which gives the TE peaks within 1 kb of a TSS a median log2 fold change
-of −0.12, against +0.03 for distal peaks. Both profiles say the same thing about the
+This agrees with DESeq2, which gives the TE peaks within 1 kb of a TSS a median (unshrunken) log2
+fold change of −0.12, against +0.03 for distal peaks. Both profiles say the same thing about the
 gene groups: compare each group with the unchanged genes, not the two lines with each other,
 and use the peak tests above for significance. See
 [Scaling of the signal tracks](transposable_elements.md#scaling-of-the-signal-tracks) for when

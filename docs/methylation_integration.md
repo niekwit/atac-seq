@@ -100,6 +100,74 @@ hypo- and hypermethylated regions (`n_copies_hypo`, `n_copies_hyper`). `decrease
 (hypomethylated) and `increased.bed` (hypermethylated) are next to `regions.tsv`, and
 `input_tables/` has an unchanged copy of the `regions` file.
 
+## Example: Morc1 knockout gonocytes
+
+These figures use the Morc1 ATAC-seq data of the
+[Transposable elements example](transposable_elements.md#example-morc1-knockout-gonocytes) (TE
+module, `KO_vs_het`) and DNA methylation data of *Morc1* knockout and heterozygous gonocytes (GEO
+[GSE63048](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63048)), aligned to GRCm39. The
+DMRs are the 20,507 hypomethylated 1 kb tiles of a methylKit analysis. Adjacent tiles were merged
+(`bedtools merge -d 0`) into 14,026 regions, so that a long hypomethylated element counts as one
+region. The BigWig files are the CpG methylation (%) of each condition:
+
+```yaml
+methylation:
+  contrasts:
+    KO_vs_het:
+      regions: /path/to/hypomethylated_DMRs_merged.bed
+      methylkit: false
+      direction: hypo
+      bigwigs:
+        control: /path/to/methylation_het.bw
+        treatment: /path/to/methylation_KO.bw
+```
+
+### TE peaks
+
+![Morc1: TE peaks in the hypomethylated regions](images/methylation_integration/morc1_enrichment.png)
+
+**Enrichment** (`peaks/enrichment.pdf`): more than half of the more accessible TE peaks (2,409 of
+4,590, 52%) are in hypomethylated regions, against 9.8% of the unchanged peaks (odds ratio 10.2).
+None of the 370 less accessible peaks are.
+
+![Morc1: accessibility change of the peaks by methylation change](images/methylation_integration/morc1_distribution.png)
+
+**Distribution** (`peaks/distribution.pdf`): the 10,871 TE peaks in hypomethylated regions gain
+accessibility (median shrunken log2 fold change 0.47, against −0.03 outside the regions).
+
+![Morc1: CpG methylation around the differential peaks](images/methylation_integration/morc1_signal_profile.png)
+
+**Methylation around the differential peaks** (`peaks/signal_profile.pdf`): the more accessible
+peaks are methylated in the heterozygous gonocytes (about 60% at the centre) and lose about a
+third of it in the knockout (about 40%). The unchanged peaks have a sharp dip of methylation in
+both conditions, typical of open sites such as CpG island promoters. The profile of the less
+accessible peaks is noisy, as there are few of them.
+
+![Morc1: accessibility over the hypomethylated regions](images/methylation_integration/morc1_atac_profile.png)
+
+**ATAC-seq over the regions** (`atac_profile.pdf`): the knockout has about twice as many Tn5
+insertions per million over the hypomethylated regions as the heterozygous gonocytes.
+
+### Repeat subfamilies
+
+![Morc1: hypomethylated regions and accessibility of the subfamilies](images/methylation_integration/morc1_subfamilies_scatter.png)
+
+**Scatter** (`subfamilies/scatter.pdf`): the subfamilies that open (solid points, LTR
+retrotransposons) have 10–50% of their copies in hypomethylated regions (e.g. MMERGLN_LTR, RLTR10C,
+IAPLTR2b), far above the genome (dashed line). Spearman's rho over all 1,137 subfamilies is 0.20.
+
+![Morc1: full-length copies by methylation change and accessibility](images/methylation_integration/morc1_full_length.png)
+
+**Full-length copies** (`subfamilies/full_length.pdf`): most full-length L1MdTf copies are
+hypomethylated in the knockout (69–75% of L1MdTf_I–III), but only 7–8% of the L1MdA_I and
+L1MdA_II copies, although these open as well. For L1MdTf_III, hypomethylated copies are more often
+more accessible (105 of 387, against 20 of 172 others; odds ratio 2.8). Together with the
+[H3K9me3 example](h3k9me3_integration.md#example-morc1-knockout-gonocytes), where L1MdA_I copies
+in regions that lose H3K9me3 are more often more accessible, this suggests that L1MdA copies open
+with the loss of H3K9me3 but without losing methylation, while L1MdTf copies lose both. As for
+H3K9me3, few L1MdTf_I and L1MdTf_II copies overlap a more accessible TE peak, as their reads are
+mostly multimappers.
+
 ## Caveats
 
 - **Coverage:** methylKit tests only regions with enough coverage in enough samples, so

@@ -173,6 +173,77 @@ In `results/te/integration/h3k9me3/{contrast}/` (TE module):
 `te: only`). `input_tables/` next to them has an unchanged copy of the `regions` file, so the
 results keep the input they were made from. The BigWig files are not copied.
 
+## Example: Morc1 knockout gonocytes
+
+These figures use the Morc1 ATAC-seq data of the
+[Transposable elements example](transposable_elements.md#example-morc1-knockout-gonocytes) (TE
+module, `KO_vs_het`) and H3K9me3 ChIP-seq of *Morc1* knockout and heterozygous gonocytes from the
+same study (GEO [GSE235429](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235429)),
+aligned to GRCm39. H3K9me3 broad peaks were called with MACS2 (FDR 0.1) in the heterozygous
+samples with the knockout as control, so the 2,848 consensus peaks (2,761 after merging
+overlapping peaks) are regions with H3K9me3 in the heterozygous gonocytes that is lost in the
+knockout. They are a BED file, so there are no unchanged or gained regions and no fold change
+scatter:
+
+```yaml
+h3k9me3:
+  contrasts:
+    KO_vs_het:
+      regions: /path/to/H3K9me3_het_over_KO_peaks.bed
+      diffbind: false
+      direction: lost
+      bigwigs:
+        control: /path/to/H3K9me3_het.bw
+        treatment: /path/to/H3K9me3_KO.bw
+  bigwig_units: CPM
+```
+
+### TE peaks
+
+![Morc1: TE peaks in the regions that lose H3K9me3](images/h3k9me3_integration/morc1_enrichment.png)
+
+**Enrichment** (`peaks/enrichment.pdf`): 15.8% of the more accessible TE peaks (725 of 4,590) are
+in regions that lose H3K9me3, against 2.1% of the unchanged peaks (odds ratio 8.7). None of the
+370 less accessible peaks are.
+
+![Morc1: accessibility change of the peaks by H3K9me3 change](images/h3k9me3_integration/morc1_distribution.png)
+
+**Distribution** (`peaks/distribution.pdf`): almost all 2,551 TE peaks in the regions that lose
+H3K9me3 gain accessibility (median shrunken log2 fold change 0.61, against −0.01 for the peaks
+outside the regions), not only the peaks called differential.
+
+![Morc1: H3K9me3 around the differential peaks](images/h3k9me3_integration/morc1_signal_profile.png)
+
+**H3K9me3 around the differential peaks** (`peaks/signal_profile.pdf`): the more accessible peaks
+have H3K9me3 at their centre in the heterozygous gonocytes (grey), and it is gone in the knockout
+(red). The less accessible and unchanged peaks have little H3K9me3 in either.
+
+![Morc1: accessibility over the regions that lose H3K9me3](images/h3k9me3_integration/morc1_atac_profile.png)
+
+**ATAC-seq over the regions** (`atac_profile.pdf`): over the whole regions that lose H3K9me3,
+the knockout has about twice as many Tn5 insertions per million as the heterozygous gonocytes.
+
+### Repeat subfamilies
+
+![Morc1: H3K9me3 regions and accessibility of the subfamilies](images/h3k9me3_integration/morc1_subfamilies_scatter.png)
+
+**Scatter** (`subfamilies/scatter.pdf`): the subfamilies that open (solid points) are LTR
+retrotransposons, and most of them have a larger percentage of their copies in the regions that
+lose H3K9me3 than the genome (dashed line), e.g. MMERGLN_LTR, RLTR10-int and RLTR1B-int with
+3–4%. Most subfamilies have no copies in the regions, so Spearman's rho over all 1,137
+subfamilies is low (0.11).
+
+![Morc1: full-length copies by H3K9me3 change and accessibility](images/h3k9me3_integration/morc1_full_length.png)
+
+**Full-length copies** (`subfamilies/full_length.pdf`): 36–48% of the full-length L1MdTf_I,
+L1MdTf_II and L1MdA_I copies are in regions that lose H3K9me3. Copies in these regions are more
+often more accessible for L1MdTf_III, L1MdA_I, L1MdA_II and L1MdGf_I (e.g. L1MdA_I: 127 of 315
+copies in the regions against 101 of 340 others; odds ratio 1.6, adjusted p = 0.01). Few
+L1MdTf_I and L1MdTf_II copies overlap a more accessible TE peak (6 and 5), although their 5' ends
+open on average ([TE profile](transposable_elements.md#morc1-full-length-copies)): their copies are so
+similar that most reads are multimappers, which are spread over the copies, so the signal at
+single copies is often too low to call a peak.
+
 ## Caveats
 
 - **Peaks called against the other condition:** without an IgG or input control, peaks of one
