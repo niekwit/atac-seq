@@ -145,12 +145,13 @@ In `results/te/integration/multiomics/{contrast}/`:
 
 ## Example: Morc1 knockout gonocytes
 
-These figures combine the four Morc1 data sets of the other examples for the contrast
-`KO_vs_het`: ATAC-seq ([Transposable elements](transposable_elements.md#example-morc1-knockout-gonocytes)),
-RNA-seq ([RNA-seq](rnaseq_integration.md#example-morc1-knockout-gonocytes)), H3K9me3
-([H3K9me3](h3k9me3_integration.md#example-morc1-knockout-gonocytes)) and DNA methylation
-([DNA methylation](methylation_integration.md#example-morc1-knockout-gonocytes)), with the default
-settings:
+These figures show the output on public data of *Morc1* knockout and heterozygous gonocytes,
+combining the four data sets of the other examples for the contrast `KO_vs_het`: ATAC-seq
+([Transposable elements](transposable_elements.md#example-morc1-knockout-gonocytes)), RNA-seq
+([RNA-seq](rnaseq_integration.md#example-morc1-knockout-gonocytes)) and H3K9me3
+([H3K9me3](h3k9me3_integration.md#example-morc1-knockout-gonocytes)) from [Uneme et al., 2024](https://doi.org/10.1073/pnas.2317095121), and DNA
+methylation ([DNA methylation](methylation_integration.md#example-morc1-knockout-gonocytes)) from
+[Pastor et al., 2014](https://doi.org/10.1038/ncomms6795). For the biology, see the publications. The settings are the defaults:
 
 ```yaml
 multiomics:
@@ -161,59 +162,48 @@ multiomics:
 
 ![Morc1: changes of the significant subfamilies in all data sets](images/multiomics_integration/morc1_subfamilies_heatmap.png)
 
-**Significant subfamilies** (`subfamilies/heatmap.pdf`): 788 subfamilies with at least 20 copies
-change significantly in accessibility or expression, and the heatmap shows the 10 most significant
-of each class. The LTR retrotransposons (IAPLTR2, MMERGLN, RLTR10, RLTR1B and others) open,
-are expressed more, are hypomethylated and mostly lose H3K9me3, and many of their copies are in
-the regions where the marks change (bars). The young L1s (bold: profile subfamilies) are strongly
-upregulated and lose H3K9me3 and methylation over all their copies, but their accessibility over
-all copies changes little (only L1MdA_II is significant). The DNA transposons, SINEs and satellites
-are upregulated in the RNA-seq data, with little change in the other data sets.
+**Significant subfamilies** (`subfamilies/heatmap.pdf`): the subfamilies with at least 20 copies
+and a significant change in accessibility or expression, at most 10 per class, with one column per
+data set: ATAC-seq and RNA-seq log2 fold changes, H3K9me3 log2 ratio and methylation difference
+over all copies (knockout vs heterozygous), each with its own colour scale. Stars mark significant
+changes in accessibility or expression, and profile subfamilies are bold. The bars give the
+percentage of copies in the regions that lose H3K9me3 and in the hypomethylated regions.
 
 ![Morc1: changes of the profile subfamilies](images/multiomics_integration/morc1_profile_heatmap.png)
 
-**Profile subfamilies** (`subfamilies/profile_heatmap.pdf`): the same for the
-`te: profile: subfamilies` subfamilies. All are upregulated in the RNA-seq data. Over all their
-copies, L1MdTf_I and L1MdTf_II lose the most H3K9me3 (log2 ratio −0.4) and methylation (about
-−13 percentage points), the L1MdA subfamilies lose less H3K9me3 (−0.2 to −0.3) and hardly any
-methylation (about −2.5 points), and L1MdGf_I and `IAPEz-int` don't lose H3K9me3. Only a small
-percentage of their copies is in the regions where the marks change (bars), as these regions
-are mostly at the 5' end of the few full-length copies.
+**Profile subfamilies** (`subfamilies/profile_heatmap.pdf`): the same for all
+`te: profile: subfamilies` subfamilies, whether they change or not.
 
 ### Morc1: TE peaks
 
 ![Morc1: UpSet plot of the TE peaks](images/multiomics_integration/morc1_upset.png)
 
-**UpSet plot** (`peaks/upset.pdf`): of the 91,421 tested TE peaks, the largest groups change in
-only one data set (hypomethylated, or near an up- or downregulated gene). The largest groups of
-more accessible peaks (red) are those that are also hypomethylated (1,964), more accessible only
-(1,493), and also in a region that loses H3K9me3 (454).
+**UpSet plot** (`peaks/upset.pdf`): the tested TE peaks by their combination of changes (more or
+less accessible, H3K9me3 lost, hypomethylated, nearest gene up- or downregulated). Each peak is
+counted in one combination (bar at the top), and the set sizes are on the right. Combinations with
+more accessible peaks are red.
 
 ![Morc1: accessibility and expression by the changes of the marks](images/multiomics_integration/morc1_peaks_enrichment.png)
 
-**Enrichment** (`peaks/enrichment.pdf`): 21–34% of the peaks where H3K9me3 is lost, methylation
-is lost, or both, are more accessible, against 2.1% of the other peaks. None of them is less
-accessible. Their nearest genes are more often upregulated (22–24%, against 13%) and less often
-downregulated (5%, against 15%). Peaks with both changes are not more often more accessible than
-peaks with one (21% against 34% and 22%); this comparison is not tested.
+**Enrichment** (`peaks/enrichment.pdf`): the TE peaks grouped by the changes of the marks (both,
+H3K9me3 lost only, hypomethylated only, neither). For each group, the percentage of peaks that are
+more or less accessible, and of the peaks with a tested nearest gene, the percentage whose gene is
+up- or downregulated, with the number of peaks above the bar. Each group is compared with
+"Neither" (Fisher's exact test).
 
 ### Morc1: full-length copies
 
 ![Morc1: signal of each full-length copy](images/multiomics_integration/morc1_copies_heatmap.png)
 
-**Heatmap of the copies** (`copies/heatmap.pdf`): ATAC-seq, H3K9me3 and CpG methylation over each
-full-length copy of the profile subfamilies, heterozygous and knockout, sorted by the gain of
-accessibility. The 5' UTR of most L1MdTf and L1MdA copies opens in the knockout and loses its
-H3K9me3, while the L1MdGf_I and `IAPEz-int` copies keep their H3K9me3.
+**Heatmap of the copies** (`copies/heatmap.pdf`): ATAC-seq, H3K9me3 and CpG methylation of the
+heterozygous and knockout gonocytes over each full-length copy of the profile subfamilies, scaled
+from 5' to 3' with 2 kb flanks. Within each subfamily, the copies are sorted by the log2 ratio of
+their mean ATAC-seq signal, knockout over heterozygous, most gained accessibility at the top.
 
 ![Morc1: mean signal over the full-length copies](images/multiomics_integration/morc1_copies_profile.png)
 
-**Mean profiles** (`copies/profile.pdf`): the mean of the heatmap per subfamily (heterozygous in
-grey, knockout in red). In the heterozygous gonocytes, the 5' UTR of the L1MdTf and L1MdA copies
-has a peak of H3K9me3, which is gone in the knockout, where accessibility at the 5' UTR rises. The
-L1MdTf copies also lose methylation over the 5' UTR (from about 50% to 25–30%), but the L1MdA
-copies do not. L1MdGf_I and `IAPEz-int` keep their H3K9me3, and their accessibility and methylation
-change little.
+**Mean profiles** (`copies/profile.pdf`): the mean of the heatmap per subfamily (columns) and data
+set (rows), heterozygous in grey and knockout in red, with the units on the y axes.
 
 ## Caveats
 

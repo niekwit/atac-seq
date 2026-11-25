@@ -31,3 +31,8 @@ Uneme, Y., Maeda, R., Nakayama, G., Narita, H., Takeda, N., Hiramatsu, R., Nishi
 Nakato, R., Kanai, Y., Araki, K., Siomi, M. C., & Yamanaka, S. *Morc1 reestablishes H3K9me3
 heterochromatin on piRNA-targeted transposons in gonocytes*. PNAS, 121(13), e2317095121,
 **2024**. <https://doi.org/10.1073/pnas.2317095121>
+
+Pastor, W. A., Stroud, H., Nee, K., Liu, W., Pezic, D., Manakov, S., Lee, S. A., Moissiard, G.,
+Zamudio, N., Bourc'his, D., Aravin, A. A., Clark, A. T., & Jacobsen, S. E. *MORC1 represses
+transposable elements in the mouse male germline*. Nature Communications, 5, 5795, **2014**.
+<https://doi.org/10.1038/ncomms6795>
